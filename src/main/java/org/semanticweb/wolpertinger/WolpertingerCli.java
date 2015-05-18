@@ -43,6 +43,10 @@ public class WolpertingerCli {
         }
     }
 
+    /**
+     * 
+     *
+     */
     protected interface Action {
         void run(Wolpertinger wolpert, StatusOutput status, PrintWriter output, boolean ignoreOntologyPrefixes);
     }
@@ -62,7 +66,8 @@ public class WolpertingerCli {
 
 		@Override
 		public void run(Wolpertinger wolpert, StatusOutput status, PrintWriter output, boolean ignoreOntologyPrefixes) {
-			wolpert.translateOntologyToASP(null, output);
+			NaiveTranslation translation = new NaiveTranslation(output);
+			wolpert.translateOntology(translation, null, output);
 		}
     	
     }
@@ -76,8 +81,7 @@ public class WolpertingerCli {
 
 	protected static final String usageString = "";
 
-	protected static final String groupActions = "Actions",
-			groupMisc = "Miscellaneous";
+	protected static final String groupActions = "Actions", groupMisc = "Miscellaneous";
 
 	protected static final Option[] options = new Option[] {
 			// misc options
@@ -134,12 +138,15 @@ public class WolpertingerCli {
                 break;
 			
 				
-				// actions
+				// ACTIONS
+                
+                // normalize
 				case 'N': {				
 					actions.add(new OnlyNormalizeAction());
 				}
 				break;
 				
+				// translate
 				case 'T': {
 					String arg = getopt.getOptarg();
 					Action action;
@@ -174,11 +181,14 @@ public class WolpertingerCli {
 			}
 			StatusOutput status = new StatusOutput(verbosity);
 			for (IRI ont : ontologies) {
+				
 				status.log(2,"Processing "+ont.toString());
                 status.log(2,String.valueOf(actions.size())+" actions");
+                
                 try {
                     long startTime=System.currentTimeMillis();
                     OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
+                    
                     if (ont.isAbsolute()) {
                     	
                         URI uri=URI.create(ont.getStart());
@@ -191,11 +201,12 @@ public class WolpertingerCli {
                             }
                         }
                     }
+                    
                     OWLOntology ontology=ontologyManager.loadOntology(ont);
                     long parseTime=System.currentTimeMillis()-startTime;
                     status.log(2,"Ontology parsed in "+String.valueOf(parseTime)+" msec.");
                     startTime=System.currentTimeMillis();
-                    Wolpertinger hermit = new Wolpertinger(new Configuration(),ontology);
+                    Wolpertinger wolpertinger = new Wolpertinger(new Configuration(),ontology);
                    // Prefixes prefixes=hermit.getPrefixes();
 //                    if (defaultPrefix!=null) {
 //                        try {
@@ -218,7 +229,7 @@ public class WolpertingerCli {
                     for (Action action : actions) {
                         status.log(2,"Doing action...");
                         startTime=System.currentTimeMillis();
-                        action.run(hermit,status,new PrintWriter(System.out),true);
+                        action.run(wolpertinger,status,new PrintWriter(System.out),true);
                         long actionTime=System.currentTimeMillis()-startTime;
                         status.log(2,"...action completed in "+String.valueOf(actionTime)+" msec.");
                     }
@@ -231,7 +242,7 @@ public class WolpertingerCli {
 		catch (UsageException e) {
 			System.err.println(e.getMessage());
 			System.err.println(usageString);
-			System.err.println("try 'wolperting --help' for more information.");
+			System.err.println("try '--help' for more information.");
 		}
 	}
 

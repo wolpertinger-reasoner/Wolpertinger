@@ -26,14 +26,104 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.*;
-import org.semanticweb.wolpertinger.model.Atom;
-import org.semanticweb.wolpertinger.model.AtomicConcept;
-import org.semanticweb.wolpertinger.model.AtomicRole;
-import org.semanticweb.wolpertinger.model.Variable;
-import org.semanticweb.wolpertinger.structural.asp.ASPConstraint;
-import org.semanticweb.wolpertinger.structural.asp.ASPRule;
-import org.semanticweb.wolpertinger.structural.asp.CountExpression;
+import org.semanticweb.owlapi.model.ClassExpressionType;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
+import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLAxiomVisitor;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLClassExpressionVisitorEx;
+import org.semanticweb.owlapi.model.OWLDataAllValuesFrom;
+import org.semanticweb.owlapi.model.OWLDataComplementOf;
+import org.semanticweb.owlapi.model.OWLDataExactCardinality;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDataHasValue;
+import org.semanticweb.owlapi.model.OWLDataIntersectionOf;
+import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
+import org.semanticweb.owlapi.model.OWLDataMinCardinality;
+import org.semanticweb.owlapi.model.OWLDataOneOf;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
+import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
+import org.semanticweb.owlapi.model.OWLDataRange;
+import org.semanticweb.owlapi.model.OWLDataSomeValuesFrom;
+import org.semanticweb.owlapi.model.OWLDataUnionOf;
+import org.semanticweb.owlapi.model.OWLDataVisitorEx;
+import org.semanticweb.owlapi.model.OWLDatatype;
+import org.semanticweb.owlapi.model.OWLDatatypeDefinitionAxiom;
+import org.semanticweb.owlapi.model.OWLDatatypeRestriction;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
+import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLFacetRestriction;
+import org.semanticweb.owlapi.model.OWLFunctionalDataPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLHasKeyAxiom;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLIndividual;
+import org.semanticweb.owlapi.model.OWLIndividualAxiom;
+import org.semanticweb.owlapi.model.OWLInverseFunctionalObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom;
+import org.semanticweb.owlapi.model.OWLIrreflexiveObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLLiteral;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLNegativeDataPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
+import org.semanticweb.owlapi.model.OWLObjectComplementOf;
+import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
+import org.semanticweb.owlapi.model.OWLObjectHasSelf;
+import org.semanticweb.owlapi.model.OWLObjectHasValue;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
+import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
+import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
+import org.semanticweb.owlapi.model.OWLObjectOneOf;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom;
+import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
+import org.semanticweb.owlapi.model.OWLObjectUnionOf;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
+import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
+import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
+import org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.SWRLArgument;
+import org.semanticweb.owlapi.model.SWRLAtom;
+import org.semanticweb.owlapi.model.SWRLBuiltInAtom;
+import org.semanticweb.owlapi.model.SWRLClassAtom;
+import org.semanticweb.owlapi.model.SWRLDArgument;
+import org.semanticweb.owlapi.model.SWRLDataPropertyAtom;
+import org.semanticweb.owlapi.model.SWRLDataRangeAtom;
+import org.semanticweb.owlapi.model.SWRLDifferentIndividualsAtom;
+import org.semanticweb.owlapi.model.SWRLIArgument;
+import org.semanticweb.owlapi.model.SWRLIndividualArgument;
+import org.semanticweb.owlapi.model.SWRLLiteralArgument;
+import org.semanticweb.owlapi.model.SWRLObjectPropertyAtom;
+import org.semanticweb.owlapi.model.SWRLObjectVisitor;
+import org.semanticweb.owlapi.model.SWRLRule;
+import org.semanticweb.owlapi.model.SWRLSameIndividualAtom;
+import org.semanticweb.owlapi.model.SWRLVariable;
 
 
 /**
@@ -64,6 +154,7 @@ public class OWLNormalization {
         m_plVisitor=new PLVisitor();
         m_dataRangeDefinitions=new HashMap<OWLDataRange,OWLDatatype>();
     }
+    
     public void processOntology(OWLOntology ontology) {
         // Each entry in the inclusions list represents a disjunction of
         // concepts -- that is, each OWLClassExpression in an entry contributes a
@@ -76,6 +167,7 @@ public class OWLNormalization {
               
         processAxioms(ontology.getLogicalAxioms());
     }
+    
     public void processAxioms(Collection<? extends OWLAxiom> axioms) {
         AxiomVisitor axiomVisitor=new AxiomVisitor();
         for (OWLAxiom axiom : axioms)
@@ -96,12 +188,15 @@ public class OWLNormalization {
         // concepts m_axioms.m_conceptInclusions contains the normalized axioms after the normalization
         normalizeInclusions(axiomVisitor.m_classExpressionInclusionsAsDisjunctions,axiomVisitor.m_dataRangeInclusionsAsDisjunctions);
     }
+    
     protected void addFact(OWLIndividualAxiom axiom) {
         m_axioms.m_facts.add(axiom);
     }
+    
     protected void addInclusion(OWLObjectPropertyExpression subObjectPropertyExpression,OWLObjectPropertyExpression superObjectPropertyExpression) {
         m_axioms.m_simpleObjectPropertyInclusions.add(new OWLObjectPropertyExpression[] { subObjectPropertyExpression.getSimplified(),superObjectPropertyExpression.getSimplified() });
     }
+    
     protected void addInclusion(OWLObjectPropertyExpression[] subObjectPropertyExpressions,OWLObjectPropertyExpression superObjectPropertyExpression) {
         for (int index=subObjectPropertyExpressions.length-1;index>=0;--index)
             subObjectPropertyExpressions[index]=subObjectPropertyExpressions[index].getSimplified();
@@ -368,230 +463,230 @@ public class OWLNormalization {
         // Class axioms
 
         
-        /**
-         * MODIFIED: If the axiom is some type of cardinality restriction
-         */
-        public void visit(OWLSubClassOfAxiom axiom) {
-        	OWLClassExpression superClass = axiom.getSuperClass();
-        	OWLClassExpression subClass = axiom.getSubClass();
-        	
-        	if (superClass instanceof OWLObjectIntersectionOf) {
-        		OWLObjectIntersectionOf intersection = (OWLObjectIntersectionOf) superClass;
-        		for (OWLClassExpression operand : intersection.getOperands()) {
-        			// visit the splitted axiom first
-        			visit(m_factory.getOWLSubClassOfAxiom(subClass, operand));
-        		}
-        	}        	
-        	// in the next case we split an exact cardinality axiom into one min and one max axiom
-//        	else if (superClass instanceof OWLObjectExactCardinality && !subClass.isAnonymous()) {
-////        		OWLObjectExactCardinality exactRestriction = (OWLObjectExactCardinality) superClass;
-////        		OWLObjectMinCardinality minRestriction = m_factory.getOWLObjectMinCardinality(exactRestriction.getCardinality(), exactRestriction.getProperty(), exactRestriction.getFiller());
-////        		OWLObjectMaxCardinality maxRestriction = m_factory.getOWLObjectMaxCardinality(exactRestriction.getCardinality(), exactRestriction.getProperty(), exactRestriction.getFiller());
-////        		//
-////        		visit(m_factory.getOWLSubClassOfAxiom(subClass, minRestriction));
-////        		visit(m_factory.getOWLSubClassOfAxiom(subClass, maxRestriction));
+//        /**
+//         * MODIFIED: If the axiom is some type of cardinality restriction
+//         */
+//        public void visit(OWLSubClassOfAxiom axiom) {
+//        	OWLClassExpression superClass = axiom.getSuperClass();
+//        	OWLClassExpression subClass = axiom.getSubClass();
+//        	
+//        	if (superClass instanceof OWLObjectIntersectionOf) {
+//        		OWLObjectIntersectionOf intersection = (OWLObjectIntersectionOf) superClass;
+//        		for (OWLClassExpression operand : intersection.getOperands()) {
+//        			// visit the splitted axiom first
+//        			visit(m_factory.getOWLSubClassOfAxiom(subClass, operand));
+//        		}
+//        	}        	
+//        	// in the next case we split an exact cardinality axiom into one min and one max axiom
+////        	else if (superClass instanceof OWLObjectExactCardinality && !subClass.isAnonymous()) {
+//////        		OWLObjectExactCardinality exactRestriction = (OWLObjectExactCardinality) superClass;
+//////        		OWLObjectMinCardinality minRestriction = m_factory.getOWLObjectMinCardinality(exactRestriction.getCardinality(), exactRestriction.getProperty(), exactRestriction.getFiller());
+//////        		OWLObjectMaxCardinality maxRestriction = m_factory.getOWLObjectMaxCardinality(exactRestriction.getCardinality(), exactRestriction.getProperty(), exactRestriction.getFiller());
+//////        		//
+//////        		visit(m_factory.getOWLSubClassOfAxiom(subClass, minRestriction));
+//////        		visit(m_factory.getOWLSubClassOfAxiom(subClass, maxRestriction));
+////        		
+////        		// Optimized Version
+////        		OWLClass namedSubClass = (OWLClass) subClass;
+////        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
+////        		
+////        		OWLObjectExactCardinality exactRestrcition = (OWLObjectExactCardinality) superClass;
+////        		OWLClassExpression complextFiller = exactRestrcition.getFiller();
+////        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
+////        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass);
+////        		
+////        		OWLObjectProperty roleRestriction = (OWLObjectProperty) exactRestrcition.getProperty();
+////        		Atom role = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
+////        		
+////        		Atom origSubClass = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
+////        		Atom conditionalConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
+////        		
+////        		CountExpression countExpression = new CountExpression(conditionalConcept, role, "!=", exactRestrcition.getCardinality());
+////        		ASPConstraint constraint = new ASPConstraint(new Object[] {origSubClass, countExpression}, new Object[] {});
+////        		m_axioms.m_aspConstraints.add(constraint);
+////        		// further process subClassExpression, (break down the prospective complex class) 
+////        		visit(subClassExpression);
+////        	}
+//        	/**
+//        	 * Break the axioms, before put to HermiT's structural transformation.
+//        	 * 
+//        	 * C1 subClassOf partOf some C2
+//        	 * ------
+//        	 * C2 subClassOf Aux1
+//        	 * + ASP Constraint
+//        	 * :- c1(X), #count{ partOf(X,Y) : Aux1(Y) } < 1.
+//        	 */
+//        	else if (superClass instanceof OWLObjectSomeValuesFrom && !subClass.isAnonymous()) {
+//        		OWLClass namedSubClass = (OWLClass) subClass; 
 //        		
-//        		// Optimized Version
-//        		OWLClass namedSubClass = (OWLClass) subClass;
-//        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
+//        		String nextAuxName1 = "aux" + String.valueOf(axiom.hashCode());
+//        		//String nextAuxName2 = nextAuxName1 + "H";
 //        		
-//        		OWLObjectExactCardinality exactRestrcition = (OWLObjectExactCardinality) superClass;
-//        		OWLClassExpression complextFiller = exactRestrcition.getFiller();
-//        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
-//        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass);
+//        		OWLObjectSomeValuesFrom existentialRestriction = (OWLObjectSomeValuesFrom) superClass;
+//        		OWLClassExpression complextFiller = existentialRestriction.getFiller();
 //        		
-//        		OWLObjectProperty roleRestriction = (OWLObjectProperty) exactRestrcition.getProperty();
+//        		OWLClass auxClass1 = m_factory.getOWLClass(IRI.create("urn:monum#" + nextAuxName1));
+//        		//OWLClass auxClass2 = m_factory.getOWLClass(IRI.create("urn:monum#" + nextAuxName2));
+//        		
+//        		//OWLObjectSomeValuesFrom expr2 = m_factory.getOWLObjectSomeValuesFrom(existentialRestriction.getProperty(), auxClass1);
+//        		OWLSubClassOfAxiom expr1 = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass1);
+//        		//OWLSubClassOfAxiom expr3 = m_factory.getOWLSubClassOfAxiom(expr2, auxClass2);
+//        		
+//        		OWLObjectProperty roleRestriction = (OWLObjectProperty) existentialRestriction.getProperty();
 //        		Atom role = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
 //        		
-//        		Atom origSubClass = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
-//        		Atom conditionalConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
-//        		
-//        		CountExpression countExpression = new CountExpression(conditionalConcept, role, "!=", exactRestrcition.getCardinality());
-//        		ASPConstraint constraint = new ASPConstraint(new Object[] {origSubClass, countExpression}, new Object[] {});
+//        		Atom disjoint1 = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
+//        		Atom conditionalConcept = Atom.create(AtomicConcept.create(auxClass1.getIRI().toURI().toString()), Variable.create("Y"));
+//        		//ASPConstraint constraint = new ASPConstraint(new Atom[] {disjoint1}, new Atom[] {disjoint2});
+//        		CountExpression countExpression = new CountExpression(conditionalConcept, role, "<", 1);
+//        		ASPConstraint constraint = new ASPConstraint(new Object[] {disjoint1, countExpression}, new Object[] {});
 //        		m_axioms.m_aspConstraints.add(constraint);
-//        		// further process subClassExpression, (break down the prospective complex class) 
-//        		visit(subClassExpression);
+//        		
+//        		// further process expr1, (break down the prospective complex class) 
+//        		visit(expr1);
 //        	}
-        	/**
-        	 * Break the axioms, before put to HermiT's structural transformation.
-        	 * 
-        	 * C1 subClassOf partOf some C2
-        	 * ------
-        	 * C2 subClassOf Aux1
-        	 * + ASP Constraint
-        	 * :- c1(X), #count{ partOf(X,Y) : Aux1(Y) } < 1.
-        	 */
-        	else if (superClass instanceof OWLObjectSomeValuesFrom && !subClass.isAnonymous()) {
-        		OWLClass namedSubClass = (OWLClass) subClass; 
-        		
-        		String nextAuxName1 = "aux" + String.valueOf(axiom.hashCode());
-        		//String nextAuxName2 = nextAuxName1 + "H";
-        		
-        		OWLObjectSomeValuesFrom existentialRestriction = (OWLObjectSomeValuesFrom) superClass;
-        		OWLClassExpression complextFiller = existentialRestriction.getFiller();
-        		
-        		OWLClass auxClass1 = m_factory.getOWLClass(IRI.create("urn:monum#" + nextAuxName1));
-        		//OWLClass auxClass2 = m_factory.getOWLClass(IRI.create("urn:monum#" + nextAuxName2));
-        		
-        		//OWLObjectSomeValuesFrom expr2 = m_factory.getOWLObjectSomeValuesFrom(existentialRestriction.getProperty(), auxClass1);
-        		OWLSubClassOfAxiom expr1 = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass1);
-        		//OWLSubClassOfAxiom expr3 = m_factory.getOWLSubClassOfAxiom(expr2, auxClass2);
-        		
-        		OWLObjectProperty roleRestriction = (OWLObjectProperty) existentialRestriction.getProperty();
-        		Atom role = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
-        		
-        		Atom disjoint1 = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
-        		Atom conditionalConcept = Atom.create(AtomicConcept.create(auxClass1.getIRI().toURI().toString()), Variable.create("Y"));
-        		//ASPConstraint constraint = new ASPConstraint(new Atom[] {disjoint1}, new Atom[] {disjoint2});
-        		CountExpression countExpression = new CountExpression(conditionalConcept, role, "<", 1);
-        		ASPConstraint constraint = new ASPConstraint(new Object[] {disjoint1, countExpression}, new Object[] {});
-        		m_axioms.m_aspConstraints.add(constraint);
-        		
-        		// further process expr1, (break down the prospective complex class) 
-        		visit(expr1);
-        	}
-//        	else if (superClass instanceof OWLObjectMinCardinality && !subClass.isAnonymous()) {
+////        	else if (superClass instanceof OWLObjectMinCardinality && !subClass.isAnonymous()) {
+////        		OWLClass namedSubClass = (OWLClass) subClass;
+////        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
+////        		
+////        		OWLObjectMinCardinality minRestrcition = (OWLObjectMinCardinality) superClass;
+////        		OWLClassExpression complextFiller = minRestrcition.getFiller();
+////        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
+////        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass);
+////        		
+////        		OWLObjectProperty roleRestriction = (OWLObjectProperty) minRestrcition.getProperty();
+////        		Atom role = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
+////        		
+////        		Atom origSubClass = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
+////        		Atom conditionalConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
+////        		
+////        		CountExpression countExpression = new CountExpression(conditionalConcept, role, "<", minRestrcition.getCardinality());
+////        		ASPConstraint constraint = new ASPConstraint(new Object[] {origSubClass, countExpression}, new Object[] {});
+////        		m_axioms.m_aspConstraints.add(constraint);
+////        		// further process subClassExpression, (break down the prospective complex class) 
+////        		visit(subClassExpression);
+////        	}
+//        	// this is a more general implementation for the cases min, max and exactly
+//        	else if (superClass instanceof OWLObjectCardinalityRestriction && !subClass.isAnonymous()) {
 //        		OWLClass namedSubClass = (OWLClass) subClass;
 //        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
 //        		
-//        		OWLObjectMinCardinality minRestrcition = (OWLObjectMinCardinality) superClass;
-//        		OWLClassExpression complextFiller = minRestrcition.getFiller();
+//        		OWLObjectCardinalityRestriction cardinalityRestriction = (OWLObjectCardinalityRestriction) superClass;
+//        		OWLClassExpression complexFiller = cardinalityRestriction.getFiller();
 //        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
-//        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass);
+//        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complexFiller, auxClass);
 //        		
-//        		OWLObjectProperty roleRestriction = (OWLObjectProperty) minRestrcition.getProperty();
-//        		Atom role = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
-//        		
-//        		Atom origSubClass = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
-//        		Atom conditionalConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
-//        		
-//        		CountExpression countExpression = new CountExpression(conditionalConcept, role, "<", minRestrcition.getCardinality());
-//        		ASPConstraint constraint = new ASPConstraint(new Object[] {origSubClass, countExpression}, new Object[] {});
-//        		m_axioms.m_aspConstraints.add(constraint);
-//        		// further process subClassExpression, (break down the prospective complex class) 
-//        		visit(subClassExpression);
-//        	}
-        	// this is a more general implementation for the cases min, max and exactly
-        	else if (superClass instanceof OWLObjectCardinalityRestriction && !subClass.isAnonymous()) {
-        		OWLClass namedSubClass = (OWLClass) subClass;
-        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
-        		
-        		OWLObjectCardinalityRestriction cardinalityRestriction = (OWLObjectCardinalityRestriction) superClass;
-        		OWLClassExpression complexFiller = cardinalityRestriction.getFiller();
-        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
-        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complexFiller, auxClass);
-        		
-        		OWLObjectProperty roleRestriction = (OWLObjectProperty) cardinalityRestriction.getProperty();
-        		Atom conditionalRole = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
-        		
-        		Atom subConcept = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
-        		Atom countingConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
-        		
-        		String comperator = "";
-        		//if (superClass instanceof OWLObjectSomeValuesFrom)
-        		//	comperator = "<";
-        		//else
-        		if (superClass instanceof OWLObjectMinCardinality) 
-        			comperator = "<";
-        		else if (superClass instanceof OWLObjectMaxCardinality) 
-        			comperator = ">";
-        		else if (superClass instanceof OWLObjectExactCardinality)
-        			comperator = "!=";
-        		
-        		CountExpression countExpression = new CountExpression(countingConcept, conditionalRole, comperator, cardinalityRestriction.getCardinality());
-        		ASPConstraint constraint = new ASPConstraint(new Object[] {subConcept, countExpression}, new Object[] {});
-        		
-        		m_axioms.m_aspConstraints.add(constraint);
-        		
-        		visit(subClassExpression);
-        	}
-        	else if (subClass instanceof OWLObjectCardinalityRestriction && !superClass.isAnonymous()) {
-        		OWLClass namedSuperClass = (OWLClass) superClass;
-        		String auxClassName = "aux" + String.valueOf(axiom.hashCode()); // this might include a minus "-" which handled in a later step
-        		
-        		OWLObjectCardinalityRestriction cardinalityRestriction = (OWLObjectCardinalityRestriction) subClass;
-        		OWLClassExpression complexFiller = cardinalityRestriction.getFiller();
-        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
-        		OWLSubClassOfAxiom subClassExpr = m_factory.getOWLSubClassOfAxiom(complexFiller, auxClass);
-        		
-        		OWLObjectProperty roleRestriction = (OWLObjectProperty) cardinalityRestriction.getProperty();
-        		Atom conditionalRole = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
-        		
-        		Atom superConcept = Atom.create(AtomicConcept.create(namedSuperClass.getIRI().toURI().toString()), Variable.create("X"));
-        		Atom countingConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
-        		
-        		String comperator = "";
-        		//if (subClass instanceof OWLObjectSomeValuesFrom)
-        		//	comperator = ">=";
-        		//else 
-        		if (subClass instanceof OWLObjectMinCardinality)
-        			comperator = ">=";
-        		else if (subClass instanceof OWLObjectMaxCardinality)
-        			comperator = "<=";
-        		else if (subClass instanceof OWLObjectExactCardinality)
-        			comperator = "=";
-        		
-        		CountExpression countExpr = new CountExpression(countingConcept, conditionalRole, comperator, cardinalityRestriction.getCardinality());
-        		ASPRule rule = new ASPRule(new Object[] {superConcept}, new Object[] {countExpr});
-        		
-        		m_axioms.m_aspRules.add(rule);
-        		
-        		visit(subClassExpr);
-        	}
-        	// now, what if the subClass has some cardinality restriction
-        	// this in our case only results from equality axioms
-        	else if (subClass instanceof OWLObjectSomeValuesFrom && !superClass.isAnonymous()) {
-        		OWLClass namedSuperClass = (OWLClass) superClass;
-        		OWLObjectSomeValuesFrom existentialRestriction = (OWLObjectSomeValuesFrom) subClass;
-        		OWLClassExpression complexClassExpression = existentialRestriction.getFiller();
-        		
-        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
-        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
-        		OWLSubClassOfAxiom subClassExpr = m_factory.getOWLSubClassOfAxiom(complexClassExpression, auxClass);
-        		
-        		OWLObjectProperty roleRestriction = (OWLObjectProperty) existentialRestriction.getProperty();
-        		Atom conditionalRole = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
-        		Atom countingConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
-        		CountExpression countExpression = new CountExpression(countingConcept, conditionalRole, ">", 0);
-        		
-        		Atom superConcept = Atom.create(AtomicConcept.create(namedSuperClass.getIRI().toURI().toString()), Variable.create("X"));
-        		ASPRule rule = new ASPRule(new Object[] {superConcept}, new Object[] {countExpression});
-        		
-        		m_axioms.m_aspRules.add(rule);
-        		
-        		visit(subClassExpr);
-        	}
-//        	else if (superClass instanceof OWLObjectMaxCardinality && !subClass.isAnonymous()) {
-//        		OWLClass namedSubClass = (OWLClass) subClass;
-//        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
-//        		
-//        		OWLObjectMaxCardinality maxRestrcition = (OWLObjectMaxCardinality) superClass;
-//        		OWLClassExpression complextFiller = maxRestrcition.getFiller();
-//        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
-//        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass);
-//        		
-//        		OWLObjectProperty roleRestriction = (OWLObjectProperty) maxRestrcition.getProperty();
+//        		OWLObjectProperty roleRestriction = (OWLObjectProperty) cardinalityRestriction.getProperty();
 //        		Atom conditionalRole = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
 //        		
-//        		Atom origSubClass = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
+//        		Atom subConcept = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
 //        		Atom countingConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
 //        		
-//        		CountExpression countExpression = new CountExpression(countingConcept, conditionalRole, ">", maxRestrcition.getCardinality());
-//        		ASPConstraint constraint = new ASPConstraint(new Object[] {origSubClass, countExpression}, new Object[] {});
+//        		String comperator = "";
+//        		//if (superClass instanceof OWLObjectSomeValuesFrom)
+//        		//	comperator = "<";
+//        		//else
+//        		if (superClass instanceof OWLObjectMinCardinality) 
+//        			comperator = "<";
+//        		else if (superClass instanceof OWLObjectMaxCardinality) 
+//        			comperator = ">";
+//        		else if (superClass instanceof OWLObjectExactCardinality)
+//        			comperator = "!=";
+//        		
+//        		CountExpression countExpression = new CountExpression(countingConcept, conditionalRole, comperator, cardinalityRestriction.getCardinality());
+//        		ASPConstraint constraint = new ASPConstraint(new Object[] {subConcept, countExpression}, new Object[] {});
+//        		
 //        		m_axioms.m_aspConstraints.add(constraint);
-//        		// further process subClassExpression, (break down the prospective complex class) 
+//        		
 //        		visit(subClassExpression);
 //        	}
-        	// all other cases (i.e. unproblematic ones)
-        	else {
-        		m_classExpressionInclusionsAsDisjunctions.add(new OWLClassExpression[] { negative(subClass),positive(superClass) });
-        	}
-        }
+//        	else if (subClass instanceof OWLObjectCardinalityRestriction && !superClass.isAnonymous()) {
+//        		OWLClass namedSuperClass = (OWLClass) superClass;
+//        		String auxClassName = "aux" + String.valueOf(axiom.hashCode()); // this might include a minus "-" which handled in a later step
+//        		
+//        		OWLObjectCardinalityRestriction cardinalityRestriction = (OWLObjectCardinalityRestriction) subClass;
+//        		OWLClassExpression complexFiller = cardinalityRestriction.getFiller();
+//        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
+//        		OWLSubClassOfAxiom subClassExpr = m_factory.getOWLSubClassOfAxiom(complexFiller, auxClass);
+//        		
+//        		OWLObjectProperty roleRestriction = (OWLObjectProperty) cardinalityRestriction.getProperty();
+//        		Atom conditionalRole = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
+//        		
+//        		Atom superConcept = Atom.create(AtomicConcept.create(namedSuperClass.getIRI().toURI().toString()), Variable.create("X"));
+//        		Atom countingConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
+//        		
+//        		String comperator = "";
+//        		//if (subClass instanceof OWLObjectSomeValuesFrom)
+//        		//	comperator = ">=";
+//        		//else 
+//        		if (subClass instanceof OWLObjectMinCardinality)
+//        			comperator = ">=";
+//        		else if (subClass instanceof OWLObjectMaxCardinality)
+//        			comperator = "<=";
+//        		else if (subClass instanceof OWLObjectExactCardinality)
+//        			comperator = "=";
+//        		
+//        		CountExpression countExpr = new CountExpression(countingConcept, conditionalRole, comperator, cardinalityRestriction.getCardinality());
+//        		ASPRule rule = new ASPRule(new Object[] {superConcept}, new Object[] {countExpr});
+//        		
+//        		m_axioms.m_aspRules.add(rule);
+//        		
+//        		visit(subClassExpr);
+//        	}
+//        	// now, what if the subClass has some cardinality restriction
+//        	// this in our case only results from equality axioms
+//        	else if (subClass instanceof OWLObjectSomeValuesFrom && !superClass.isAnonymous()) {
+//        		OWLClass namedSuperClass = (OWLClass) superClass;
+//        		OWLObjectSomeValuesFrom existentialRestriction = (OWLObjectSomeValuesFrom) subClass;
+//        		OWLClassExpression complexClassExpression = existentialRestriction.getFiller();
+//        		
+//        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
+//        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
+//        		OWLSubClassOfAxiom subClassExpr = m_factory.getOWLSubClassOfAxiom(complexClassExpression, auxClass);
+//        		
+//        		OWLObjectProperty roleRestriction = (OWLObjectProperty) existentialRestriction.getProperty();
+//        		Atom conditionalRole = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
+//        		Atom countingConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
+//        		CountExpression countExpression = new CountExpression(countingConcept, conditionalRole, ">", 0);
+//        		
+//        		Atom superConcept = Atom.create(AtomicConcept.create(namedSuperClass.getIRI().toURI().toString()), Variable.create("X"));
+//        		ASPRule rule = new ASPRule(new Object[] {superConcept}, new Object[] {countExpression});
+//        		
+//        		m_axioms.m_aspRules.add(rule);
+//        		
+//        		visit(subClassExpr);
+//        	}
+////        	else if (superClass instanceof OWLObjectMaxCardinality && !subClass.isAnonymous()) {
+////        		OWLClass namedSubClass = (OWLClass) subClass;
+////        		String auxClassName = "aux" + String.valueOf(axiom.hashCode());
+////        		
+////        		OWLObjectMaxCardinality maxRestrcition = (OWLObjectMaxCardinality) superClass;
+////        		OWLClassExpression complextFiller = maxRestrcition.getFiller();
+////        		OWLClass auxClass = m_factory.getOWLClass(IRI.create("urn:monum#" + auxClassName));
+////        		OWLSubClassOfAxiom subClassExpression = m_factory.getOWLSubClassOfAxiom(complextFiller, auxClass);
+////        		
+////        		OWLObjectProperty roleRestriction = (OWLObjectProperty) maxRestrcition.getProperty();
+////        		Atom conditionalRole = Atom.create(AtomicRole.create(roleRestriction.getIRI().toString()), Variable.create("X"), Variable.create("Y"));
+////        		
+////        		Atom origSubClass = Atom.create(AtomicConcept.create(namedSubClass.getIRI().toURI().toString()), Variable.create("X"));
+////        		Atom countingConcept = Atom.create(AtomicConcept.create(auxClass.getIRI().toURI().toString()), Variable.create("Y"));
+////        		
+////        		CountExpression countExpression = new CountExpression(countingConcept, conditionalRole, ">", maxRestrcition.getCardinality());
+////        		ASPConstraint constraint = new ASPConstraint(new Object[] {origSubClass, countExpression}, new Object[] {});
+////        		m_axioms.m_aspConstraints.add(constraint);
+////        		// further process subClassExpression, (break down the prospective complex class) 
+////        		visit(subClassExpression);
+////        	}
+//        	// all other cases (i.e. unproblematic ones)
+//        	else {
+//        		m_classExpressionInclusionsAsDisjunctions.add(new OWLClassExpression[] { negative(subClass),positive(superClass) });
+//        	}
+//        }
 
 // Original version
-//        public void visit(OWLSubClassOfAxiom axiom) {
-//            m_classExpressionInclusionsAsDisjunctions.add(new OWLClassExpression[] { negative(axiom.getSubClass()),positive(axiom.getSuperClass()) });
-//        }
+        public void visit(OWLSubClassOfAxiom axiom) {
+            m_classExpressionInclusionsAsDisjunctions.add(new OWLClassExpression[] { negative(axiom.getSubClass()),positive(axiom.getSuperClass()) });
+        }
         
         /**
          * MODIFIED: 
@@ -945,9 +1040,11 @@ public class OWLNormalization {
             m_newDataRangeInclusions=newDataRangeInclusions;
             m_alreadyExists=new boolean[1];
         }
+        
         public OWLClassExpression visit(OWLClass object) {
             return object;
         }
+        
         public OWLClassExpression visit(OWLObjectIntersectionOf object) {
             OWLClassExpression definition=getDefinitionFor(object,m_alreadyExists);
             if (!m_alreadyExists[0])
@@ -955,9 +1052,11 @@ public class OWLNormalization {
                     m_newInclusions.add(new OWLClassExpression[] { negative(definition),description });
             return definition;
         }
+        
         public OWLClassExpression visit(OWLObjectUnionOf object) {
             throw new IllegalStateException("OR should be broken down at the outermost level");
         }
+        
         public OWLClassExpression visit(OWLObjectComplementOf object) {
             if (isNominal(object.getOperand())) {
                 OWLObjectOneOf objectOneOf=(OWLObjectOneOf)object.getOperand();
@@ -970,12 +1069,14 @@ public class OWLNormalization {
             else
                 return object;
         }
+        
         public OWLClassExpression visit(OWLObjectOneOf object) {
             for (OWLIndividual ind : object.getIndividuals())
                 if (ind.isAnonymous())
                     throw new IllegalArgumentException("Error: The class expression "+object+" contains anonymous individuals, which is not allowed in OWL 2 (erratum in first OWL 2 spec, to be fixed with next publication of minor corrections). ");
             return object;
         }
+        
         public OWLClassExpression visit(OWLObjectSomeValuesFrom object) {
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(object.getProperty().getNamedProperty());
             OWLClassExpression filler=object.getFiller();
@@ -989,6 +1090,7 @@ public class OWLNormalization {
                 return m_factory.getOWLObjectSomeValuesFrom(object.getProperty(),definition);
             }
         }
+        
         public OWLClassExpression visit(OWLObjectAllValuesFrom object) {
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(object.getProperty().getNamedProperty());
             OWLClassExpression filler=object.getFiller();
@@ -1002,13 +1104,16 @@ public class OWLNormalization {
                 return m_factory.getOWLObjectAllValuesFrom(object.getProperty(),definition);
             }
         }
+        
         public OWLClassExpression visit(OWLObjectHasValue object) {
             throw new IllegalStateException("Internal error: object value restrictions should have been simplified.");
         }
+        
         public OWLClassExpression visit(OWLObjectHasSelf object) {
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(object.getProperty().getNamedProperty());
             return object;
         }
+        
         public OWLClassExpression visit(OWLObjectMinCardinality object) {
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(object.getProperty().getNamedProperty());
             OWLClassExpression filler=object.getFiller();
@@ -1021,6 +1126,7 @@ public class OWLNormalization {
                 return m_factory.getOWLObjectMinCardinality(object.getCardinality(),object.getProperty(),definition);
             }
         }
+        
         public OWLClassExpression visit(OWLObjectMaxCardinality object) {
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(object.getProperty().getNamedProperty());
             OWLClassExpression filler=object.getFiller();
@@ -1034,9 +1140,11 @@ public class OWLNormalization {
                 return m_factory.getOWLObjectMaxCardinality(object.getCardinality(),object.getProperty(),m_expressionManager.getComplementNNF(definition));
             }
         }
+        
         public OWLClassExpression visit(OWLObjectExactCardinality object) {
             throw new IllegalStateException("Internal error: exact object cardinality restrictions should have been simplified.");
         }
+        
         public OWLClassExpression visit(OWLDataSomeValuesFrom object) {
             OWLDataRange filler=object.getFiller();
             OWLDataPropertyExpression prop=object.getProperty();
@@ -1051,6 +1159,7 @@ public class OWLNormalization {
                 return m_factory.getOWLDataSomeValuesFrom(object.getProperty(),definition);
             }
         }
+        
         public OWLClassExpression visit(OWLDataAllValuesFrom object) {
             OWLDataRange filler=object.getFiller();
             OWLDataPropertyExpression prop=object.getProperty();
@@ -1065,12 +1174,15 @@ public class OWLNormalization {
                 return m_factory.getOWLDataAllValuesFrom(prop,definition);
             }
         }
+        
         protected void throwInvalidTopDPUseError(OWLClassExpression ex) {
             throw new IllegalArgumentException("Error: In OWL 2 DL, owl:topDataProperty is only allowed to occur in the super property position of SubDataPropertyOf axioms, but the ontology contains an axiom with the class expression "+ex+" that violates this restriction.");
         }
+        
         public OWLClassExpression visit(OWLDataHasValue object) {
             throw new IllegalStateException("Internal error: data value restrictions should have been simplified.");
         }
+        
         public OWLClassExpression visit(OWLDataMinCardinality object) {
             OWLDataRange filler=object.getFiller();
             OWLDataPropertyExpression prop=object.getProperty();
@@ -1085,6 +1197,7 @@ public class OWLNormalization {
                 return m_factory.getOWLDataMinCardinality(object.getCardinality(),prop,definition);
             }
         }
+        
         public OWLClassExpression visit(OWLDataMaxCardinality object) {
             OWLDataRange filler=object.getFiller();
             OWLDataPropertyExpression prop=object.getProperty();
@@ -1100,6 +1213,7 @@ public class OWLNormalization {
                 return m_factory.getOWLDataMaxCardinality(object.getCardinality(),prop,m_expressionManager.getComplementNNF(definition));
             }
         }
+        
         public OWLClassExpression visit(OWLDataExactCardinality object) {
             throw new IllegalStateException("Internal error: exact data cardinality restrictions should have been simplified.");
         }
