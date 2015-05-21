@@ -43,13 +43,15 @@ public class Wolpertinger implements OWLReasoner {
 	// normalized kb
 	private OWLAxioms axioms;
 	
+	private Configuration configuration;
+	
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
 	}
 	
 	public Wolpertinger(Configuration configuration, OWLOntology rootOntology) {
 		this.rootOntology = rootOntology;
-		
+		this.configuration = configuration;
 		loadOntology();
 	}
 	
@@ -94,8 +96,8 @@ public class Wolpertinger implements OWLReasoner {
 		}
 	}
 	
-	public void translateOntology(ASPTranslation translation, Configuration configuration, PrintWriter writer) {
-		translation.translateOntology(axioms);
+	public void translateOntology(ASPTranslation translation, PrintWriter writer) {
+		translation.translateOntology(axioms, configuration, writer);
 	}
 	
 	// --------------

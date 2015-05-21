@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.net.URI;
 import java.text.BreakIterator;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -43,10 +44,6 @@ public class WolpertingerCli {
         }
     }
 
-    /**
-     * 
-     *
-     */
     protected interface Action {
         void run(Wolpertinger wolpert, StatusOutput status, PrintWriter output, boolean ignoreOntologyPrefixes);
     }
@@ -66,8 +63,8 @@ public class WolpertingerCli {
 
 		@Override
 		public void run(Wolpertinger wolpert, StatusOutput status, PrintWriter output, boolean ignoreOntologyPrefixes) {
-			NaiveTranslation translation = new NaiveTranslation(output);
-			wolpert.translateOntology(translation, null, output);
+			NaiveTranslation translation = new NaiveTranslation();
+			wolpert.translateOntology(translation, output);
 		}
     	
     }
@@ -81,24 +78,25 @@ public class WolpertingerCli {
 
 	protected static final String usageString = "";
 
-	protected static final String groupActions = "Actions", groupMisc = "Miscellaneous";
+	protected static final String groupActions = "Actions", groupMisc = "Miscellaneous", groupDebug = "Debugging", groupOptimize = "Optimization";
 
 	protected static final Option[] options = new Option[] {
 			// misc options
 			new Option('h', "help", groupMisc, "display this help and exit"),
 			new Option('V', "version", groupMisc, "display Wolpertinger's built version and exit"),
-			new Option('v', "verbose", groupMisc, true, "AMOUNT", "increase verbosity by AMOUNT levels (default 1)"),
+			// optimization options
+			new Option('p', "project", groupOptimize,true, "IRI1,..,IRI2", "project on concept "),
+			// debug options
+			new Option('v', "verbose", groupDebug, true, "AMOUNT", "increase verbosity by AMOUNT levels (default 1)"),
 			// actions
 			new Option('N', "normalize", groupActions, "normalize the input ontology (structural transformation), optionally writing it back to file (via --output)"),
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)")
 	};
 
-	/**
-	 * 
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		try {
+			Configuration configuration = new Configuration();
+			
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
 
 			URI base;
@@ -125,18 +123,27 @@ public class WolpertingerCli {
 				{
                     String arg=getopt.getOptarg();
                     if (arg==null) {
-                        verbosity+=1;
+                        verbosity += 1;
                     }
                     else
                         try {
-                            verbosity+=Integer.parseInt(arg,10);
+                            verbosity += Integer.parseInt(arg,10);
                         }
                         catch (NumberFormatException e) {
                             throw new UsageException("argument to --verbose must be a number");
                         }
 				}
                 break;
-			
+                
+				case 'p': {
+					String arg = getopt.getOptarg();
+					HashSet<IRI> iris = new HashSet<IRI>();
+					for (String sIRI : arg.split(",")) {
+						iris.add(IRI.create(sIRI));
+					}
+					configuration.setConceptsToProjectOn(iris);
+				}
+				break;
 				
 				// ACTIONS
                 
@@ -203,10 +210,10 @@ public class WolpertingerCli {
                     }
                     
                     OWLOntology ontology=ontologyManager.loadOntology(ont);
-                    long parseTime=System.currentTimeMillis()-startTime;
-                    status.log(2,"Ontology parsed in "+String.valueOf(parseTime)+" msec.");
-                    startTime=System.currentTimeMillis();
-                    Wolpertinger wolpertinger = new Wolpertinger(new Configuration(),ontology);
+                    long parseTime = System.currentTimeMillis()-startTime;
+                    status.log(2,"Ontology parsed in " + String.valueOf(parseTime) + " msec.");
+                    startTime = System.currentTimeMillis();
+                    Wolpertinger wolpertinger = new Wolpertinger(configuration, ontology);
                    // Prefixes prefixes=hermit.getPrefixes();
 //                    if (defaultPrefix!=null) {
 //                        try {
@@ -224,14 +231,14 @@ public class WolpertingerCli {
 //                            status.log(2,"Prefixname "+prefixName+" could not be set to "+prefixMappings.get(prefixName)+" because there is already a registered prefix name for the IRI. ");
 //                        }
 //                    }
-                    long loadTime=System.currentTimeMillis()-startTime;
-                    status.log(2,"Reasoner created in "+String.valueOf(loadTime)+" msec.");
+                    long loadTime = System.currentTimeMillis()-startTime;
+                    status.log(2,"Reasoner created in " + String.valueOf(loadTime) + " msec.");
                     for (Action action : actions) {
                         status.log(2,"Doing action...");
-                        startTime=System.currentTimeMillis();
-                        action.run(wolpertinger,status,new PrintWriter(System.out),true);
-                        long actionTime=System.currentTimeMillis()-startTime;
-                        status.log(2,"...action completed in "+String.valueOf(actionTime)+" msec.");
+                        startTime = System.currentTimeMillis();
+                        action.run(wolpertinger, status, new PrintWriter(System.out), true);
+                        long actionTime = System.currentTimeMillis() - startTime;
+                        status.log(2, "...action completed in " + String.valueOf(actionTime) + " msec.");
                     }
                 } catch (OWLException e) {
                 	System.err.println(e.getMessage());

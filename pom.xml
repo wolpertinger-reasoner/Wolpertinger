@@ -4,7 +4,7 @@
 
 	<groupId>org.semanticweb.wolpertinger</groupId>
 	<artifactId>wolpertinger</artifactId>
-	<version>0.1</version>
+	<version>0.9b</version>
 	<packaging>jar</packaging>
 
 	<name>wolpertinger</name>
@@ -81,4 +81,5 @@
 		</dependency>
 	</dependencies>
 	<description>A bounded model reasoner for the Semantic Web.</description>
+	<url>https://github.com/wolpertinger-reasoner/</url>
 </project>

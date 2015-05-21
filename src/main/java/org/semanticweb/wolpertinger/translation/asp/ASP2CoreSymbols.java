@@ -39,4 +39,5 @@ public final class ASP2CoreSymbols {
 	public static final String CURLY_CLOSE		= "}";
 	public static final String EOR 				= ".";
 	public static final String ARG_SEPERATOR 	= ",";
+	public static final String SPACE 			= " ";
 }
