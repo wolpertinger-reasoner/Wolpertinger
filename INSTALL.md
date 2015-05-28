@@ -14,6 +14,8 @@ mvn package
 
 ## Use Wolpertinger
 
+Use our simple puzzle ontologies from https://github.com/wolpertinger-reasoner/
+
 ```
 java -jar wolpertinger.jar --help
 ```

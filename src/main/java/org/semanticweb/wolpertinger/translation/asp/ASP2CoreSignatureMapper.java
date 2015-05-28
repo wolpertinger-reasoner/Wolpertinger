@@ -1,10 +1,16 @@
 package org.semanticweb.wolpertinger.translation.asp;
 
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.wolpertinger.Prefixes;
 
+/**
+ * 
+ * @author lschweizer
+ *
+ */
 public class ASP2CoreSignatureMapper extends SignatureMapper {
 
 	private boolean isAuxiliaryClass(OWLClass owlClass) {
@@ -21,22 +27,24 @@ public class ASP2CoreSignatureMapper extends SignatureMapper {
 			predicateName = owlClass.getIRI().getFragment().toLowerCase();
 		}
 		
-		putPredicateMapping(predicateName, owlClass);
-		return predicateName;
+		return putPredicateMapping(predicateName, owlClass);
 	}
 
 	@Override
 	public String getPredicateName(OWLObjectProperty owlObjectProperty) {
 		String predicateName = owlObjectProperty.getIRI().getFragment().toLowerCase();
-		putPredicateMapping(predicateName, owlObjectProperty);
-		return predicateName;
+		return putPredicateMapping(predicateName, owlObjectProperty);
 	}
 
+	/**
+	 * For given {@link OWLIndividual}, a string representation is created induced by the 
+	 * individual's IRI. Example: http://www.semanticweb.org/wolpertinger/ontologies/Sudoko#n11
+	 * becomes <i>i_n11</i>.
+	 */
 	@Override
 	public String getConstantName(OWLNamedIndividual owlIndividual) {
-		String individualName = owlIndividual.getIRI().getFragment().toLowerCase();
-		putIndividualMapping(individualName, owlIndividual);
-		return individualName;
+		String individualName = "i_" + owlIndividual.getIRI().getFragment().toLowerCase();
+		return putIndividualMapping(individualName, owlIndividual);
 	}
 
 }

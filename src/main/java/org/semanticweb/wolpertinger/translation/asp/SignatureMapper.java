@@ -29,16 +29,22 @@ public abstract class SignatureMapper {
 	
 	public static SignatureMapper ASP2CoreMapping = new ASP2CoreSignatureMapper();
 	
-	protected void putPredicateMapping(String predicateName, OWLClass owlClass) {
-		classNameMappings.put(predicateName, owlClass);
+	protected String putPredicateMapping(String predicateName, OWLClass owlClass) {
+		if (!classNameMappings.containsKey(predicateName))  
+			classNameMappings.put(predicateName, owlClass);
+		return predicateName;
 	}
 	
-	protected void putPredicateMapping(String predicateName, OWLObjectProperty owlObjectProperty) {
-		propertyNameMappings.put(predicateName, owlObjectProperty);
+	protected String putPredicateMapping(String predicateName, OWLObjectProperty owlObjectProperty) {
+		if (!propertyNameMappings.containsKey(predicateName))
+			propertyNameMappings.put(predicateName, owlObjectProperty);
+		return predicateName;
 	}
 	
-	protected void putIndividualMapping(String constantName, OWLNamedIndividual owlindividual) {
-		individualNameMappings.put(constantName, owlindividual);
+	protected String putIndividualMapping(String constantName, OWLNamedIndividual owlindividual) {
+		if (!individualNameMappings.containsKey(constantName))
+			individualNameMappings.put(constantName, owlindividual);
+		return constantName;
 	}
 	
 	public abstract String getPredicateName(OWLClass owlClass);
