@@ -29,7 +29,7 @@ import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.util.NiceAxiomPrinter;
-import org.semanticweb.wolpertinger.translation.asp.ASPTranslation;
+import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 
 /**
  * TODO: Detailed Description here.
@@ -96,7 +96,7 @@ public class Wolpertinger implements OWLReasoner {
 		}
 	}
 	
-	public void translateOntology(ASPTranslation translation, PrintWriter writer) {
+	public void translateOntology(OWLOntologyTranslator translation, PrintWriter writer) {
 		translation.translateOntology(axioms, configuration, writer);
 	}
 	

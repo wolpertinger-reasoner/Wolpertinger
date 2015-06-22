@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.semanticweb.wolpertinger.translation.asp;
+package org.semanticweb.wolpertinger.translation.naive;
 
 import java.io.PrintWriter;
 import java.util.Collection;
@@ -84,6 +84,8 @@ import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.DisjunctiveRule;
+import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
+import org.semanticweb.wolpertinger.translation.SignatureMapper;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.manchester.cs.owl.owlapi.OWLAsymmetricObjectPropertyAxiomImpl;
@@ -107,7 +109,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLReflexiveObjectPropertyAxiomImpl;
  * @author Lukas Schweizer
  *
  */
-public class NaiveTranslation implements ASPTranslation {
+public class NaiveTranslation implements OWLOntologyTranslator {
 	
 	//private Configuration configuration;
 	private PrintWriter writer;
@@ -1078,7 +1080,7 @@ public class NaiveTranslation implements ASPTranslation {
 	 */
 	@Override
 	public void visit(OWLObjectPropertyRangeAxiom arg0) {
-		
+		throw new IllegalStateException("OWLObjectRangeAxiom should have been normalized (rewritten) already.");
 	}
 
 	/* (non-Javadoc)
@@ -1108,8 +1110,7 @@ public class NaiveTranslation implements ASPTranslation {
 	 */
 	@Override
 	public void visit(OWLFunctionalObjectPropertyAxiom arg0) {
-		// TODO Auto-generated method stub
-
+		throw new IllegalStateException("OWLFunctionalObjectPropertyAxiom should have been normalized (rewritten) already.");
 	}
 
 	/* (non-Javadoc)
@@ -1117,8 +1118,7 @@ public class NaiveTranslation implements ASPTranslation {
 	 */
 	@Override
 	public void visit(OWLSubObjectPropertyOfAxiom arg0) {
-		// TODO Auto-generated method stub
-
+		throw new NotImplementedException();
 	}
 
 	/* (non-Javadoc)
@@ -1126,8 +1126,7 @@ public class NaiveTranslation implements ASPTranslation {
 	 */
 	@Override
 	public void visit(OWLDisjointUnionAxiom arg0) {
-		// TODO Auto-generated method stub
-
+		throw new IllegalStateException("OWLDisjointUnionAxiom should have been normalized (rewritten) already.");
 	}
 
 	/**

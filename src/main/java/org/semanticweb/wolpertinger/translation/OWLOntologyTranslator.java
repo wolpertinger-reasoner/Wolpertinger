@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.semanticweb.wolpertinger.translation.asp;
+package org.semanticweb.wolpertinger.translation;
 
 import java.io.PrintWriter;
 
@@ -15,9 +15,10 @@ import org.semanticweb.wolpertinger.structural.OWLAxioms;
  * @author Lukas Schweizer
  *
  */
-public interface ASPTranslation extends OWLAxiomVisitor,
+public interface OWLOntologyTranslator extends OWLAxiomVisitor,
 		OWLClassExpressionVisitor, OWLPropertyExpressionVisitor {
 
+	// 
 	public void translateOntology(OWLAxioms ontology, Configuration configuration, PrintWriter writer);
 	
 }

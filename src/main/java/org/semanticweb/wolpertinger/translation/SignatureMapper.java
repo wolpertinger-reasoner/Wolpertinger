@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.semanticweb.wolpertinger.translation.asp;
+package org.semanticweb.wolpertinger.translation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +9,7 @@ import java.util.Map;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSignatureMapper;
 
 /**
  * 

@@ -6,6 +6,8 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.text.BreakIterator;
@@ -20,7 +22,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
-import org.semanticweb.wolpertinger.translation.asp.NaiveTranslation;
+import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 /**
  * Command Line Interface for Wolpertinger.
@@ -90,7 +92,8 @@ public class WolpertingerCli {
 			new Option('v', "verbose", groupDebug, true, "AMOUNT", "increase verbosity by AMOUNT levels (default 1)"),
 			// actions
 			new Option('N', "normalize", groupActions, "normalize the input ontology (structural transformation), optionally writing it back to file (via --output)"),
-			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)")
+			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)"),
+			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE") 
 	};
 
 	public static void main(String[] args) {
@@ -98,7 +101,8 @@ public class WolpertingerCli {
 			Configuration configuration = new Configuration();
 			
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
-
+			PrintWriter output = null;
+			
 			URI base;
 			try {
 				base = new URI("file", System.getProperty("user.dir") + "/", null);
@@ -113,16 +117,17 @@ public class WolpertingerCli {
 			while ((option = getopt.getopt()) != -1) {
 				switch (option) {
 				// misc
-				case 'h':
+				case 'h': {
 					System.out.println(usageString);
 					System.out.println(Option.formatOptionHelp(options));
 					System.exit(0);
-					break;
+				}
+				break;
 					
 				case 'v': 
 				{
-                    String arg=getopt.getOptarg();
-                    if (arg==null) {
+                    String arg = getopt.getOptarg();
+                    if (arg == null) {
                         verbosity += 1;
                     }
                     else
@@ -171,6 +176,26 @@ public class WolpertingerCli {
 				}
 				break;
 				
+				//output
+				case 'O': {
+					String arg = getopt.getOptarg();
+					
+					if (arg == null) {
+						throw new UsageException("Empty value for argument --output");
+					}
+					else {
+						File fOut = new File(arg);
+						
+						try {
+							output = new PrintWriter( new FileWriter(fOut, false));
+						}
+						catch (IOException e) {
+							throw new UsageException("Cannot open file: " + fOut.getAbsolutePath());
+						}
+					}
+				}
+				break;
+				
 				default:
 					if (getopt.getOptopt() != 0) {
 						throw new UsageException("invalid option -- " + (char) getopt.getOptopt());
@@ -182,8 +207,7 @@ public class WolpertingerCli {
 				try {
 					ontologies.add(IRI.create(base.resolve(args[i])));
 				} catch (IllegalArgumentException e) {
-					throw new UsageException(args[i]
-							+ " is not a valid ontology name");
+					throw new UsageException(args[i] + " is not a valid ontology name");
 				}
 			}
 			StatusOutput status = new StatusOutput(verbosity);
@@ -203,7 +227,7 @@ public class WolpertingerCli {
                         if (scheme!=null && scheme.equalsIgnoreCase("file")) {
                             File file=new File(URI.create(ont.getStart()));
                             if (file.isDirectory()) {
-                                OWLOntologyIRIMapper mapper=new AutoIRIMapper(file, false);
+                                OWLOntologyIRIMapper mapper = new AutoIRIMapper(file, false);
                                 ontologyManager.addIRIMapper(mapper);
                             }
                         }
@@ -231,12 +255,12 @@ public class WolpertingerCli {
 //                            status.log(2,"Prefixname "+prefixName+" could not be set to "+prefixMappings.get(prefixName)+" because there is already a registered prefix name for the IRI. ");
 //                        }
 //                    }
-                    long loadTime = System.currentTimeMillis()-startTime;
+                    long loadTime = System.currentTimeMillis() - startTime;
                     status.log(2,"Reasoner created in " + String.valueOf(loadTime) + " msec.");
                     for (Action action : actions) {
                         status.log(2,"Doing action...");
                         startTime = System.currentTimeMillis();
-                        action.run(wolpertinger, status, new PrintWriter(System.out), true);
+                        action.run(wolpertinger, status, output, true);
                         long actionTime = System.currentTimeMillis() - startTime;
                         status.log(2, "...action completed in " + String.valueOf(actionTime) + " msec.");
                     }
@@ -261,9 +285,6 @@ enum Arg {
 
 /**
  * Represents a single CL Option.
- * 
- * @author Lukas Schweizer
- * @Credits to
  */
 class Option {
 	protected int optChar;

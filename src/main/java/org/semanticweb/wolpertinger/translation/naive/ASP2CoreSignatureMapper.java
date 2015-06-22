@@ -1,10 +1,11 @@
-package org.semanticweb.wolpertinger.translation.asp;
+package org.semanticweb.wolpertinger.translation.naive;
 
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.wolpertinger.Prefixes;
+import org.semanticweb.wolpertinger.translation.SignatureMapper;
 
 /**
  * 

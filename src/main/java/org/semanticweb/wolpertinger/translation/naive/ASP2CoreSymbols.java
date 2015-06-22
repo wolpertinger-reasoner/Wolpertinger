@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.semanticweb.wolpertinger.translation.asp;
+package org.semanticweb.wolpertinger.translation.naive;
 
 /**
  * ASP-2 Core Symbol constants.
