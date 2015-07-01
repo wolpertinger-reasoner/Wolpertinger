@@ -70,6 +70,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLObjectUnionOf;
+import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
@@ -83,6 +84,7 @@ import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
+import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.DisjunctiveRule;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
@@ -119,17 +121,20 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	private Set<OWLClass> auxClasses;
 	// inclusions resutling from, e.g. resolving nominals
 	private Collection<OWLClassExpression[]> newInclusions;
+	private Configuration configuration;
 	
 	/**
 	 * Creates a {@link NaiveTranslation} instance 
 	 * @param configuration
 	 * @param writer
 	 */
-	public NaiveTranslation() {
+	public NaiveTranslation(Configuration configuration, PrintWriter writer) {
 		// TODO: based on config parameter instantiate the name mappers (nice,std)
 		this.mapper = SignatureMapper.ASP2CoreMapping;
 		this.newInclusions = new LinkedList<OWLClassExpression[]>();
 		this.auxClasses = new HashSet<OWLClass>();
+		this.configuration = configuration;
+		this.writer = writer;
 	}
 	
 	// ----------------------
@@ -137,16 +142,46 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	// ----------------------
 	
 	/**
-	 * Translate the given axioms into a corresponding answer set program.
+	 * Load the root ontology and all imports and apply normalization.
+	 */
+	private OWLAxioms loadOntology(OWLOntology rootOntology) {	
+		OWLAxioms axioms = new OWLAxioms();
+		
+		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
+		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0);
+		
+		for (OWLOntology ontology : importClosure) {
+			normalization.processOntology(ontology);
+		}
+		
+		return axioms;
+	}
+	
+	private void clearState() {
+		this.newInclusions = new LinkedList<OWLClassExpression[]>();
+		this.auxClasses = new HashSet<OWLClass>();
+	}
+	
+	/**
+	 * Translate the given {@link OWLOntology}.
+	 * Note that the result is written to the PrintWriter, which was given in the constructor.
+	 */
+	@Override
+	public void translateOntology(OWLOntology rootOntology) {
+		translateOntology(loadOntology(rootOntology));
+	}
+	
+	/**
+	 * We have the OWLOntology (ies) now (normalized) in our internal data model representation.
 	 * 
 	 * @param normalizedOntology
 	 */
-	public void translateOntology(OWLAxioms normalizedOntology, Configuration configuration, PrintWriter writer) {
-		this.writer = writer;
+	public void translateOntology(OWLAxioms normalizedOntology) {
+		clearState();
 		
 		// thing assertions for all named individuals
 		for (OWLNamedIndividual individual : normalizedOntology.m_namedIndividuals) {
-			// TODO: avoi adding assertions to thing when there is already real thing assertions
+			// TODO: avoid adding assertions to owl:Thing when there is already real owl:Thing assertions
 			assertThing(individual);
 			writer.println();
 		}

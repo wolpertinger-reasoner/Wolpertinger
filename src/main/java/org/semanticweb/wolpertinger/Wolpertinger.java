@@ -79,26 +79,22 @@ public class Wolpertinger implements OWLReasoner {
 		return rootOntology.getOWLOntologyManager().getOWLDataFactory();
 	}
 	
-	public void outputNormalizedOntology(PrintWriter writer) {
-		NiceAxiomPrinter ontoPrinter = new NiceAxiomPrinter(writer);
-		for (OWLIndividualAxiom ia : axioms.m_facts) {
-			ia.accept(ontoPrinter);
-		}
-		for (OWLClassExpression[] inclusionAxiom : axioms.m_conceptInclusions) {
-			boolean isFirst=true;
-			for (OWLClassExpression expression : inclusionAxiom) {
-				if (!isFirst)
-					writer.print(", ");
-				expression.accept(ontoPrinter);
-				isFirst=false;
-			}
-			writer.print(".\n");
-		}
-	}
-	
-	public void translateOntology(OWLOntologyTranslator translation, PrintWriter writer) {
-		translation.translateOntology(axioms, configuration, writer);
-	}
+//	public void outputNormalizedOntology(PrintWriter writer) {
+//		NiceAxiomPrinter ontoPrinter = new NiceAxiomPrinter(writer);
+//		for (OWLIndividualAxiom ia : axioms.m_facts) {
+//			ia.accept(ontoPrinter);
+//		}
+//		for (OWLClassExpression[] inclusionAxiom : axioms.m_conceptInclusions) {
+//			boolean isFirst=true;
+//			for (OWLClassExpression expression : inclusionAxiom) {
+//				if (!isFirst)
+//					writer.print(", ");
+//				expression.accept(ontoPrinter);
+//				isFirst=false;
+//			}
+//			writer.print(".\n");
+//		}
+//	}
 	
 	// --------------
 	// OWLReasoner implementations up from here

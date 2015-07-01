@@ -9,7 +9,7 @@ import org.semanticweb.wolpertinger.translation.SignatureMapper;
 
 /**
  * 
- * @author lschweizer
+ * @author Lukas Schweizer
  *
  */
 public class ASP2CoreSignatureMapper extends SignatureMapper {
