@@ -1,5 +1,5 @@
 /*  Copyright 2015 by the International Center for Computational Logic, Technical University Dresden.
- 
+
     This file is part of Wolpertinger.
 
     Wolpertinger is free software: you can redistribute it and/or modify
@@ -39,14 +39,15 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.semanticweb.wolpertinger.translation.direct.DirectTranslation;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
+import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 
 /**
  * Command Line Interface for Wolpertinger.
- * 
+ *
  * @author Lukas Schweizer
  */
 public class WolpertingerCli {
-	
+
     protected static class StatusOutput {
         protected int level;
         public StatusOutput(int inLevel) {
@@ -61,11 +62,26 @@ public class WolpertingerCli {
                 System.err.println(message);
         }
     }
-    
+
     protected interface TranslationAction {
     	void run(OWLOntology ontology, Configuration configuration, StatusOutput status, PrintWriter output);
     }
-    
+
+    static protected class DebugTranslationAction implements TranslationAction {
+    	boolean debugFlag;
+
+    	public DebugTranslationAction(boolean debugFlag) {
+    		super();
+    		this.debugFlag = debugFlag;
+    	}
+		@Override
+		public void run(OWLOntology ontology, Configuration configuration, StatusOutput status, PrintWriter output) {
+			DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag);
+			translation.translateOntology(ontology);
+		}
+
+    }
+
     static protected class NaiveTranslationAction implements TranslationAction {
 
 		@Override
@@ -73,9 +89,9 @@ public class WolpertingerCli {
 			NaiveTranslation translation = new NaiveTranslation(configuration, output);
 			translation.translateOntology(ontology);
 		}
-    	
+
     }
-    
+
     static protected class DirectTranslationAction implements TranslationAction {
 
 		@Override
@@ -83,7 +99,7 @@ public class WolpertingerCli {
 			DirectTranslation translation = new DirectTranslation(configuration, output);
 			translation.translateOntology(ontology);
 		}
-    	
+
     }
 
 	@SuppressWarnings("serial")
@@ -108,27 +124,30 @@ public class WolpertingerCli {
 			// actions
 			//new Option('N', "normalize", groupActions, "normalize the input ontology (structural transformation), optionally writing it back to file (via --output)"),
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)"),
-			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE") 
+			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
+			new Option('d', "debug", groupMisc, "debug mode")
 	};
 
 	public static void main(String[] args) {
 		try {
 			Configuration configuration = new Configuration();
-			
+
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
 			PrintWriter output = new PrintWriter(System.out);
-			
+
 			URI base;
 			try {
 				base = new URI("file", System.getProperty("user.dir") + "/", null);
 			} catch (java.net.URISyntaxException e) {
 				throw new RuntimeException("unable to create default IRI base");
 			}
-			
+
 			Collection<IRI> ontologies = new LinkedList<IRI>();
 			Collection<TranslationAction> actions = new LinkedList<TranslationAction>();
 			int option;
 			int verbosity=1;
+			int debug = 1;
+
 			while ((option = getopt.getopt()) != -1) {
 				switch (option) {
 				// misc
@@ -138,7 +157,7 @@ public class WolpertingerCli {
 					System.exit(0);
 				}
 				break;
-					
+
 				case 'v': {
 					String arg = getopt.getOptarg();
 					if (arg == null) {
@@ -152,7 +171,7 @@ public class WolpertingerCli {
 						}
 				}
 				break;
-                
+
 				case 'p': {
 					String arg = getopt.getOptarg();
 					HashSet<IRI> iris = new HashSet<IRI>();
@@ -162,9 +181,12 @@ public class WolpertingerCli {
 					configuration.setConceptsToProjectOn(iris);
 				}
 				break;
-				
+				case 'd': {
+					// do nothing
+				}
+				break;
 				// ACTIONS
-				
+
 				// translate
 				case 'T': {
 					String arg = getopt.getOptarg();
@@ -174,23 +196,34 @@ public class WolpertingerCli {
 						action = new NaiveTranslationAction();
 					} else if (arg.toLowerCase().equals("direct")) {
 						action = new DirectTranslationAction();
+					} else if (arg.toLowerCase().equals("naff")) {
+						boolean debugFlag = false;
+						while ((option = getopt.getopt()) != -1) {
+							switch (option) {
+								case 'd': {
+									debugFlag = true;
+								}
+								break;
+							}
+						}
+						action = new DebugTranslationAction(debugFlag);
 					} else {
 						throw new UsageException("Unknown value for TARGET argument");
 					}
 					actions.add(action);
 				}
 				break;
-				
+
 				//output
 				case 'O': {
 					String arg = getopt.getOptarg();
-					
+
 					if (arg == null) {
 						throw new UsageException("Empty value for argument --output");
 					}
 					else {
 						File fOut = new File(arg);
-						
+
 						try {
 							output = new PrintWriter( new FileWriter(fOut, false));
 						}
@@ -200,7 +233,7 @@ public class WolpertingerCli {
 					}
 				}
 				break;
-				
+
 				default:
 					if (getopt.getOptopt() != 0) {
 						throw new UsageException("invalid option -- " + (char) getopt.getOptopt());
@@ -217,14 +250,14 @@ public class WolpertingerCli {
 			}
 			StatusOutput status = new StatusOutput(verbosity);
 			for (IRI iriOntology : ontologies) {
-				
+
 				status.log(2,"Processing "+iriOntology.toString());
                 status.log(2,String.valueOf(actions.size())+" actions");
-                
+
                 try {
                     long startTime=System.currentTimeMillis();
                     OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
-                    
+
                     if (iriOntology.isAbsolute()) {
                         URI uri = URI.create(iriOntology.getStart());
                         String scheme = uri.getScheme();
@@ -236,7 +269,7 @@ public class WolpertingerCli {
                             }
                         }
                     }
-                    
+
                     OWLOntology ontology=ontologyManager.loadOntology(iriOntology);
                     long parseTime = System.currentTimeMillis()-startTime;
                     status.log(2,"Ontology parsed in " + String.valueOf(parseTime) + " msec.");
@@ -261,7 +294,7 @@ public class WolpertingerCli {
 //                    }
                     long loadTime = System.currentTimeMillis() - startTime;
                     status.log(2, "Reasoner created in " + String.valueOf(loadTime) + " msec.");
-                    
+
                     for (TranslationAction action : actions) {
                         status.log(2, "Doing action...");
                         startTime = System.currentTimeMillis();
