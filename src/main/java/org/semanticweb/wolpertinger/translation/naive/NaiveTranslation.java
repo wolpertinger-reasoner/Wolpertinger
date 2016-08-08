@@ -98,6 +98,7 @@ import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
+import org.semanticweb.wolpertinger.structural.OWLAxioms.ComplexObjectPropertyInclusion;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.DisjunctiveRule;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
@@ -111,6 +112,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLIrreflexiveObjectPropertyAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectMinCardinalityImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLReflexiveObjectPropertyAxiomImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLSubPropertyChainAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSymmetricObjectPropertyAxiomImpl;
 
 /**
@@ -217,6 +219,18 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		for (OWLObjectPropertyExpression objectPropertyExp : normalizedOntology.m_complexObjectPropertyExpressions) {
 			// TODO
 		}
+
+		for	(ComplexObjectPropertyInclusion complexObjPropertyInclusion : normalizedOntology.m_complexObjectPropertyInclusions) {
+			LinkedList<OWLObjectPropertyExpression> subPropertyList = new LinkedList<OWLObjectPropertyExpression> ();
+			for (OWLObjectPropertyExpression e : complexObjPropertyInclusion.m_subObjectProperties) {
+				subPropertyList.add(e.getObjectPropertiesInSignature().iterator().next());
+			}
+			OWLSubPropertyChainAxiomImpl prop = new OWLSubPropertyChainAxiomImpl(subPropertyList, complexObjPropertyInclusion.m_superObjectProperty, new LinkedList<OWLAnnotation>());
+			prop.accept(this);
+
+			writer.println();
+		}
+
 		for(OWLObjectPropertyExpression objPropertyExp : normalizedOntology.m_asymmetricObjectProperties) {
 			//
 			OWLAsymmetricObjectPropertyAxiomImpl asyProp = new OWLAsymmetricObjectPropertyAxiomImpl(objPropertyExp, new LinkedList<OWLAnnotation>());
@@ -248,8 +262,15 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 
 		for (OWLObjectPropertyExpression[] objectProperty : normalizedOntology.m_simpleObjectPropertyInclusions) {
-			OWLSymmetricObjectPropertyAxiomImpl prop = new OWLSymmetricObjectPropertyAxiomImpl(objectProperty[0], new LinkedList<OWLAnnotation>());
-			prop.accept(this);
+			if(objectProperty[0].equals(objectProperty[1])) {
+				OWLSymmetricObjectPropertyAxiomImpl prop = new OWLSymmetricObjectPropertyAxiomImpl(objectProperty[0], new LinkedList<OWLAnnotation>());
+				prop.accept(this);
+			} else {
+				LinkedList<OWLObjectPropertyExpression> subProperty = new LinkedList<OWLObjectPropertyExpression> ();
+				subProperty.add(objectProperty[0]);
+				OWLSubPropertyChainAxiomImpl prop = new OWLSubPropertyChainAxiomImpl(subProperty, objectProperty[1], new LinkedList<OWLAnnotation>());
+				prop.accept(this);
+			}
 			writer.println();
 		}
 
@@ -289,6 +310,8 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 				writer.println();
 			}
 		//}
+
+
 
 		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
 			createExtensionGuess(property);
@@ -472,6 +495,21 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		writer.print(nextVar);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		writer.print(ASP2CoreSymbols.EOR);
+	}
+
+	private void createComplexInclusion(ComplexObjectPropertyInclusion complexObjPropertyInclusion) {
+		LinkedList<String> chainPredicateNameList = new LinkedList<String> ();
+		for (OWLObjectPropertyExpression e : complexObjPropertyInclusion.m_subObjectProperties) {
+			chainPredicateNameList.add(mapper.getPredicateName(e.getObjectPropertiesInSignature().iterator().next()));
+		}
+		String superPropertyName = (mapper.getPredicateName(complexObjPropertyInclusion.m_superObjectProperty.getNamedProperty()));
+
+		int counter = 1;
+		writer.print(":-");
+		for (String subPropertyName : chainPredicateNameList) {
+			writer.print(String.format("%s(X%d,X%d),", subPropertyName, counter, ++counter));
+		}
+		writer.print(String.format("not %s(X%d,X%d).", superPropertyName, 1, counter));
 	}
 
 	private void assertThing(OWLNamedIndividual individual) {
@@ -1349,7 +1387,15 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	@Override
 	public void visit(OWLSubPropertyChainOfAxiom arg0) {
 		// TODO Auto-generated method stub
+		String superPropertyName = (mapper.getPredicateName(arg0.getSuperProperty().asOWLObjectProperty()));
 
+		int counter = 1;
+		writer.print(":-");
+		for (OWLObjectPropertyExpression subPropertyExpression : arg0.getPropertyChain()) {
+			String subPropertyName = mapper.getPredicateName(subPropertyExpression.asOWLObjectProperty());
+			writer.print(String.format("%s(X%d,X%d),", subPropertyName, counter, ++counter));
+		}
+		writer.print(String.format("not %s(X%d,X%d).", superPropertyName, 1, counter));
 	}
 
 	/* (non-Javadoc)

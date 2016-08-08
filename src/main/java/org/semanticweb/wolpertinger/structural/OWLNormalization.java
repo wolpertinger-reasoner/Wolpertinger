@@ -803,10 +803,12 @@ public class OWLNormalization {
         @Override
 		public void visit(OWLSubPropertyChainOfAxiom axiom) {
             List<OWLObjectPropertyExpression> subPropertyChain=axiom.getPropertyChain();
+
             if (!containsBottomObjectProperty(subPropertyChain) && !axiom.getSuperProperty().isOWLTopObjectProperty()) {
                 OWLObjectPropertyExpression superObjectPropertyExpression=axiom.getSuperProperty();
-                if (subPropertyChain.size()==1)
+                if (subPropertyChain.size()==1) {
                     addInclusion(subPropertyChain.get(0),superObjectPropertyExpression);
+                }
                 else if (subPropertyChain.size()==2 && subPropertyChain.get(0).equals(superObjectPropertyExpression) && subPropertyChain.get(1).equals(superObjectPropertyExpression))
                     makeTransitive(axiom.getSuperProperty());
                 else if (subPropertyChain.size()==0)
@@ -817,8 +819,9 @@ public class OWLNormalization {
                     addInclusion(subObjectProperties,superObjectPropertyExpression);
                 }
             }
-            for (OWLObjectPropertyExpression objectPropertyExpression : subPropertyChain)
+            for (OWLObjectPropertyExpression objectPropertyExpression : subPropertyChain) {
                 m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(objectPropertyExpression.getNamedProperty());
+            }
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(axiom.getSuperProperty().getNamedProperty());
         }
         protected boolean containsBottomObjectProperty(List<OWLObjectPropertyExpression> properties) {
