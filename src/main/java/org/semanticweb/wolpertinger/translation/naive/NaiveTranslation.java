@@ -262,7 +262,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 
 		for (OWLObjectPropertyExpression[] objectProperty : normalizedOntology.m_simpleObjectPropertyInclusions) {
-			if(objectProperty[0].equals(objectProperty[1])) {
+			if(objectProperty[0].getInverseProperty().equals(objectProperty[1])) {
 				OWLSymmetricObjectPropertyAxiomImpl prop = new OWLSymmetricObjectPropertyAxiomImpl(objectProperty[0], new LinkedList<OWLAnnotation>());
 				prop.accept(this);
 			} else {
