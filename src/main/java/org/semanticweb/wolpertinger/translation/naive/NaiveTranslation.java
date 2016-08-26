@@ -616,7 +616,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	@Override
 	public void visit(OWLClass owlClass) {
 		String predicateName = mapper.getPredicateName(owlClass);
-
 		writer.print(ASP2CoreSymbols.NAF + " ");
 		writer.print(predicateName);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
@@ -712,7 +711,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
 		writer.print(nVar);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(ASP2CoreSymbols.CONJUNCTION);
+
 
 		// distinguish -A or A
 		// complex fillers are not possible anymore at this stage
@@ -721,6 +720,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			String predicateName = mapper.getPredicateName(owlClass);
 
 			//writer.print(ASP2CoreSymbols.NAF + " ");
+			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(predicateName);
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print(nVar);
@@ -733,17 +733,21 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			OWLClass auxOneOf = getOneOfAuxiliaryClass(oneOf);
 
 			String auxOneOfName = mapper.getPredicateName(auxOneOf);
-
+			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(ASP2CoreSymbols.NAF + " ");
 			writer.write(auxOneOfName);
 			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.write(nVar);
 			writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
 		}
+		else if (filler.isOWLNothing()) {
+			// do nothing
+		}
 		else {
 			assert filler instanceof OWLClass;
 			String predicateName = mapper.getPredicateName(filler.asOWLClass());
 
+			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(ASP2CoreSymbols.NAF + " ");
 			writer.print(predicateName);
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
