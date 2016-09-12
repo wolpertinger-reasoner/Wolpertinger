@@ -721,7 +721,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 				String auxOneOfName = mapper.getPredicateName(auxOneOf);
 				writer.print(ASP2CoreSymbols.CONJUNCTION);
-				writer.print(ASP2CoreSymbols.NAF + " ");
 				writer.write(auxOneOfName);
 				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 				writer.write(nVar);
