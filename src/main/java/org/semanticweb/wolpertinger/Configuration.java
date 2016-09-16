@@ -1,5 +1,5 @@
 /*  Copyright 2015 by the International Center for Computational Logic, Technical University Dresden.
- 
+
     This file is part of Wolpertinger.
 
     Wolpertinger is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.reasoner.FreshEntityPolicy;
 import org.semanticweb.owlapi.reasoner.IndividualNodeSetPolicy;
 import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
@@ -35,15 +36,22 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 		Serializable {
 
 	private static final long serialVersionUID = -2516044809777955981L;
-	
+
 	private Set<IRI> conceptsToProjectOn;
-	
+	private Set<OWLNamedIndividual> domainIndividuals;
+
 	public Configuration() {
 		this.conceptsToProjectOn = new HashSet<IRI>();
+		this.domainIndividuals = new HashSet<OWLNamedIndividual> ();
 	}
-	
+
 	public Configuration(Set<IRI> conceptsToProjectOn) {
 		this.conceptsToProjectOn = conceptsToProjectOn;
+	}
+
+	public Configuration(Set<IRI> conceptsToProjectOn, Set<OWLNamedIndividual> domainIndividuals) {
+		this.conceptsToProjectOn = conceptsToProjectOn;
+		this.domainIndividuals = domainIndividuals;
 	}
 
 	/* (non-Javadoc)
@@ -81,7 +89,7 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
 	/**
 	 * @return A set of IRIs corresponding to those classes/concepts which are of
 	 * particular interest, and the solver therefore can be asked to dedicate solving with respect to those.
@@ -93,5 +101,13 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	public void setConceptsToProjectOn(Set<IRI> conceptsToProjectOn) {
 		this.conceptsToProjectOn = conceptsToProjectOn;
 	}
-	
+
+	public Set<OWLNamedIndividual> getDomainIndividuals() {
+		return domainIndividuals;
+	}
+
+	public void setDomainIndividuals(Set<OWLNamedIndividual> domainIndividuals) {
+		this.domainIndividuals = domainIndividuals;
+	}
+
 }

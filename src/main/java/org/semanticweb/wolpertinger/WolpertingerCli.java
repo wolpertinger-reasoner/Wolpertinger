@@ -29,11 +29,14 @@ import java.text.BreakIterator;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLException;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
@@ -74,6 +77,7 @@ public class WolpertingerCli {
     		super();
     		this.debugFlag = debugFlag;
     	}
+
 		@Override
 		public void run(OWLOntology ontology, Configuration configuration, StatusOutput status, PrintWriter output) {
 			DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag);
@@ -125,7 +129,9 @@ public class WolpertingerCli {
 			//new Option('N', "normalize", groupActions, "normalize the input ontology (structural transformation), optionally writing it back to file (via --output)"),
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)"),
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
-			new Option('d', "debug", groupMisc, "debug mode")
+			new Option('d', "domain", groupActions, true, "FILE", "get fixed domain from FILE"),
+			new Option('x', "debugging", groupMisc, "debug mode")
+
 	};
 
 	public static void main(String[] args) {
@@ -144,6 +150,9 @@ public class WolpertingerCli {
 
 			Collection<IRI> ontologies = new LinkedList<IRI>();
 			Collection<TranslationAction> actions = new LinkedList<TranslationAction>();
+
+			OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
+
 			int option;
 			int verbosity=1;
 			int debug = 1;
@@ -234,6 +243,23 @@ public class WolpertingerCli {
 				}
 				break;
 
+				//domain file
+				case 'x': {
+					String arg = getopt.getOptarg();
+					IRI domainIRI = null;
+					try {
+						domainIRI = IRI.create(base.resolve(arg));
+						OWLOntology domainOntology = ontologyManager.loadOntology(domainIRI);
+						Set<OWLNamedIndividual> domainIndividuals = domainOntology.getIndividualsInSignature(true);
+						configuration.setDomainIndividuals(domainIndividuals);
+					} catch (IllegalArgumentException e) {
+						throw new UsageException(arg + " is not a valid ontology name");
+					} catch (OWLOntologyCreationException e) {
+						throw new UsageException("Failed to load ontology");
+					}
+
+				}
+				break;
 				default:
 					if (getopt.getOptopt() != 0) {
 						throw new UsageException("invalid option -- " + (char) getopt.getOptopt());
@@ -256,7 +282,6 @@ public class WolpertingerCli {
 
                 try {
                     long startTime=System.currentTimeMillis();
-                    OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
 
                     if (iriOntology.isAbsolute()) {
                         URI uri = URI.create(iriOntology.getStart());
