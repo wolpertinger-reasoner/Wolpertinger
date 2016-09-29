@@ -42,11 +42,12 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 
 	public Configuration() {
 		this.conceptsToProjectOn = new HashSet<IRI>();
-		this.domainIndividuals = new HashSet<OWLNamedIndividual> ();
+		this.domainIndividuals = null;
 	}
 
 	public Configuration(Set<IRI> conceptsToProjectOn) {
 		this.conceptsToProjectOn = conceptsToProjectOn;
+		this.domainIndividuals = null;
 	}
 
 	public Configuration(Set<IRI> conceptsToProjectOn, Set<OWLNamedIndividual> domainIndividuals) {

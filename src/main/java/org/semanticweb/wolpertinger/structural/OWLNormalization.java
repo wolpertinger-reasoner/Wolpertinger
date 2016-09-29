@@ -141,6 +141,14 @@ import org.semanticweb.owlapi.model.SWRLObjectVisitor;
 import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.owlapi.model.SWRLSameIndividualAtom;
 import org.semanticweb.owlapi.model.SWRLVariable;
+import org.semanticweb.owlapi.model.*;
+
+import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectInverseOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectOneOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectSomeValuesFromImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
 
 
 /**
@@ -160,6 +168,7 @@ public class OWLNormalization {
     protected final ExpressionManager m_expressionManager;
     protected final PLVisitor m_plVisitor;
     protected final Map<OWLDataRange,OWLDatatype> m_dataRangeDefinitions; // contains custom datatype definitions from DatatypeDefinition axioms
+    protected final Set<OWLNamedIndividual> m_domain;
 
     public OWLNormalization(OWLDataFactory factory,OWLAxioms axioms,int firstReplacementIndex) {
         m_factory=factory;
@@ -170,6 +179,12 @@ public class OWLNormalization {
         m_expressionManager=new ExpressionManager(m_factory);
         m_plVisitor=new PLVisitor();
         m_dataRangeDefinitions=new HashMap<OWLDataRange,OWLDatatype>();
+        m_domain = new HashSet<OWLNamedIndividual>();
+    }
+
+    public OWLNormalization(OWLDataFactory factory,OWLAxioms axioms,int firstReplacementIndex, Set<OWLNamedIndividual> domain) {
+    	this(factory, axioms, firstReplacementIndex);
+    	m_domain.addAll(domain);
     }
 
     public void processOntology(OWLOntology ontology) {
@@ -187,8 +202,112 @@ public class OWLNormalization {
 
     public void processAxioms(Collection<? extends OWLAxiom> axioms) {
         AxiomVisitor axiomVisitor=new AxiomVisitor();
-        for (OWLAxiom axiom : axioms)
-            axiom.accept(axiomVisitor);
+        for (OWLAxiom axiom : axioms) {
+        	if (axiom instanceof OWLClassAssertionAxiom) {
+        		OWLClassAssertionAxiom axiomInst = (OWLClassAssertionAxiom) axiom;
+        		OWLClassExpression classExpression = axiomInst.getClassExpression();
+            	OWLIndividual individual = axiomInst.getIndividual();
+            	if (m_domain.contains(individual)) {
+            		//do nothing
+            	} else {
+            		Set<OWLIndividual> wrapper = new HashSet<OWLIndividual> ();
+    				wrapper.add(individual);
+    				OWLObjectOneOfImpl objectOneOf = new OWLObjectOneOfImpl (wrapper);
+    				OWLSubClassOfAxiomImpl impl = new OWLSubClassOfAxiomImpl (objectOneOf, classExpression, new HashSet<OWLAnnotation> ());
+    				axiom = impl;
+            	}
+        	}
+        	else if (axiom instanceof OWLObjectPropertyAssertionAxiom) {
+        		OWLObjectPropertyAssertionAxiom axiomInst = (OWLObjectPropertyAssertionAxiom) axiom;
+        		OWLIndividual subjectIndividual = axiomInst.getSubject();
+        		OWLIndividual objectIndividual = axiomInst.getObject();
+        		OWLObjectPropertyExpression property = axiomInst.getProperty();
+        		if (!m_domain.contains(subjectIndividual) && !m_domain.contains(objectIndividual)) {
+        			Set<OWLIndividual> subjectWrapper = new HashSet<OWLIndividual> ();
+        			Set<OWLIndividual> objectWrapper = new HashSet<OWLIndividual> ();
+        			subjectWrapper.add(subjectIndividual);
+        			objectWrapper.add(objectIndividual);
+        			OWLObjectOneOfImpl subjectOneOf = new OWLObjectOneOfImpl (subjectWrapper);
+        			OWLObjectOneOfImpl objectOneOf = new OWLObjectOneOfImpl (objectWrapper);
+        			OWLObjectSomeValuesFromImpl someValuesObject = new OWLObjectSomeValuesFromImpl (property, objectOneOf);
+        			OWLSubClassOfAxiomImpl impl = new OWLSubClassOfAxiomImpl (subjectOneOf, someValuesObject, new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		} else if (m_domain.contains(subjectIndividual) && !m_domain.contains(objectIndividual)) {
+        			Set<OWLIndividual> objectWrapper = new HashSet<OWLIndividual> ();
+        			objectWrapper.add(objectIndividual);
+        			OWLObjectOneOfImpl objectOneOf = new OWLObjectOneOfImpl (objectWrapper);
+        			OWLObjectSomeValuesFromImpl someValuesObject = new OWLObjectSomeValuesFromImpl (property, objectOneOf);
+        			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(subjectIndividual, someValuesObject , new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		} else if (!m_domain.contains(subjectIndividual) && m_domain.contains(objectIndividual)) {
+        			Set<OWLIndividual> subjectWrapper = new HashSet<OWLIndividual> ();
+        			subjectWrapper.add(subjectIndividual);
+        			OWLObjectOneOfImpl subjectOneOf = new OWLObjectOneOfImpl (subjectWrapper);
+        			OWLObjectInverseOfImpl inverseProp = new OWLObjectInverseOfImpl(property);
+        			OWLObjectSomeValuesFromImpl someValuesObject = new OWLObjectSomeValuesFromImpl (inverseProp, subjectOneOf);
+        			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(objectIndividual, someValuesObject , new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		}
+        	} else if (axiom instanceof OWLSameIndividualAxiom) {
+        		OWLSameIndividualAxiom axiomInst = (OWLSameIndividualAxiom) axiom;
+        		OWLIndividual firstIndividual = axiomInst.getIndividualsAsList().get(0);
+        		OWLIndividual secondIndividual = axiomInst.getIndividualsAsList().get(1);
+        		if (!m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
+        			Set<OWLIndividual> firstWrapper = new HashSet<OWLIndividual> ();
+        			Set<OWLIndividual> secondWrapper = new HashSet<OWLIndividual> ();
+        			firstWrapper.add(firstIndividual);
+        			secondWrapper.add(secondIndividual);
+        			OWLObjectOneOfImpl firstOneOf = new OWLObjectOneOfImpl (firstWrapper);
+        			OWLObjectOneOfImpl secondOneOf = new OWLObjectOneOfImpl (secondWrapper);
+        			OWLSubClassOfAxiomImpl impl = new OWLSubClassOfAxiomImpl (firstOneOf, secondOneOf, new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		} else if (!m_domain.contains(firstIndividual) && m_domain.contains(secondIndividual)) {
+        			Set<OWLIndividual> firstWrapper = new HashSet<OWLIndividual> ();
+        			firstWrapper.add(firstIndividual);
+        			OWLObjectOneOfImpl firstOneOf = new OWLObjectOneOfImpl (firstWrapper);
+        			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(secondIndividual, firstOneOf , new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		} else if (m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
+        			Set<OWLIndividual> secondWrapper = new HashSet<OWLIndividual> ();
+        			secondWrapper.add(secondIndividual);
+        			OWLObjectOneOfImpl secondOneOf = new OWLObjectOneOfImpl (secondWrapper);
+        			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(firstIndividual, secondOneOf , new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		}
+        	} else if (axiom instanceof OWLDifferentIndividualsAxiom) {
+        		OWLDifferentIndividualsAxiom axiomInst = (OWLDifferentIndividualsAxiom) axiom;
+        		OWLIndividual firstIndividual = axiomInst.getIndividualsAsList().get(0);
+        		OWLIndividual secondIndividual = axiomInst.getIndividualsAsList().get(1);
+        		if (!m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
+        			Set<OWLIndividual> firstWrapper = new HashSet<OWLIndividual> ();
+        			Set<OWLIndividual> secondWrapper = new HashSet<OWLIndividual> ();
+        			firstWrapper.add(firstIndividual);
+        			secondWrapper.add(secondIndividual);
+        			OWLObjectOneOfImpl firstOneOf = new OWLObjectOneOfImpl (firstWrapper);
+        			OWLObjectOneOfImpl secondOneOf = new OWLObjectOneOfImpl (secondWrapper);
+        			OWLObjectComplementOfImpl complementOf = new OWLObjectComplementOfImpl(secondOneOf);
+        			OWLSubClassOfAxiomImpl impl = new OWLSubClassOfAxiomImpl (firstOneOf, complementOf, new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		} else if (!m_domain.contains(firstIndividual) && m_domain.contains(secondIndividual)) {
+        			Set<OWLIndividual> firstWrapper = new HashSet<OWLIndividual> ();
+        			firstWrapper.add(firstIndividual);
+        			OWLObjectOneOfImpl firstOneOf = new OWLObjectOneOfImpl (firstWrapper);
+        			OWLObjectComplementOfImpl complementOf = new OWLObjectComplementOfImpl(firstOneOf);
+        			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(secondIndividual, complementOf , new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		} else if (m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
+        			Set<OWLIndividual> secondWrapper = new HashSet<OWLIndividual> ();
+        			secondWrapper.add(secondIndividual);
+        			OWLObjectOneOfImpl secondOneOf = new OWLObjectOneOfImpl (secondWrapper);
+        			OWLObjectComplementOfImpl complementOf = new OWLObjectComplementOfImpl(secondOneOf);
+        			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(firstIndividual, complementOf , new HashSet<OWLAnnotation> ());
+        			axiom = impl;
+        		}
+        	}
+    		axiom.accept(axiomVisitor);
+        }
+
+
         // now all axioms are in NNF and converted into disjunctions wherever possible
         // exact cardinalities are rewritten into at least and at most cardinalities etc
         // Rules with multiple head atoms are rewritten into several rules (Lloyd-Topor transformation)
@@ -372,8 +491,14 @@ public class OWLNormalization {
                 nominal=(OWLObjectOneOf)((OWLObjectComplementOf)descriptions[1]).getOperand();
             }
             if (nominal!=null && (other instanceof OWLClass || (other instanceof OWLObjectComplementOf && ((OWLObjectComplementOf)other).getOperand() instanceof OWLClass))) {
-                for (OWLIndividual individual : nominal.getIndividuals())
-                    facts.add(m_factory.getOWLClassAssertionAxiom(other,individual));
+            	for (OWLIndividual individual : nominal.getIndividuals()) {
+            		if (!m_domain.contains(individual)) {
+            			return false;
+            		}
+            	}
+                for (OWLIndividual individual : nominal.getIndividuals()) {
+            		facts.add(m_factory.getOWLClassAssertionAxiom(other,individual));
+                }
                 return true;
             }
         }
@@ -990,8 +1115,8 @@ public class OWLNormalization {
         }
         @Override
 		public void visit(OWLClassAssertionAxiom axiom) {
-            OWLClassExpression classExpression=axiom.getClassExpression();
-            if (classExpression instanceof OWLDataHasValue) {
+        	OWLClassExpression classExpression=axiom.getClassExpression();
+        	if (classExpression instanceof OWLDataHasValue) {
                 OWLDataHasValue hasValue=(OWLDataHasValue)classExpression;
                 addFact(m_factory.getOWLDataPropertyAssertionAxiom(hasValue.getProperty(), axiom.getIndividual(), hasValue.getValue()));
                 return;
@@ -1015,6 +1140,8 @@ public class OWLNormalization {
                 classExpression=definition;
             }
             addFact(m_factory.getOWLClassAssertionAxiom(classExpression,axiom.getIndividual()));
+
+        	OWLIndividual individual = axiom.getIndividual();
         }
         @Override
 		public void visit(OWLObjectPropertyAssertionAxiom axiom) {

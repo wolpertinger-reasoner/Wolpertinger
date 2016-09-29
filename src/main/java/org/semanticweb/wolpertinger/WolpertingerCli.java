@@ -190,7 +190,7 @@ public class WolpertingerCli {
 					configuration.setConceptsToProjectOn(iris);
 				}
 				break;
-				case 'd': {
+				case 'x': {
 					// do nothing
 				}
 				break;
@@ -244,12 +244,13 @@ public class WolpertingerCli {
 				break;
 
 				//domain file
-				case 'x': {
+				case 'd': {
 					String arg = getopt.getOptarg();
 					IRI domainIRI = null;
 					try {
 						domainIRI = IRI.create(base.resolve(arg));
-						OWLOntology domainOntology = ontologyManager.loadOntology(domainIRI);
+						OWLOntologyManager domainOntologyManager = OWLManager.createOWLOntologyManager();
+						OWLOntology domainOntology = domainOntologyManager.loadOntology(domainIRI);
 						Set<OWLNamedIndividual> domainIndividuals = domainOntology.getIndividualsInSignature(true);
 						configuration.setDomainIndividuals(domainIndividuals);
 					} catch (IllegalArgumentException e) {
@@ -296,6 +297,7 @@ public class WolpertingerCli {
                     }
 
                     OWLOntology ontology=ontologyManager.loadOntology(iriOntology);
+
                     long parseTime = System.currentTimeMillis()-startTime;
                     status.log(2,"Ontology parsed in " + String.valueOf(parseTime) + " msec.");
                     startTime = System.currentTimeMillis();
