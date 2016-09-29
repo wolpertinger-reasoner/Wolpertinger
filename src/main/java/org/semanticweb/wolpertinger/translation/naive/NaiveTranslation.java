@@ -166,7 +166,11 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		OWLAxioms axioms = new OWLAxioms();
 
 		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
-		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0);
+		if(configuration.getDomainIndividuals() == null) {
+			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
+		}
+
+		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
 
 		for (OWLOntology ontology : importClosure) {
 			normalization.processOntology(ontology);
