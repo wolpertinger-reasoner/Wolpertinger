@@ -261,13 +261,14 @@ public class OWLNormalization {
         			OWLObjectOneOfImpl secondOneOf = new OWLObjectOneOfImpl (secondWrapper);
         			OWLSubClassOfAxiomImpl impl = new OWLSubClassOfAxiomImpl (firstOneOf, secondOneOf, new HashSet<OWLAnnotation> ());
         			axiom = impl;
-        		} else if (!m_domain.contains(firstIndividual) && m_domain.contains(secondIndividual)) {
+        		} else if (m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
         			Set<OWLIndividual> firstWrapper = new HashSet<OWLIndividual> ();
         			firstWrapper.add(firstIndividual);
         			OWLObjectOneOfImpl firstOneOf = new OWLObjectOneOfImpl (firstWrapper);
         			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(secondIndividual, firstOneOf , new HashSet<OWLAnnotation> ());
+        			System.out.println(impl);
         			axiom = impl;
-        		} else if (m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
+        		} else if (!m_domain.contains(firstIndividual) && m_domain.contains(secondIndividual)) {
         			Set<OWLIndividual> secondWrapper = new HashSet<OWLIndividual> ();
         			secondWrapper.add(secondIndividual);
         			OWLObjectOneOfImpl secondOneOf = new OWLObjectOneOfImpl (secondWrapper);
@@ -288,14 +289,14 @@ public class OWLNormalization {
         			OWLObjectComplementOfImpl complementOf = new OWLObjectComplementOfImpl(secondOneOf);
         			OWLSubClassOfAxiomImpl impl = new OWLSubClassOfAxiomImpl (firstOneOf, complementOf, new HashSet<OWLAnnotation> ());
         			axiom = impl;
-        		} else if (!m_domain.contains(firstIndividual) && m_domain.contains(secondIndividual)) {
+        		} else if (m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
         			Set<OWLIndividual> firstWrapper = new HashSet<OWLIndividual> ();
         			firstWrapper.add(firstIndividual);
         			OWLObjectOneOfImpl firstOneOf = new OWLObjectOneOfImpl (firstWrapper);
         			OWLObjectComplementOfImpl complementOf = new OWLObjectComplementOfImpl(firstOneOf);
         			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(secondIndividual, complementOf , new HashSet<OWLAnnotation> ());
         			axiom = impl;
-        		} else if (m_domain.contains(firstIndividual) && !m_domain.contains(secondIndividual)) {
+        		} else if (!m_domain.contains(firstIndividual) && m_domain.contains(secondIndividual)) {
         			Set<OWLIndividual> secondWrapper = new HashSet<OWLIndividual> ();
         			secondWrapper.add(secondIndividual);
         			OWLObjectOneOfImpl secondOneOf = new OWLObjectOneOfImpl (secondWrapper);
