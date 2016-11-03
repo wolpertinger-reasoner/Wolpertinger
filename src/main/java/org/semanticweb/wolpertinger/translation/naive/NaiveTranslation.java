@@ -851,7 +851,11 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			comperator = "=";
 
 		if (filler instanceof OWLObjectComplementOf){
-			throw new NotImplementedException();
+			fillerName = mapper.getPredicateName(((OWLObjectComplementOf) filler).getOperand().asOWLClass());
+			fillerName = ASP2CoreSymbols.NAF + " " + fillerName;
+
+			if (isAuxiliaryClass(((OWLObjectComplementOf) filler).getOperand().asOWLClass()))
+				auxClasses.add(filler.asOWLClass());
 		}
 		else if (filler instanceof OWLObjectOneOf) {
 			//TODO: in case of a max-cardinality we will never end up within here,
