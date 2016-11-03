@@ -242,6 +242,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 			writer.println();
 		}
+
 		for (OWLObjectPropertyExpression objPropertyExp : normalizedOntology.m_irreflexiveObjectProperties) {
 			OWLIrreflexiveObjectPropertyAxiomImpl irrProp = new OWLIrreflexiveObjectPropertyAxiomImpl(objPropertyExp, new LinkedList<OWLAnnotation>());
 			irrProp.accept(this);

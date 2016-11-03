@@ -99,6 +99,7 @@ import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
+import org.semanticweb.wolpertinger.structural.OWLAxioms.ComplexObjectPropertyInclusion;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.DisjunctiveRule;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
@@ -112,6 +113,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLIrreflexiveObjectPropertyAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectMinCardinalityImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLReflexiveObjectPropertyAxiomImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLSubPropertyChainAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSymmetricObjectPropertyAxiomImpl;
 
 /**
@@ -157,6 +159,8 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		this.writer = writer;
 		this.nConstraints = 0;
 		this.debugFlag = debugFlag;
+
+		var = new VariableIssuer();
 	}
 
 	/**
@@ -166,7 +170,11 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		OWLAxioms axioms = new OWLAxioms();
 
 		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
-		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0);
+		if(configuration.getDomainIndividuals() == null) {
+			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
+		}
+
+		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
 
 		for (OWLOntology ontology : importClosure) {
 			normalization.processOntology(ontology);
@@ -197,8 +205,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	public void translateOntology(OWLAxioms normalizedOntology) {
 		clearState();
 		nIndividuals = normalizedOntology.m_namedIndividuals.size();
-
-		var = new VariableIssuer();
 
 		// thing assertions for all named individuals
 		writer.println();
@@ -233,10 +239,22 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			// TODO
 		}
 
-		// Asymmetric Object Property
+		for	(ComplexObjectPropertyInclusion complexObjPropertyInclusion : normalizedOntology.m_complexObjectPropertyInclusions) {
+			LinkedList<OWLObjectPropertyExpression> subPropertyList = new LinkedList<OWLObjectPropertyExpression> ();
+			for (OWLObjectPropertyExpression e : complexObjPropertyInclusion.m_subObjectProperties) {
+				subPropertyList.add(e.getObjectPropertiesInSignature().iterator().next());
+			}
+			OWLSubPropertyChainAxiomImpl prop = new OWLSubPropertyChainAxiomImpl(subPropertyList, complexObjPropertyInclusion.m_superObjectProperty, new LinkedList<OWLAnnotation>());
+			prop.accept(this);
+
+			writer.println();
+		}
+
 		for(OWLObjectPropertyExpression objPropertyExp : normalizedOntology.m_asymmetricObjectProperties) {
+			//
 			OWLAsymmetricObjectPropertyAxiomImpl asyProp = new OWLAsymmetricObjectPropertyAxiomImpl(objPropertyExp, new LinkedList<OWLAnnotation>());
 			asyProp.accept(this);
+
 			writer.println();
 		}
 
@@ -265,8 +283,15 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		}
 
 		for (OWLObjectPropertyExpression[] objectProperty : normalizedOntology.m_simpleObjectPropertyInclusions) {
-			OWLSymmetricObjectPropertyAxiomImpl prop = new OWLSymmetricObjectPropertyAxiomImpl(objectProperty[0], new LinkedList<OWLAnnotation>());
-			prop.accept(this);
+			if(objectProperty[0].getInverseProperty().equals(objectProperty[1])) {
+				OWLSymmetricObjectPropertyAxiomImpl prop = new OWLSymmetricObjectPropertyAxiomImpl(objectProperty[0], new LinkedList<OWLAnnotation>());
+				prop.accept(this);
+			} else {
+				LinkedList<OWLObjectPropertyExpression> subProperty = new LinkedList<OWLObjectPropertyExpression> ();
+				subProperty.add(objectProperty[0]);
+				OWLSubPropertyChainAxiomImpl prop = new OWLSubPropertyChainAxiomImpl(subProperty, objectProperty[1], new LinkedList<OWLAnnotation>());
+				prop.accept(this);
+			}
 			writer.println();
 		}
 
@@ -414,7 +439,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	}
 
 	private void translateInclusion(OWLClassExpression[] inclusion, int index) {
-		var = new VariableIssuer();
 		writer.print("icons " + ASP2CoreSymbols.IMPLICATION);
 		writer.print(String.format(" activated(%d), ", index));
 
@@ -443,6 +467,36 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	 * TODO: Improve OWLThing handling
 	 * @param owlClass
 	 */
+	private void createExtensionGuess(OWLClass owlClass) {
+		String owlThing = "thing";
+
+		String className = mapper.getPredicateName(owlClass);
+		String negClassName = "-" + className;
+
+		writer.print(className);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(var.currentVar());
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+
+		writer.print(ASP2CoreSymbols.CONJUNCTION + " ");
+
+		writer.print("not_");
+		writer.print(className);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(var.currentVar());
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+
+		///////////////////////////////////////////////
+
+		writer.print(" " + ASP2CoreSymbols.IMPLICATION + " ");
+
+		writer.print(owlThing);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(var.currentVar());
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(ASP2CoreSymbols.EOR);
+	}
+
 	private void createIconsClass(OWLClass owlClass) {
 		String owlThing = "thing";
 
@@ -486,36 +540,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(var.currentVar());
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		writer.print(ASP2CoreSymbols.IMPLICATION + " thing(X), icons");
-		writer.print(ASP2CoreSymbols.EOR);
-	}
-
-	private void createExtensionGuess(OWLClass owlClass) {
-		String owlThing = "thing";
-
-		String className = mapper.getPredicateName(owlClass);
-		String negClassName = "-" + className;
-
-		writer.print(className);
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(var.currentVar());
-		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-
-		writer.print(ASP2CoreSymbols.CONJUNCTION + " ");
-
-		writer.print("not_");
-		writer.print(className);
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(var.currentVar());
-		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-
-		///////////////////////////////////////////////
-
-		writer.print(" " + ASP2CoreSymbols.IMPLICATION + " ");
-
-		writer.print(owlThing);
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(var.currentVar());
-		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		writer.print(ASP2CoreSymbols.EOR);
 	}
 
@@ -732,6 +756,22 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.EOR);
 	}
 
+	//TODO NAFF TRANSLATION?
+	private void createComplexInclusion(ComplexObjectPropertyInclusion complexObjPropertyInclusion) {
+		LinkedList<String> chainPredicateNameList = new LinkedList<String> ();
+		for (OWLObjectPropertyExpression e : complexObjPropertyInclusion.m_subObjectProperties) {
+			chainPredicateNameList.add(mapper.getPredicateName(e.getObjectPropertiesInSignature().iterator().next()));
+		}
+		String superPropertyName = (mapper.getPredicateName(complexObjPropertyInclusion.m_superObjectProperty.getNamedProperty()));
+
+		int counter = 1;
+		writer.print(":-");
+		for (String subPropertyName : chainPredicateNameList) {
+			writer.print(String.format("%s(X%d,X%d),", subPropertyName, counter, ++counter));
+		}
+		writer.print(String.format("not %s(X%d,X%d).", superPropertyName, 1, counter));
+	}
+
 	private void assertThing(OWLNamedIndividual individual) {
 		String owlThing = "thing";
 
@@ -935,17 +975,32 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 		// distinguish -A or A
 		// complex fillers are not possible anymore at this stage
+		// TODO NAFF VERSION
 		if (filler instanceof OWLObjectComplementOf) {
-			OWLClass owlClass = ((OWLObjectComplementOf)filler).getOperand().asOWLClass();
-			String predicateName = mapper.getPredicateName(owlClass);
+			OWLClassExpression expr = ((OWLObjectComplementOf)filler).getOperand();
+			if (expr instanceof OWLObjectOneOf) {
+				OWLObjectOneOf oneOf = (OWLObjectOneOf) expr;
+				OWLClass auxOneOf = getOneOfAuxiliaryClass(oneOf);
 
-			//writer.print(ASP2CoreSymbols.NAF + " ");
-			writer.print(predicateName);
-			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.print(nVar);
-			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+				String auxOneOfName = mapper.getPredicateName(auxOneOf);
+				writer.print(ASP2CoreSymbols.CONJUNCTION);
+				writer.write(auxOneOfName);
+				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.write(nVar);
+				writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
+			} else {
+				OWLClass owlClass = expr.asOWLClass();
+				String predicateName = mapper.getPredicateName(owlClass);
 
-			if (isAuxiliaryClass(owlClass)) auxClasses.add(owlClass);
+				//writer.print(ASP2CoreSymbols.NAF + " ");
+				writer.print(ASP2CoreSymbols.CONJUNCTION);
+				writer.print(predicateName);
+				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.print(nVar);
+				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+
+				if (isAuxiliaryClass(owlClass)) auxClasses.add(owlClass);
+			}
 		}
 		else if (filler instanceof OWLObjectOneOf) {
 			OWLObjectOneOf oneOf = (OWLObjectOneOf) filler;
@@ -958,6 +1013,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.write(nVar);
 			writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
+		}
+		else if (filler.isOWLNothing()) {
+			// do nothing
 		}
 		else {
 			assert filler instanceof OWLClass;
@@ -1008,6 +1066,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 		// add to the set of class which needs to be guessed
 		auxClasses.add(auxOneOf);
+		oneOfAuxClasses.put(objectOneOf, auxOneOf);
 		return auxOneOf;
 	}
 
@@ -1527,14 +1586,27 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	 */
 	@Override
 	public void visit(OWLClassAssertionAxiom classAssertion) {
-		OWLClass owlClass = classAssertion.getClassExpression().asOWLClass();
-		OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
+		OWLClassExpression classExpression = classAssertion.getClassExpression();
+		boolean isComplement = classExpression.getClassExpressionType().getName().equals("ObjectComplementOf");
+		if (isComplement) {
+			OWLClass owlClass = classAssertion.getClassExpression().getComplementNNF().asOWLClass();
+			OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
+			writer.print(ASP2CoreSymbols.CLASSICAL_NEGATION);
+			writer.print(mapper.getPredicateName(owlClass));
+			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+			writer.print(mapper.getConstantName(individual));
+			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+			writer.print(ASP2CoreSymbols.EOR);
+		} else {
+			OWLClass owlClass = classAssertion.getClassExpression().asOWLClass();
+			OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
 
-		writer.print(mapper.getPredicateName(owlClass));
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(mapper.getConstantName(individual));
-		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(ASP2CoreSymbols.EOR);
+			writer.print(mapper.getPredicateName(owlClass));
+			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+			writer.print(mapper.getConstantName(individual));
+			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+			writer.print(ASP2CoreSymbols.EOR);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -1623,7 +1695,15 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	@Override
 	public void visit(OWLSubPropertyChainOfAxiom arg0) {
 		// TODO Auto-generated method stub
+		String superPropertyName = (mapper.getPredicateName(arg0.getSuperProperty().asOWLObjectProperty()));
 
+		int counter = 1;
+		writer.print(":-");
+		for (OWLObjectPropertyExpression subPropertyExpression : arg0.getPropertyChain()) {
+			String subPropertyName = mapper.getPredicateName(subPropertyExpression.asOWLObjectProperty());
+			writer.print(String.format("%s(X%d,X%d),", subPropertyName, counter, ++counter));
+		}
+		writer.print(String.format("not %s(X%d,X%d).", superPropertyName, 1, counter));
 	}
 
 	/* (non-Javadoc)
