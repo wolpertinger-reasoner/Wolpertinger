@@ -349,6 +349,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		for (OWLClass owlClass : normalizedOntology.m_classes) {
 			for (OWLObjectProperty owlProperty : normalizedOntology.m_objectProperties) {
 				createPropertyNegation(owlClass, owlProperty);
+				createNegatedPropertyNegation(owlClass, owlProperty);
 				var.reset();
 				writer.println();
 			}
@@ -622,6 +623,58 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		writer.print(", ");
 		writer.print(negClassName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(nextVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(ASP2CoreSymbols.EOR);
+		writer.println();
+
+		writer.print(negClassPredicateName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(currentVar);
+		writer.print(",");
+		writer.print(nextVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(" :- ");
+		writer.print(negPropertyName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(currentVar);
+		writer.print(",");
+		writer.print(nextVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(ASP2CoreSymbols.EOR);
+		writer.println();
+	}
+
+	private void createNegatedPropertyNegation(OWLClass owlClass, OWLObjectProperty owlProperty) {
+		String owlThing = "thing";
+		String propertyName = mapper.getPredicateName(owlProperty);
+		String negPropertyName = "not_" + propertyName;
+
+		String currentVar = var.currentVar();
+		String nextVar = var.nextVariable();
+
+		String className = mapper.getPredicateName(owlClass);
+		String negClassName = "not_" + className;
+
+		String classPredicateName = propertyName + "_not_" + className;
+		String negClassPredicateName = "not_" + classPredicateName;
+
+		writer.print(negClassPredicateName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(currentVar);
+		writer.print(",");
+		writer.print(nextVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(" :- ");
+		writer.print(propertyName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(currentVar);
+		writer.print(",");
+		writer.print(nextVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(", ");
+		writer.print(className);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.print(nextVar);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
@@ -1107,8 +1160,14 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		else
 			comperator = "=";
 
+		boolean isComplement = false;
+
 		if (filler instanceof OWLObjectComplementOf){
-			throw new NotImplementedException();
+			isComplement = true;
+			OWLClassExpression classExpr = ((OWLObjectComplementOf) filler).getOperand();
+			fillerName = mapper.getPredicateName(classExpr.asOWLClass());
+			if (isAuxiliaryClass(classExpr.asOWLClass()))
+				auxClasses.add(classExpr.asOWLClass());
 		}
 		else if (filler instanceof OWLObjectOneOf) {
 			//TODO: in case of a max-cardinality we will never end up within here,
@@ -1154,6 +1213,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.print("not_");
 			writer.print(propertyName);
 			writer.print("_");
+			if (isComplement) {
+				writer.print("not_");
+			}
 			writer.print(fillerName);
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print(currentVar);
