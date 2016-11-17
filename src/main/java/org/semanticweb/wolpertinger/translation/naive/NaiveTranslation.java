@@ -1181,9 +1181,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 			if (!isFirst) {
 				writer.write(ASP2CoreSymbols.CONJUNCTION);
-				isFirst = false;
 			}
 
+			isFirst = false;
 			writer.write(propertyName);
 			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.write(cVar);

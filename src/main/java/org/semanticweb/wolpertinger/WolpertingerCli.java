@@ -121,6 +121,7 @@ public class WolpertingerCli {
 			// misc options
 			new Option('h', "help", groupMisc, "display this help and exit"),
 			new Option('V', "version", groupMisc, "display Wolpertinger's built version and exit"),
+			new Option('x', "debugging", groupMisc, "debug mode"),
 			// optimization options
 			new Option('p', "project", groupOptimize,true, "IRI1,..,IRI2", "project on concept "),
 			// debug options
@@ -130,7 +131,7 @@ public class WolpertingerCli {
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)"),
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('d', "domain", groupActions, true, "FILE", "get fixed domain from FILE"),
-			new Option('x', "debugging", groupMisc, "debug mode")
+
 
 	};
 
@@ -156,6 +157,8 @@ public class WolpertingerCli {
 			int option;
 			int verbosity=1;
 			int debug = 1;
+
+			boolean debugFlag = false;
 
 			while ((option = getopt.getopt()) != -1) {
 				switch (option) {
@@ -191,7 +194,7 @@ public class WolpertingerCli {
 				}
 				break;
 				case 'x': {
-					// do nothing
+					debugFlag = true;
 				}
 				break;
 				// ACTIONS
@@ -206,15 +209,6 @@ public class WolpertingerCli {
 					} else if (arg.toLowerCase().equals("direct")) {
 						action = new DirectTranslationAction();
 					} else if (arg.toLowerCase().equals("naff")) {
-						boolean debugFlag = false;
-						while ((option = getopt.getopt()) != -1) {
-							switch (option) {
-								case 'd': {
-									debugFlag = true;
-								}
-								break;
-							}
-						}
 						action = new DebugTranslationAction(debugFlag);
 					} else {
 						throw new UsageException("Unknown value for TARGET argument");
