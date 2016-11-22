@@ -84,11 +84,6 @@
 			<version>1.0.13</version>
 		</dependency>
 		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>1.2</version>
-		</dependency>
-		<dependency>
 			<groupId>net.sourceforge.owlapi</groupId>
 			<artifactId>owlapi-api</artifactId>
 			<version>3.5.0</version>
@@ -97,6 +92,21 @@
     		<groupId>net.sourceforge.owlapi</groupId>
     		<artifactId>owlapi-apibinding</artifactId>
     		<version>3.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-configuration2</artifactId>
+			<version>2.1</version>
+		</dependency>
+		<dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>1.1.1</version>
+		</dependency>
+		<dependency>
+	    <groupId>commons-beanutils</groupId>
+	    <artifactId>commons-beanutils</artifactId>
+	    <version>1.9.3</version>
 		</dependency>
 	</dependencies>
 	<description>A bounded model reasoner for the Semantic Web.</description>

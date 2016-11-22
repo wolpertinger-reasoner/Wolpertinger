@@ -21,6 +21,7 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,6 +44,7 @@ import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.semanticweb.wolpertinger.translation.direct.DirectTranslation;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
+import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 
 /**
  * Command Line Interface for Wolpertinger.
@@ -140,7 +142,17 @@ public class WolpertingerCli {
 			Configuration configuration = new Configuration();
 
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
+
+			File tmpFile = new File("temp_wolpertinger.lp");
 			PrintWriter output = new PrintWriter(System.out);
+
+			try {
+				tmpFile.createNewFile();
+				output = new PrintWriter(tmpFile);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 
 			URI base;
 			try {
@@ -322,6 +334,12 @@ public class WolpertingerCli {
                         action.run(ontology, configuration, status, output);
                         long actionTime = System.currentTimeMillis() - startTime;
                         status.log(2, "...action completed in " + String.valueOf(actionTime) + " msec.");
+                        ClingoModelEnumerator enumerator = new ClingoModelEnumerator(tmpFile.getAbsolutePath());
+                        Collection<String> models = enumerator.enumerateAllModels();
+                        int counter = 1;
+                        for (String model : models) {
+                        	System.out.println("Model # " + counter++ + " : " + model);
+                        }
                     }
                 } catch (OWLException e) {
                 	System.err.println(e.getMessage());

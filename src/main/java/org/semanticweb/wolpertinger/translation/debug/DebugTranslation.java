@@ -1760,7 +1760,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String superPropertyName = (mapper.getPredicateName(arg0.getSuperProperty().asOWLObjectProperty()));
 
 		int counter = 1;
-		writer.print(":-");
+		writer.print("icons :-");
 		for (OWLObjectPropertyExpression subPropertyExpression : arg0.getPropertyChain()) {
 			String subPropertyName = mapper.getPredicateName(subPropertyExpression.asOWLObjectProperty());
 			writer.print(String.format("%s(X%d,X%d),", subPropertyName, counter, ++counter));
