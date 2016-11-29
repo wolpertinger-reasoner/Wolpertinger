@@ -1,5 +1,5 @@
 /*  Copyright 2015 by the International Center for Computational Logic, Technical University Dresden.
- 
+
     This file is part of Wolpertinger.
 
     Wolpertinger is free software: you can redistribute it and/or modify
@@ -17,6 +17,11 @@
 */
 package org.semanticweb.wolpertinger;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
@@ -43,59 +48,107 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.Version;
+import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.util.NiceAxiomPrinter;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
+import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
+import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 /**
  * TODO: Detailed Description here.
- * 
- * @author Lukas Schweizer
  *
+ * @author Lukas Schweizer
+ * @author Satyadharma Tirtarasa
  */
 public class Wolpertinger implements OWLReasoner {
-	
+
 	private OWLOntology rootOntology;
 	// normalized kb
 	private OWLAxioms axioms;
-	
+
 	private Configuration configuration;
-	
+
+	private DebugTranslation debugTranslation;
+	private NaiveTranslation naiveTranslation;
+
+	private File tmpFile;
+	private PrintWriter output;
+	private boolean baseProgramReady;
+
+	private ClingoModelEnumerator enumerator;
+
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
 	}
-	
+
 	public Wolpertinger(Configuration configuration, OWLOntology rootOntology) {
 		this.rootOntology = rootOntology;
 		this.configuration = configuration;
 		loadOntology();
 	}
-	
+
 	/**
 	 * Load the root ontology and all imports and apply normalization.
 	 */
 	private void loadOntology() {
 		clearState();
-		
+
 		axioms = new OWLAxioms();
-		
+
 		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
-		OWLNormalization normalization = new OWLNormalization(getOWLDataFactory(), this.axioms, 0);
-		
+		if(configuration.getDomainIndividuals() == null) {
+			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
+		}
+
+		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
+
 		for (OWLOntology ontology : importClosure) {
 			normalization.processOntology(ontology);
 		}
+
+		try {
+			tmpFile = File.createTempFile("wolpertinger-base-program", ".lp");
+			tmpFile.deleteOnExit();
+			output = new PrintWriter(tmpFile);
+			NaiveTranslation translation = new NaiveTranslation(configuration, output);
+			translation.translateOntology(axioms);
+			baseProgramReady = true;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		enumerator = new ClingoModelEnumerator(tmpFile.getAbsolutePath());
 	}
-	
+
 	private void clearState() {
 		this.axioms = null;
 	}
-	
+
 	private OWLDataFactory getOWLDataFactory() {
 		return rootOntology.getOWLOntologyManager().getOWLDataFactory();
 	}
-	
+
+	public void naiveTranslate(PrintWriter output) {
+		NaiveTranslation translation = new NaiveTranslation(configuration, output);
+		translation.translateOntology(axioms);
+	}
+
+	public void naffTranslate(PrintWriter output, boolean debugFlag) {
+		DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag);
+		translation.translateOntology(axioms);
+	}
+
+	public Collection<String> enumerateAllModels() {
+		return enumerator.enumerateAllModels();
+	}
+
+	public Collection<String> enumerateModels(int number) {
+		return enumerator.enumerateModels(number);
+	}
+
+
 //	public void outputNormalizedOntology(PrintWriter writer) {
 //		NiceAxiomPrinter ontoPrinter = new NiceAxiomPrinter(writer);
 //		for (OWLIndividualAxiom ia : axioms.m_facts) {
@@ -112,7 +165,7 @@ public class Wolpertinger implements OWLReasoner {
 //			writer.print(".\n");
 //		}
 //	}
-	
+
 	// --------------
 	// OWLReasoner implementations up from here
 	// --------------
@@ -120,13 +173,13 @@ public class Wolpertinger implements OWLReasoner {
 	@Override
 	public void dispose() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void flush() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -387,13 +440,13 @@ public class Wolpertinger implements OWLReasoner {
 	@Override
 	public void interrupt() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public boolean isConsistent() {
-		// TODO Auto-generated method stub
-		return false;
+        Collection<String> models = enumerator.enumerateAllModels();
+		return models.isEmpty();
 	}
 
 	@Override
@@ -429,7 +482,7 @@ public class Wolpertinger implements OWLReasoner {
 	@Override
 	public void precomputeInferences(InferenceType... arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

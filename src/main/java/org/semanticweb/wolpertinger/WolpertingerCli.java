@@ -50,6 +50,7 @@ import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
  * Command Line Interface for Wolpertinger.
  *
  * @author Lukas Schweizer
+ * @author Satyadharma Tirtarasa
  */
 public class WolpertingerCli {
 
@@ -69,7 +70,7 @@ public class WolpertingerCli {
     }
 
     protected interface TranslationAction {
-    	void run(OWLOntology ontology, Configuration configuration, StatusOutput status, PrintWriter output);
+    	void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output);
     }
 
     static protected class DebugTranslationAction implements TranslationAction {
@@ -81,29 +82,24 @@ public class WolpertingerCli {
     	}
 
 		@Override
-		public void run(OWLOntology ontology, Configuration configuration, StatusOutput status, PrintWriter output) {
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag);
-			translation.translateOntology(ontology);
 		}
 
     }
 
     static protected class NaiveTranslationAction implements TranslationAction {
-
 		@Override
-		public void run(OWLOntology ontology, Configuration configuration, StatusOutput status, PrintWriter output) {
-			NaiveTranslation translation = new NaiveTranslation(configuration, output);
-			translation.translateOntology(ontology);
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			wolpertinger.naiveTranslate(new PrintWriter(System.out));
 		}
-
     }
 
     static protected class DirectTranslationAction implements TranslationAction {
 
 		@Override
-		public void run(OWLOntology ontology, Configuration configuration, StatusOutput status, PrintWriter output) {
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			DirectTranslation translation = new DirectTranslation(configuration, output);
-			translation.translateOntology(ontology);
 		}
 
     }
@@ -133,26 +129,14 @@ public class WolpertingerCli {
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)"),
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('d', "domain", groupActions, true, "FILE", "get fixed domain from FILE"),
-
-
 	};
 
 	public static void main(String[] args) {
 		try {
 			Configuration configuration = new Configuration();
-
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
 
-			File tmpFile = new File("temp_wolpertinger.lp");
 			PrintWriter output = new PrintWriter(System.out);
-
-			try {
-				tmpFile.createNewFile();
-				output = new PrintWriter(tmpFile);
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
 
 			URI base;
 			try {
@@ -283,7 +267,6 @@ public class WolpertingerCli {
 			}
 			StatusOutput status = new StatusOutput(verbosity);
 			for (IRI iriOntology : ontologies) {
-
 				status.log(2,"Processing "+iriOntology.toString());
                 status.log(2,String.valueOf(actions.size())+" actions");
 
@@ -307,7 +290,7 @@ public class WolpertingerCli {
                     long parseTime = System.currentTimeMillis()-startTime;
                     status.log(2,"Ontology parsed in " + String.valueOf(parseTime) + " msec.");
                     startTime = System.currentTimeMillis();
-                    //Wolpertinger wolpertinger = new Wolpertinger(configuration, ontology);
+                    Wolpertinger wolpertinger = new Wolpertinger(configuration, ontology);
                    // Prefixes prefixes=hermit.getPrefixes();
 //                    if (defaultPrefix!=null) {
 //                        try {
@@ -331,15 +314,9 @@ public class WolpertingerCli {
                     for (TranslationAction action : actions) {
                         status.log(2, "Doing action...");
                         startTime = System.currentTimeMillis();
-                        action.run(ontology, configuration, status, output);
+                        action.run(wolpertinger, configuration, status, output);
                         long actionTime = System.currentTimeMillis() - startTime;
                         status.log(2, "...action completed in " + String.valueOf(actionTime) + " msec.");
-                        ClingoModelEnumerator enumerator = new ClingoModelEnumerator(tmpFile.getAbsolutePath());
-                        Collection<String> models = enumerator.enumerateAllModels();
-                        int counter = 1;
-                        for (String model : models) {
-                        	System.out.println("Model # " + counter++ + " : " + model);
-                        }
                     }
                 } catch (OWLException e) {
                 	System.err.println(e.getMessage());

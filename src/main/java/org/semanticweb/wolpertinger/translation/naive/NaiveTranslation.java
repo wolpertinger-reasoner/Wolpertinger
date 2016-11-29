@@ -166,6 +166,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		OWLAxioms axioms = new OWLAxioms();
 
 		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
+
 		if(configuration.getDomainIndividuals() == null) {
 			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
 		}

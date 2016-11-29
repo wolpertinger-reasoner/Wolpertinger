@@ -56,7 +56,6 @@ public class ClingoSolver implements Solver {
 			String answerset;
 			LinkedList<String> answersets = new LinkedList<String>();
 			while ((answerset = clingoReader.readLine()) != null) {
-
 				if (!answerset.equalsIgnoreCase("SATISFIABLE") && !answerset.equalsIgnoreCase("UNSATISFIABLE")) {
 					answersets.add(answerset);
 				}
