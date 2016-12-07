@@ -266,7 +266,6 @@ public class OWLNormalization {
         			firstWrapper.add(firstIndividual);
         			OWLObjectOneOfImpl firstOneOf = new OWLObjectOneOfImpl (firstWrapper);
         			OWLClassAssertionAxiomImpl impl = new OWLClassAssertionAxiomImpl(secondIndividual, firstOneOf , new HashSet<OWLAnnotation> ());
-        			System.out.println(impl);
         			axiom = impl;
         		} else if (!m_domain.contains(firstIndividual) && m_domain.contains(secondIndividual)) {
         			Set<OWLIndividual> secondWrapper = new HashSet<OWLIndividual> ();

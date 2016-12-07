@@ -140,6 +140,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	private Collection<OWLClassExpression[]> newInclusions;
 	private Configuration configuration;
 
+	private boolean assertionMode;
 	/**
 	 * Creates a {@link NaiveTranslation} instance
 	 * @param configuration
@@ -152,6 +153,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		this.auxClasses = new HashSet<OWLClass>();
 		this.configuration = configuration;
 		this.writer = writer;
+		this.assertionMode = false;
 		var = new VariableIssuer();
 	}
 
@@ -183,6 +185,11 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	private void clearState() {
 		this.newInclusions = new LinkedList<OWLClassExpression[]>();
 		this.auxClasses = new HashSet<OWLClass>();
+	}
+
+	public void individualAssertionMode(OWLNamedIndividual individual) {
+		this.var = new IndividualIssuer (mapper.getConstantName(individual));
+		this.assertionMode = true;
 	}
 
 	/**
@@ -353,9 +360,50 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			classExp.accept(this);
 			isFirst=false;
 		}
+		var.reset();
+		writer.print(ASP2CoreSymbols.CONJUNCTION);
+		writer.print("thing");
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print("X"); //var issuer problem
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		writer.print(ASP2CoreSymbols.EOR);
 		writer.println();
 
+		var.reset();
+	}
+
+	public void translateEntailment (OWLAxioms normalizedOntology) {
+		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
+			translateEntailmentInclusion(inclusion);
+		}
+
+		writer.print(ASP2CoreSymbols.IMPLICATION);
+		writer.print(ASP2CoreSymbols.NAF);
+		writer.print(" violation.");
+	}
+
+	private void translateEntailmentInclusion(OWLClassExpression[] inclusion) {
+		writer.print("violation");
+		writer.print(ASP2CoreSymbols.IMPLICATION);
+
+		boolean isFirst=true;
+		for (OWLClassExpression classExp : inclusion) {
+			if (!isFirst) {
+				writer.print(ASP2CoreSymbols.CONJUNCTION);
+			}
+			classExp.accept(this);
+			isFirst=false;
+		}
+		var.reset();
+		if(!assertionMode){
+			writer.print(ASP2CoreSymbols.CONJUNCTION);
+			writer.print("thing");
+			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+			writer.print("X"); //var issuer problem
+			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		}
+		writer.print(ASP2CoreSymbols.EOR);
+		writer.println();
 		var.reset();
 	}
 
@@ -532,8 +580,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/**
 	 * Provides a sequence of variables X,Y,Y1,Y2,...
 	 */
-	private final class VariableIssuer {
-
+	private class VariableIssuer {
 		int counter = 0;
 		String currentVar = "X";
 
@@ -562,6 +609,25 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 	}
 
+	private class IndividualIssuer extends VariableIssuer {
+		String individualName = null;
+
+		public IndividualIssuer(String individualName) {
+			this.individualName = individualName;
+		}
+
+		@Override
+		public String currentVar () {
+			return individualName;
+		}
+
+		@Override
+		public String nextVariable() {
+			return individualName;
+		}
+
+
+	}
 
 	// ----------------------
 	// BEGIN OWLAxiomVisitor methods

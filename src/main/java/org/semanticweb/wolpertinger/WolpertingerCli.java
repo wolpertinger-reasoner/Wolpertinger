@@ -29,22 +29,35 @@ import java.net.URI;
 import java.text.BreakIterator;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.reasoner.Node;
+import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.semanticweb.wolpertinger.translation.direct.DirectTranslation;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
+
+import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectIntersectionOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
 
 /**
  * Command Line Interface for Wolpertinger.
@@ -92,6 +105,30 @@ public class WolpertingerCli {
 		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.naiveTranslate(new PrintWriter(System.out));
+			/* Example 1
+			OWLClassImpl subClass = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptD"));
+			OWLClassImpl superClass = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptB"));
+			OWLAxiom axiom = new OWLSubClassOfAxiomImpl (subClass, superClass, new HashSet<OWLAnnotation> ());
+			*/
+
+			/* Example 2
+			OWLClassImpl class1 = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptA"));
+			OWLClassImpl class2 = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptA"));
+			OWLNamedIndividualImpl individual = new OWLNamedIndividualImpl (IRI.create("http://www.example.org/ont#d"));
+			LinkedHashSet<OWLClassExpression> hashSet = new LinkedHashSet<OWLClassExpression> ();
+			hashSet.add(class1);
+			hashSet.add(class2);
+			OWLObjectIntersectionOfImpl union = new OWLObjectIntersectionOfImpl(hashSet);
+			OWLClassAssertionAxiomImpl axiom = new OWLClassAssertionAxiomImpl(individual, union, new HashSet<OWLAnnotation>());
+			*/
+			//System.out.println("ENTAILED : " + wolpertinger.isEntailed(axiom));
+
+			OWLClassImpl classX = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptB"));
+			NodeSet<OWLNamedIndividual> ind = wolpertinger.getInstances(classX, false);
+			for (Node<OWLNamedIndividual> in : ind) {
+				System.out.println("MEMBER : " + in);
+			}
+			System.out.println("CONSISTENT : " + wolpertinger.isConsistent());
 		}
     }
 

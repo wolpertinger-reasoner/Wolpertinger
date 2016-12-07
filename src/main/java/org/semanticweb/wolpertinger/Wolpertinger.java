@@ -24,12 +24,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.coode.owlapi.obo.parser.IntersectionOfHandler;
 import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataProperty;
@@ -40,6 +45,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.reasoner.BufferingMode;
 import org.semanticweb.owlapi.reasoner.FreshEntityPolicy;
 import org.semanticweb.owlapi.reasoner.IndividualNodeSetPolicy;
@@ -47,6 +53,7 @@ import org.semanticweb.owlapi.reasoner.InferenceType;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
 import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
@@ -55,6 +62,12 @@ import org.semanticweb.wolpertinger.structural.util.NiceAxiomPrinter;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
+
+import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectIntersectionOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
 
 /**
  * TODO: Detailed Description here.
@@ -78,6 +91,7 @@ public class Wolpertinger implements OWLReasoner {
 	private boolean baseProgramReady;
 
 	private ClingoModelEnumerator enumerator;
+	private OWLNormalization normalization;
 
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
@@ -102,7 +116,7 @@ public class Wolpertinger implements OWLReasoner {
 			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
 		}
 
-		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
+		normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
 
 		for (OWLOntology ontology : importClosure) {
 			normalization.processOntology(ontology);
@@ -112,14 +126,14 @@ public class Wolpertinger implements OWLReasoner {
 			tmpFile = File.createTempFile("wolpertinger-base-program", ".lp");
 			tmpFile.deleteOnExit();
 			output = new PrintWriter(tmpFile);
-			NaiveTranslation translation = new NaiveTranslation(configuration, output);
-			translation.translateOntology(axioms);
+			naiveTranslation = new NaiveTranslation(configuration, output);
+			naiveTranslation.translateOntology(axioms);
 			baseProgramReady = true;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		enumerator = new ClingoModelEnumerator(tmpFile.getAbsolutePath());
+		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath()});
 	}
 
 	private void clearState() {
@@ -280,10 +294,17 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	@Override
-	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression arg0,
+	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression,
 			boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature();
+		OWLNamedIndividualNodeSet result = new OWLNamedIndividualNodeSet ();
+		for (OWLNamedIndividual individual : individuals) {
+			OWLClassAssertionAxiom impl = new OWLClassAssertionAxiomImpl (individual, classExpression, new HashSet<OWLAnnotation> ());
+			if(isEntailed(impl)) {
+				result.addEntity(individual);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -446,19 +467,88 @@ public class Wolpertinger implements OWLReasoner {
 	@Override
 	public boolean isConsistent() {
         Collection<String> models = enumerator.enumerateAllModels();
-		return models.isEmpty();
+		return !models.isEmpty();
 	}
 
 	@Override
-	public boolean isEntailed(OWLAxiom arg0) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean isEntailed(OWLAxiom axiom) {
+		HashSet<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
+		wrapper.add(axiom);
+		return isEntailed(wrapper);
 	}
 
 	@Override
-	public boolean isEntailed(Set<? extends OWLAxiom> arg0) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean isEntailed(Set<? extends OWLAxiom> axiomSet) {
+		File tmpEntailmentFile = null;
+		PrintWriter entailmentOutput = null;
+
+		// write the constraints
+		try {
+			tmpEntailmentFile = File.createTempFile("wolpertinger-entailment-program", ".lp");
+			tmpEntailmentFile.deleteOnExit();
+			entailmentOutput = new PrintWriter(tmpEntailmentFile);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		for (OWLAxiom axiom : axiomSet) {
+			if(axiom instanceof OWLSubClassOfAxiom) {
+				OWLAxioms tempAxioms = new OWLAxioms ();
+				Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
+				OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
+				// transform into union of ~A and B
+				OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
+				LinkedHashSet<OWLClassExpression> intersectionSet = new LinkedHashSet<OWLClassExpression> ();
+				OWLClassExpression negatedSubClass = new OWLObjectComplementOfImpl (subClassOfAxiom.getSubClass());
+				intersectionSet.add(negatedSubClass);
+				intersectionSet.add(subClassOfAxiom.getSuperClass());
+				OWLObjectUnionOfImpl intersection = new OWLObjectUnionOfImpl (intersectionSet);
+				OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
+				OWLSubClassOfAxiomImpl convertedSubClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, intersection, new HashSet<OWLAnnotation> ());
+				wrapper.add(convertedSubClassOfAxiom);
+				tempNormalization.processAxioms(wrapper);
+				NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
+				axiomTranslation.translateEntailment(tempAxioms);
+			} else if (axiom instanceof OWLClassAssertionAxiom) {
+				OWLAxioms tempAxioms = new OWLAxioms ();
+				Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
+				OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
+
+				OWLClassAssertionAxiom classAssertionAxiom = (OWLClassAssertionAxiom) axiom;
+				OWLClassExpression classExpression = classAssertionAxiom.getClassExpression();
+				OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
+				OWLSubClassOfAxiomImpl subClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, classExpression, new HashSet<OWLAnnotation> ());
+				wrapper.add(subClassOfAxiom);
+				tempNormalization.processAxioms(wrapper);
+				NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
+				axiomTranslation.individualAssertionMode((OWLNamedIndividual) classAssertionAxiom.getIndividual());
+				axiomTranslation.translateEntailment(tempAxioms);
+			}
+		}
+		entailmentOutput.close();
+		String line = null;
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader (new FileReader (tmpEntailmentFile.getAbsolutePath()));
+			while((line = reader.readLine()) != null) {
+				System.out.println(line);
+			}
+			reader.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+
+		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
+		if (enumerator.enumerateModels(1).size() == 0) {
+			tmpEntailmentFile.delete();
+			return true;
+		} else{
+			tmpEntailmentFile.delete();
+			return false;
+		}
 	}
 
 	@Override

@@ -24,9 +24,9 @@ import org.semanticweb.owlapi.model.OWLOntology;
 public class ClingoModelEnumerator {
 	//private static Logger log = Logger.getLogger(OWLModelEnumerator.class);
 
-	private String lpFilePath = null;
+	private String[] lpFilePath = null;
 
-	public ClingoModelEnumerator(String _lpFilePath) {
+	public ClingoModelEnumerator(String[] _lpFilePath) {
 		lpFilePath = _lpFilePath;
 	}
 

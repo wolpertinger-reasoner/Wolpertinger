@@ -36,13 +36,15 @@ public class ClingoSolver implements Solver {
 	 * @return
 	 * @throws SolvingException
 	 */
-	public Collection<String> solve(String _program, int _answers) throws SolvingException {
-		String[] command = new String[clingoArguments.length + 3];
+	public Collection<String> solve(String[] _program, int _answers) throws SolvingException {
+		String[] command = new String[clingoArguments.length + _program.length + 2];
 		command[0] = clingoExecPath;
 		for (int i=0,j=1; i<clingoArguments.length; i++,j++){
 			command[j] = clingoArguments[i];
 		}
-		command[command.length-2] = _program;
+		for (int ii = 0; ii < _program.length; ii++) {
+			command[command.length-2-(_program.length - ii - 1)] = _program[ii];
+		}
 		command[command.length-1] = String.format("%d", _answers);
 
 		ProcessBuilder pb = new ProcessBuilder(command);
