@@ -126,7 +126,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLSymmetricObjectPropertyAxiomImpl;
  * @see OWLClassExpressionVisitor
  *
  * @author Lukas Schweizer
- *
+ * @author Satyadharma Tirtarasa
  */
 public class NaiveTranslation implements OWLOntologyTranslator {
 
@@ -225,6 +225,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		// TBox axioms
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
 			translateInclusion(inclusion);
+			var.reset();
 		}
 
 		// RBox
@@ -361,15 +362,14 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			isFirst=false;
 		}
 		var.reset();
+		String currentVar = var.currentVar();
 		writer.print(ASP2CoreSymbols.CONJUNCTION);
 		writer.print("thing");
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print("X"); //var issuer problem
+		writer.print(currentVar);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		writer.print(ASP2CoreSymbols.EOR);
 		writer.println();
-
-		var.reset();
 	}
 
 	public void translateEntailment (OWLAxioms normalizedOntology) {
@@ -567,9 +567,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 	private void assertThing(OWLNamedIndividual individual) {
 		String owlThing = "thing";
-
 		String individualName = mapper.getConstantName(individual);
 
+		// thing(a).
 		writer.print(owlThing);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.print(individualName);
@@ -599,8 +599,8 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 		public String nextVariable() {
 			String nvar = "X";
-			counter++;
 
+			counter++;
 			if (counter == 1) nvar = "Y";
 			else if (counter > 1) nvar = "Y".concat(String.valueOf(counter-1));
 
@@ -735,9 +735,19 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 			if (isAuxiliaryClass(owlClass)) auxClasses.add(owlClass);
 		}
-		//
 		else if (operand instanceof OWLObjectHasSelf) {
-			throw new NotImplementedException();
+			OWLObjectHasSelf owlHasSelf = (OWLObjectHasSelf) operand;
+			OWLObjectProperty property = owlHasSelf.getProperty().asOWLObjectProperty();
+			String propertyName = mapper.getPredicateName(property);
+			String cVar = var.currentVar();
+
+			// r(X,X)
+			writer.print(propertyName);
+			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+			writer.print(cVar);
+			writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
+			writer.print(cVar);
+			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		}
 		else if (operand instanceof OWLObjectOneOf) {
 			throw new NotImplementedException();
@@ -770,18 +780,23 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	@Override
 	public void visit(OWLObjectAllValuesFrom allValFrom) {
+		System.out.println(allValFrom);
 		OWLObjectProperty property = allValFrom.getProperty().asOWLObjectProperty();
 		OWLClassExpression filler = allValFrom.getFiller();
 		String propertyName = mapper.getPredicateName(property);
+
 		//String className = mapper.getPredicateName(fillerClass);
-		writer.print(propertyName);
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 		String cVar = var.currentVar();
 		String nVar = var.nextVariable();
+
+		// r(X,Y),
+		writer.print(propertyName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.print(cVar);
 		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
 		writer.print(nVar);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(ASP2CoreSymbols.CONJUNCTION);
 
 		// distinguish -A or A
 		// complex fillers are not possible anymore at this stage
@@ -792,17 +807,17 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 				OWLClass auxOneOf = getOneOfAuxiliaryClass(oneOf);
 
 				String auxOneOfName = mapper.getPredicateName(auxOneOf);
-				writer.print(ASP2CoreSymbols.CONJUNCTION);
 				writer.write(auxOneOfName);
 				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 				writer.write(nVar);
 				writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
 			} else {
+				assert !expr.isAnonymous();
+
 				OWLClass owlClass = expr.asOWLClass();
 				String predicateName = mapper.getPredicateName(owlClass);
 
-				//writer.print(ASP2CoreSymbols.NAF + " ");
-				writer.print(ASP2CoreSymbols.CONJUNCTION);
+				// A(X)
 				writer.print(predicateName);
 				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 				writer.print(nVar);
@@ -816,7 +831,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			OWLClass auxOneOf = getOneOfAuxiliaryClass(oneOf);
 
 			String auxOneOfName = mapper.getPredicateName(auxOneOf);
-			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(ASP2CoreSymbols.NAF + " ");
 			writer.write(auxOneOfName);
 			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
@@ -830,7 +844,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			assert filler instanceof OWLClass;
 			String predicateName = mapper.getPredicateName(filler.asOWLClass());
 
-			writer.print(ASP2CoreSymbols.CONJUNCTION);
+			// not A(X).
 			writer.print(ASP2CoreSymbols.NAF + " ");
 			writer.print(predicateName);
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
@@ -969,9 +983,19 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectHasSelf)
 	 */
 	@Override
-	public void visit(OWLObjectHasSelf arg0) {
-		// TODO Auto-generated method stub
+	public void visit(OWLObjectHasSelf owlHasSelf) {
+		OWLObjectProperty property = owlHasSelf.getProperty().asOWLObjectProperty();
+		String propertyName = mapper.getPredicateName(property);
+		String cVar = var.currentVar();
 
+		// not r(X,X)
+		writer.print(ASP2CoreSymbols.NAF + " ");
+		writer.print(propertyName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(cVar);
+		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
+		writer.print(cVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 	}
 
 	/**
@@ -1385,10 +1409,13 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	@Override
 	public void visit(OWLClassAssertionAxiom classAssertion) {
 		OWLClassExpression classExpression = classAssertion.getClassExpression();
-		boolean isComplement = classExpression.getClassExpressionType().getName().equals("ObjectComplementOf");
-		if (isComplement) {
-			OWLClass owlClass = classAssertion.getClassExpression().getComplementNNF().asOWLClass();
-			OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
+		OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
+
+		if (classExpression instanceof OWLObjectComplementOf) {
+			OWLObjectComplementOf complementOf = (OWLObjectComplementOf) classExpression;
+			OWLClass owlClass = complementOf.getOperand().asOWLClass();
+
+			// not A(a).
 			writer.print(ASP2CoreSymbols.CLASSICAL_NEGATION);
 			writer.print(mapper.getPredicateName(owlClass));
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
@@ -1396,9 +1423,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 			writer.print(ASP2CoreSymbols.EOR);
 		} else {
-			OWLClass owlClass = classAssertion.getClassExpression().asOWLClass();
-			OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
+			OWLClass owlClass = classExpression.asOWLClass();
 
+			// A(a).
 			writer.print(mapper.getPredicateName(owlClass));
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print(mapper.getConstantName(individual));

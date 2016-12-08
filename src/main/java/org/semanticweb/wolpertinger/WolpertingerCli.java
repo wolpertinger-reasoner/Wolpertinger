@@ -123,12 +123,14 @@ public class WolpertingerCli {
 			*/
 			//System.out.println("ENTAILED : " + wolpertinger.isEntailed(axiom));
 
+			/*
 			OWLClassImpl classX = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptB"));
 			NodeSet<OWLNamedIndividual> ind = wolpertinger.getInstances(classX, false);
 			for (Node<OWLNamedIndividual> in : ind) {
 				System.out.println("MEMBER : " + in);
 			}
 			System.out.println("CONSISTENT : " + wolpertinger.isConsistent());
+			*/
 		}
     }
 
