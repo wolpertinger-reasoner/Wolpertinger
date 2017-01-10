@@ -131,6 +131,7 @@ public class WolpertingerCli {
 			}
 			System.out.println("CONSISTENT : " + wolpertinger.isConsistent());
 			*/
+			wolpertinger.classify();
 		}
     }
 

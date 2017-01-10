@@ -780,7 +780,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	@Override
 	public void visit(OWLObjectAllValuesFrom allValFrom) {
-		System.out.println(allValFrom);
 		OWLObjectProperty property = allValFrom.getProperty().asOWLObjectProperty();
 		OWLClassExpression filler = allValFrom.getFiller();
 		String propertyName = mapper.getPredicateName(property);
@@ -932,11 +931,11 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			comperator = "=";
 
 		if (filler instanceof OWLObjectComplementOf){
+			OWLClassExpression operand = ((OWLObjectComplementOf) filler).getOperand();
 			fillerName = mapper.getPredicateName(((OWLObjectComplementOf) filler).getOperand().asOWLClass());
 			fillerName = ASP2CoreSymbols.NAF + " " + fillerName;
-
-			if (isAuxiliaryClass(((OWLObjectComplementOf) filler).getOperand().asOWLClass()))
-				auxClasses.add(filler.asOWLClass());
+			if (isAuxiliaryClass(operand.asOWLClass()))
+				auxClasses.add(operand.asOWLClass());
 		}
 		else if (filler instanceof OWLObjectOneOf) {
 			//TODO: in case of a max-cardinality we will never end up within here,

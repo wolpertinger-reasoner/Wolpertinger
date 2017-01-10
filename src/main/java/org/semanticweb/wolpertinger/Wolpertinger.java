@@ -162,7 +162,20 @@ public class Wolpertinger implements OWLReasoner {
 		return enumerator.enumerateModels(number);
 	}
 
-
+	public void classify() {
+		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature();
+		for (OWLClass subClass : allClasses) {
+			for (OWLClass superClass : allClasses) {
+				boolean entailed = isEntailed(new OWLSubClassOfAxiomImpl (subClass, superClass, new HashSet<OWLAnnotation> ()));
+				System.out.print(subClass.getIRI().getFragment() + " -> " + superClass.getIRI().getFragment());
+				if (entailed) {
+					System.out.println(" YES");
+				} else {
+					System.out.println(" NO");
+				}
+			}
+		}
+	}
 //	public void outputNormalizedOntology(PrintWriter writer) {
 //		NiceAxiomPrinter ontoPrinter = new NiceAxiomPrinter(writer);
 //		for (OWLIndividualAxiom ia : axioms.m_facts) {
@@ -527,20 +540,6 @@ public class Wolpertinger implements OWLReasoner {
 			}
 		}
 		entailmentOutput.close();
-		String line = null;
-		BufferedReader reader;
-		try {
-			reader = new BufferedReader (new FileReader (tmpEntailmentFile.getAbsolutePath()));
-			while((line = reader.readLine()) != null) {
-				System.out.println(line);
-			}
-			reader.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-
 		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
 		if (enumerator.enumerateModels(1).size() == 0) {
 			tmpEntailmentFile.delete();
