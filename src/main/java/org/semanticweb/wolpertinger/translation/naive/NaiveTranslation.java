@@ -178,7 +178,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		for (OWLOntology ontology : importClosure) {
 			normalization.processOntology(ontology);
 		}
-
 		return axioms;
 	}
 
@@ -214,20 +213,28 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			// TODO: avoid adding assertions to owl:Thing when there is already real owl:Thing assertions
 			assertThing(individual);
 			writer.println();
+			var.reset();
 		}
+
 
 		// ABox axioms
 		for (OWLIndividualAxiom assertion : normalizedOntology.m_facts) {
 			assertion.accept(this);
 			writer.println();
+			var.reset();
 		}
-
 		// TBox axioms
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
+			/*
+			writer.write("INCLUSION : ");
+			for(OWLClassExpression e : inclusion) {
+				writer.write(e + "  ");
+			}
+			writer.println();
+			*/
 			translateInclusion(inclusion);
 			var.reset();
 		}
-
 		// RBox
 		for (OWLObjectPropertyExpression objectPropertyExp : normalizedOntology.m_complexObjectPropertyExpressions) {
 			// TODO
@@ -240,7 +247,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			}
 			OWLSubPropertyChainAxiomImpl prop = new OWLSubPropertyChainAxiomImpl(subPropertyList, complexObjPropertyInclusion.m_superObjectProperty, new LinkedList<OWLAnnotation>());
 			prop.accept(this);
-
+			var.reset();
 			writer.println();
 		}
 
@@ -248,22 +255,24 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			//
 			OWLAsymmetricObjectPropertyAxiomImpl asyProp = new OWLAsymmetricObjectPropertyAxiomImpl(objPropertyExp, new LinkedList<OWLAnnotation>());
 			asyProp.accept(this);
-
+			var.reset();
 			writer.println();
 		}
 
 		for (OWLObjectPropertyExpression objPropertyExp : normalizedOntology.m_irreflexiveObjectProperties) {
 			OWLIrreflexiveObjectPropertyAxiomImpl irrProp = new OWLIrreflexiveObjectPropertyAxiomImpl(objPropertyExp, new LinkedList<OWLAnnotation>());
 			irrProp.accept(this);
-
+			var.reset();
 			writer.println();
 		}
+
 		for (OWLObjectPropertyExpression objPropertyExp : normalizedOntology.m_reflexiveObjectProperties) {
 			OWLReflexiveObjectPropertyAxiomImpl refProp = new OWLReflexiveObjectPropertyAxiomImpl(objPropertyExp, new LinkedList<OWLAnnotation>());
 			refProp.accept(this);
-
+			var.reset();
 			writer.println();
 		}
+
 		for (OWLObjectPropertyExpression[] properties : normalizedOntology.m_disjointObjectProperties) {
 			HashSet<OWLObjectPropertyExpression> props = new HashSet<OWLObjectPropertyExpression>();
 			for (OWLObjectPropertyExpression property : properties) {
@@ -271,7 +280,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			}
 			OWLDisjointObjectPropertiesAxiomImpl disProp = new OWLDisjointObjectPropertiesAxiomImpl(props, new LinkedList<OWLAnnotation>());
 			disProp.accept(this);
-
+			var.reset();
 			writer.println();
 		}
 
@@ -285,44 +294,67 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 				OWLSubPropertyChainAxiomImpl prop = new OWLSubPropertyChainAxiomImpl(subProperty, objectProperty[1], new LinkedList<OWLAnnotation>());
 				prop.accept(this);
 			}
+			var.reset();
 			writer.println();
 		}
 
-
 		// translate remaining new inclusions, mainly dealing with auxiliary classes
 		for (OWLClassExpression[] inclusion : newInclusions) {
-			translateInclusion(inclusion);
+			//translateInclusion(inclusion);
+			var.reset();
 		}
 
 		// add assertions of nominal guard classes
 		for (OWLNamedIndividual individual : nominalGuards.keySet()) {
 			OWLClass guard = nominalGuards.get(individual);
 			String guardName = mapper.getPredicateName(guard);
-			String indibName = mapper.getConstantName(individual);
 
-			writer.write(guardName);
-			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.write(indibName);
-			writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
-			writer.write(ASP2CoreSymbols.EOR);
-			writer.println();
+			if (configuration.getDomainIndividuals().contains(individual)) {
+				writer.write(guardName);
+				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.write(mapper.getConstantName(individual));
+				writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
+				writer.write(ASP2CoreSymbols.EOR);
+				writer.println();
+			} else {
+				String thing = "thing";
+
+				// 1 {guard_i_x(X):thing(X) } 1.
+				writer.write("1 {");
+				writer.write(guardName);
+				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.write(var.currentVar);
+				writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
+				writer.write(ASP2CoreSymbols.CONDITION);
+				writer.write(thing);
+				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.write(var.currentVar);
+				writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
+				writer.write("} 1");
+				writer.write(ASP2CoreSymbols.EOR);
+				writer.println();
+			}
+			var.reset();
 		}
 
 		// Guessing
 		for (OWLClass owlClass : normalizedOntology.m_classes) {
 			createExtensionGuess(owlClass);
 			var.reset();
-
 			writer.println();
 		}
+
 		// Take care of auxiliary classes, if there are any...
 		//if (null != auxClasses) {
-			for (OWLClass owlClass : auxClasses) {
+		for (OWLClass owlClass : auxClasses) {
+			if (isOneOfAuxiliaryClass(owlClass)) {
+
+			} else {
 				createExtensionGuess(owlClass);
 				var.reset();
-
 				writer.println();
 			}
+		}
 		//}
 
 
@@ -330,7 +362,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
 			createExtensionGuess(property);
 			var.reset();
-
 			writer.println();
 		}
 
@@ -676,6 +707,15 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		return Prefixes.isInternalIRI(auxClass.getIRI().toString());
 	}
 
+	private boolean isOneOfAuxiliaryClass(OWLClass owlClass) {
+		if (Prefixes.isInternalIRI(owlClass.getIRI().toString())) {
+			String iriString = owlClass.getIRI().toString();
+			boolean isOneOf = iriString.substring(iriString.lastIndexOf(":") + 1, iriString.lastIndexOf("#")).equals("nnq");
+			return isOneOf;
+		} else {
+			return false;
+		}
+	}
 
 	/**
 	 * According to the naive translation:<br/>
@@ -878,7 +918,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		if (oneOfAuxClasses.containsKey(objectOneOf))
 			return oneOfAuxClasses.get(objectOneOf);
 
-		OWLClass auxOneOf = new OWLClassImpl(IRI.create(INTERNAL_IRI_PREFIX + "#oneOfAux" + (oneOfAuxClasses.size()+1)));
+		OWLClass auxOneOf = new OWLClassImpl(IRI.create(INTERNAL_IRI_PREFIX + "#oneofaux" + (oneOfAuxClasses.size()+1)));
 		OWLClassExpression[] inclusion = new OWLClassExpression[2];
 
 		inclusion[0] = new OWLObjectComplementOfImpl(auxOneOf);
@@ -888,7 +928,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		newInclusions.add(inclusion);
 
 		// add to the set of class which needs to be guessed
-		auxClasses.add(auxOneOf);
+		// auxClasses.add(auxOneOf);
 		oneOfAuxClasses.put(objectOneOf, auxOneOf);
 		return auxOneOf;
 	}
@@ -938,6 +978,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 				auxClasses.add(operand.asOWLClass());
 		}
 		else if (filler instanceof OWLObjectOneOf) {
+			System.out.println("Shouldn't be here anymore");
 			//TODO: in case of a max-cardinality we will never end up within here,
 			// since the normalization for max-cardinality uses an "optimization".
 			OWLObjectOneOf oneOf = (OWLObjectOneOf) filler;
@@ -1019,6 +1060,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	private static final String INTERNAL_IRI_PREFIX = "http://www.semanticweb.org/wolpertinger/internal";
 
 	private HashMap<OWLNamedIndividual, OWLClass> nominalGuards = new HashMap<OWLNamedIndividual, OWLClass>();
+
 	private OWLClass getNominalGuard(OWLNamedIndividual individual) {
 		if (nominalGuards.containsKey(individual))
 			return nominalGuards.get(individual);
@@ -1423,13 +1465,27 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.print(ASP2CoreSymbols.EOR);
 		} else {
 			OWLClass owlClass = classExpression.asOWLClass();
+			OWLClass guard = getNominalGuard(individual);
 
-			// A(a).
-			writer.print(mapper.getPredicateName(owlClass));
-			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.print(mapper.getConstantName(individual));
-			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-			writer.print(ASP2CoreSymbols.EOR);
+			if (isOneOfAuxiliaryClass(owlClass)) {
+				writer.print(mapper.getPredicateName(owlClass));
+				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.print(var.currentVar());
+				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+				writer.print(ASP2CoreSymbols.IMPLICATION);
+				writer.print(mapper.getPredicateName(guard));
+				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.print(var.currentVar());
+				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+				writer.print(ASP2CoreSymbols.EOR);
+			} else {
+				// A(a).
+				writer.print(mapper.getPredicateName(owlClass));
+				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+				writer.print(mapper.getConstantName(individual));
+				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+				writer.print(ASP2CoreSymbols.EOR);
+			}
 		}
 	}
 

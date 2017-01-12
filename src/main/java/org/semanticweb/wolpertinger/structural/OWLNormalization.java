@@ -202,6 +202,8 @@ public class OWLNormalization {
 
     public void processAxioms(Collection<? extends OWLAxiom> axioms) {
         AxiomVisitor axiomVisitor=new AxiomVisitor();
+
+        // ABox Preprocessing
         for (OWLAxiom axiom : axioms) {
         	if (axiom instanceof OWLClassAssertionAxiom) {
         		OWLClassAssertionAxiom axiomInst = (OWLClassAssertionAxiom) axiom;
@@ -1251,9 +1253,11 @@ public class OWLNormalization {
             if (isNominal(object.getOperand())) {
                 OWLObjectOneOf objectOneOf=(OWLObjectOneOf)object.getOperand();
                 OWLClass definition=getDefinitionForNegativeNominal(objectOneOf,m_alreadyExists);
-                if (!m_alreadyExists[0])
-                    for (OWLIndividual individual : objectOneOf.getIndividuals())
+                if (!m_alreadyExists[0]) {
+                    for (OWLIndividual individual : objectOneOf.getIndividuals()) {
                         addFact(m_factory.getOWLClassAssertionAxiom(definition,individual));
+                    }
+                }
                 return m_factory.getOWLObjectComplementOf(definition);
             }
             else
@@ -1262,20 +1266,40 @@ public class OWLNormalization {
 
         @Override
 		public OWLClassExpression visit(OWLObjectOneOf object) {
+        	//CHANGED
+			OWLClass definition=getDefinitionForNegativeNominal(object,m_alreadyExists);
+			if (!m_alreadyExists[0]) {
+			    for (OWLIndividual individual : object.getIndividuals()) {
+			        addFact(m_factory.getOWLClassAssertionAxiom(definition,individual));
+			    }
+			}
+			return definition;
+            /*
             for (OWLIndividual ind : object.getIndividuals())
                 if (ind.isAnonymous())
                     throw new IllegalArgumentException("Error: The class expression "+object+" contains anonymous individuals, which is not allowed in OWL 2 (erratum in first OWL 2 spec, to be fixed with next publication of minor corrections). ");
             return object;
+            */
         }
 
         @Override
 		public OWLClassExpression visit(OWLObjectSomeValuesFrom object) {
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(object.getProperty().getNamedProperty());
             OWLClassExpression filler=object.getFiller();
-            if (isSimple(filler) || isNominal(filler))
-                // The ObjectOneof cases is an optimization.
+            //CHANGED
+            if (isNominal(filler)) {
+            	OWLObjectOneOf objectOneOf = (OWLObjectOneOf) filler;
+            	OWLClass definition=getDefinitionForNegativeNominal(objectOneOf,m_alreadyExists);
+            	if (!m_alreadyExists[0]) {
+                    for (OWLIndividual individual : objectOneOf.getIndividuals()) {
+                        addFact(m_factory.getOWLClassAssertionAxiom(definition,individual));
+                    }
+                }
+            	return m_factory.getOWLObjectSomeValuesFrom(object.getProperty(),definition);
+            } else if (isSimple(filler)) {
+            	// The ObjectOneof cases is an optimization.
                 return object;
-            else {
+            } else {
                 OWLClassExpression definition=getDefinitionFor(filler,m_alreadyExists);
                 if (!m_alreadyExists[0])
                     m_newInclusions.add(new OWLClassExpression[] { negative(definition),filler });
@@ -1287,7 +1311,17 @@ public class OWLNormalization {
 		public OWLClassExpression visit(OWLObjectAllValuesFrom object) {
             m_axioms.m_objectPropertiesOccurringInOWLAxioms.add(object.getProperty().getNamedProperty());
             OWLClassExpression filler=object.getFiller();
-            if (isSimple(filler) || isNominal(filler) || isNegatedOneNominal(filler))
+            //CHANGED
+            if (isNominal(filler)) {
+            	OWLObjectOneOf objectOneOf = (OWLObjectOneOf) filler;
+            	OWLClass definition=getDefinitionForNegativeNominal(objectOneOf,m_alreadyExists);
+            	if (!m_alreadyExists[0]) {
+                    for (OWLIndividual individual : objectOneOf.getIndividuals()) {
+                        addFact(m_factory.getOWLClassAssertionAxiom(definition,individual));
+                    }
+                }
+            	return m_factory.getOWLObjectSomeValuesFrom(object.getProperty(),definition);
+            } else if (isSimple(filler) || isNominal(filler))
                 // The nominal cases are optimizations.
                 return object;
             else {

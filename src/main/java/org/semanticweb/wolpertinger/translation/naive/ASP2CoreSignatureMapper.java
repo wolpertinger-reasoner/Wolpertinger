@@ -1,5 +1,5 @@
 /*  Copyright 2015 by the International Center for Computational Logic, Technical University Dresden.
- 
+
     This file is part of Wolpertinger.
 
     Wolpertinger is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
 
 /**
- * 
+ *
  * @author Lukas Schweizer
  *
  */
@@ -34,17 +34,29 @@ public class ASP2CoreSignatureMapper extends SignatureMapper {
 	private boolean isAuxiliaryClass(OWLClass owlClass) {
 		return Prefixes.isInternalIRI(owlClass.getIRI().toString());
 	}
-	
+
+	private boolean isOneOfAuxiliaryClass(OWLClass owlClass) {
+		if (Prefixes.isInternalIRI(owlClass.getIRI().toString())) {
+			String iriString = owlClass.getIRI().toString();
+			boolean isOneOf = iriString.substring(iriString.lastIndexOf(":") + 1, iriString.lastIndexOf("#")).equals("nnq");
+			return isOneOf;
+		} else {
+			return false;
+		}
+	}
+
 	@Override
 	public String getPredicateName(OWLClass owlClass) {
 		String predicateName;
-		if (isAuxiliaryClass(owlClass)) {
+		if (isOneOfAuxiliaryClass(owlClass)) {
+			predicateName = "oneofaux" + owlClass.getIRI().toString().substring(owlClass.getIRI().toString().lastIndexOf("#")+1, owlClass.getIRI().toString().length());
+		} else if (isAuxiliaryClass(owlClass)) {
 			predicateName = "aux" + owlClass.getIRI().toString().substring(owlClass.getIRI().toString().lastIndexOf("#")+1, owlClass.getIRI().toString().length());
 		}
 		else {
 			predicateName = owlClass.getIRI().getFragment().toLowerCase();
 		}
-		
+
 		return putPredicateMapping(predicateName, owlClass);
 	}
 
@@ -55,7 +67,7 @@ public class ASP2CoreSignatureMapper extends SignatureMapper {
 	}
 
 	/**
-	 * For given {@link OWLIndividual}, a string representation is created induced by the 
+	 * For given {@link OWLIndividual}, a string representation is created induced by the
 	 * individual's IRI. Example: http://www.semanticweb.org/wolpertinger/ontologies/Sudoko#n11
 	 * becomes <i>i_n11</i>.
 	 */

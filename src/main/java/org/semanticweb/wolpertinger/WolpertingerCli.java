@@ -131,12 +131,11 @@ public class WolpertingerCli {
 			}
 			System.out.println("CONSISTENT : " + wolpertinger.isConsistent());
 			*/
-			wolpertinger.classify();
+			//wolpertinger.classify();
 		}
     }
 
     static protected class DirectTranslationAction implements TranslationAction {
-
 		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			DirectTranslation translation = new DirectTranslation(configuration, output);

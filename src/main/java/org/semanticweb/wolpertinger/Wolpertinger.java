@@ -122,6 +122,9 @@ public class Wolpertinger implements OWLReasoner {
 			normalization.processOntology(ontology);
 		}
 
+		axioms.m_namedIndividuals.clear();
+		axioms.m_namedIndividuals.addAll(configuration.getDomainIndividuals());
+
 		try {
 			tmpFile = File.createTempFile("wolpertinger-base-program", ".lp");
 			tmpFile.deleteOnExit();
@@ -176,6 +179,7 @@ public class Wolpertinger implements OWLReasoner {
 			}
 		}
 	}
+
 //	public void outputNormalizedOntology(PrintWriter writer) {
 //		NiceAxiomPrinter ontoPrinter = new NiceAxiomPrinter(writer);
 //		for (OWLIndividualAxiom ia : axioms.m_facts) {
