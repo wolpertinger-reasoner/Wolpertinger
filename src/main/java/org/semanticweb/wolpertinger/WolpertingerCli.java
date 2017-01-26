@@ -96,9 +96,8 @@ public class WolpertingerCli {
 
 		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-			DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag);
+			wolpertinger.naffTranslate(new PrintWriter(System.out), debugFlag);
 		}
-
     }
 
     static protected class NaiveTranslationAction implements TranslationAction {

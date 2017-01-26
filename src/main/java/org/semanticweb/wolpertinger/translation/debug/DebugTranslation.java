@@ -410,7 +410,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			throw new NotImplementedException();
 		}
 
-		// add #showp/n.  satements if required
+		// add #show p/n. statements if required
 		for (IRI conceptIRI : configuration.getConceptNamesToProjectOn()) {
 			String conceptName = mapper.getPredicateName(new OWLClassImpl(conceptIRI));
 
@@ -436,6 +436,20 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	        writer.write(String.format("    activated(C) : C=0..%d\n", nConstraints - 1));
 			writer.write("}.\n");
 		}
+
+		writer.println();
+
+		// show statement
+		for (OWLClass owlClass : normalizedOntology.m_classes) {
+			createShowStatement(owlClass);
+			writer.println();
+		}
+
+		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
+			createShowStatement(property);
+			writer.println();
+		}
+
 		writer.flush();
 	}
 
@@ -809,6 +823,18 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.EOR);
 	}
 
+	private void createShowStatement(OWLClass owlClass) {
+		String className = mapper.getPredicateName(owlClass);
+
+		writer.write("#show " + className + "/1.");
+	}
+
+	private void createShowStatement(OWLObjectProperty property) {
+		String propertyName = mapper.getPredicateName(property);
+
+		writer.write("#show " + propertyName + "/2.");
+	}
+
 	//TODO NAFF TRANSLATION?
 	private void createComplexInclusion(ComplexObjectPropertyInclusion complexObjPropertyInclusion) {
 		LinkedList<String> chainPredicateNameList = new LinkedList<String> ();
@@ -1024,7 +1050,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
 		writer.print(nVar);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(ASP2CoreSymbols.CONJUNCTION);
 
 		// distinguish -A or A
 		// complex fillers are not possible anymore at this stage
@@ -1061,6 +1086,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 			String auxOneOfName = mapper.getPredicateName(auxOneOf);
 
+			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(ASP2CoreSymbols.NAF + "_");
 			writer.write(auxOneOfName);
 			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
@@ -1074,6 +1100,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			assert filler instanceof OWLClass;
 			String predicateName = mapper.getPredicateName(filler.asOWLClass());
 
+			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(ASP2CoreSymbols.NAF + "_");
 			writer.print(predicateName);
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
