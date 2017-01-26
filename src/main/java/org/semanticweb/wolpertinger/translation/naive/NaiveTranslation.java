@@ -411,10 +411,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
 			translateEntailmentInclusion(inclusion);
 		}
-
-		writer.print(ASP2CoreSymbols.IMPLICATION);
-		writer.print(ASP2CoreSymbols.NAF);
-		writer.print(" violation.");
 	}
 
 	private void translateEntailmentInclusion(OWLClassExpression[] inclusion) {

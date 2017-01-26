@@ -61,6 +61,7 @@ import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.util.NiceAxiomPrinter;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
+import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
@@ -543,13 +544,18 @@ public class Wolpertinger implements OWLReasoner {
 				axiomTranslation.translateEntailment(tempAxioms);
 			}
 		}
+		entailmentOutput.print(ASP2CoreSymbols.IMPLICATION);
+		entailmentOutput.print(ASP2CoreSymbols.NAF);
+		entailmentOutput.print(" violation.");
 		entailmentOutput.close();
+
 		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
+
 		if (enumerator.enumerateModels(1).size() == 0) {
 			tmpEntailmentFile.delete();
 			return true;
 		} else{
-			tmpEntailmentFile.delete();
+			tmpEntailmentFile.delete();			;
 			return false;
 		}
 	}

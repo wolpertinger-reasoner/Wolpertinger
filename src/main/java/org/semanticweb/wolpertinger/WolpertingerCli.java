@@ -104,6 +104,7 @@ public class WolpertingerCli {
 		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.naiveTranslate(new PrintWriter(System.out));
+
 			/* Example 1
 			OWLClassImpl subClass = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptD"));
 			OWLClassImpl superClass = new OWLClassImpl (IRI.create("http://www.example.org/ont#ConceptB"));
@@ -139,7 +140,21 @@ public class WolpertingerCli {
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			DirectTranslation translation = new DirectTranslation(configuration, output);
 		}
+    }
 
+    static protected class EntailmentCheckingAction implements TranslationAction {
+    	private OWLOntology owlOntology;
+
+    	public EntailmentCheckingAction(OWLOntology owlOntology) {
+    		super();
+    		this.owlOntology = owlOntology;
+    	}
+
+		@Override
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			Set<OWLAxiom> axioms = owlOntology.getAxioms();
+			System.out.println("Is entailed? : " + wolpertinger.isEntailed(axioms));
+		}
     }
 
 	@SuppressWarnings("serial")
@@ -165,6 +180,7 @@ public class WolpertingerCli {
 			// actions
 			//new Option('N', "normalize", groupActions, "normalize the input ontology (structural transformation), optionally writing it back to file (via --output)"),
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output)"),
+			new Option('e', "entail", groupActions, true, "FILE", "check ontology entailment"),
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('d', "domain", groupActions, true, "FILE", "get fixed domain from FILE"),
 	};
@@ -251,6 +267,25 @@ public class WolpertingerCli {
 				}
 				break;
 
+				//ontology entailment
+				case 'e': {
+					String arg = getopt.getOptarg();
+					IRI domainIRI = null;
+					try {
+						domainIRI = IRI.create(base.resolve(arg));
+						OWLOntologyManager domainOntologyManager = OWLManager.createOWLOntologyManager();
+						OWLOntology checkedOntology = domainOntologyManager.loadOntology(domainIRI);
+						TranslationAction action = null;
+						action = new EntailmentCheckingAction(checkedOntology);
+						actions.add(action);
+					} catch (IllegalArgumentException e) {
+						throw new UsageException(arg + " is not a valid ontology name");
+					} catch (OWLOntologyCreationException e) {
+						throw new UsageException("Failed to load ontology");
+					}
+				}
+				break;
+
 				//output
 				case 'O': {
 					String arg = getopt.getOptarg();
@@ -262,7 +297,7 @@ public class WolpertingerCli {
 						File fOut = new File(arg);
 
 						try {
-							output = new PrintWriter( new FileWriter(fOut, false));
+							output = new PrintWriter(new FileWriter(fOut, false));
 						}
 						catch (IOException e) {
 							throw new UsageException("Cannot open file: " + fOut.getAbsolutePath());
@@ -286,9 +321,9 @@ public class WolpertingerCli {
 					} catch (OWLOntologyCreationException e) {
 						throw new UsageException("Failed to load ontology");
 					}
-
 				}
 				break;
+
 				default:
 					if (getopt.getOptopt() != 0) {
 						throw new UsageException("invalid option -- " + (char) getopt.getOptopt());
