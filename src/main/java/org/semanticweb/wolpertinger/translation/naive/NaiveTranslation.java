@@ -96,7 +96,6 @@ import org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.owlapi.model.OWLObjectInverseOf;
-
 import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
@@ -228,13 +227,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 		// TBox axioms
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
-			/*
-			writer.write("INCLUSION : ");
-			for(OWLClassExpression e : inclusion) {
-				writer.write(e + "  ");
-			}
-			writer.println();
-			*/
 			translateInclusion(inclusion);
 			var.reset();
 		}
@@ -382,7 +374,30 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.println();
 		}
 
+		// show statement
+		for (OWLClass owlClass : normalizedOntology.m_classes) {
+			createShowStatement(owlClass);
+			writer.println();
+		}
+
+		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
+			createShowStatement(property);
+			writer.println();
+		}
+
 		writer.flush();
+	}
+
+	private void createShowStatement(OWLClass owlClass) {
+		String className = mapper.getPredicateName(owlClass);
+
+		writer.write("#show " + className + "/1.");
+	}
+
+	private void createShowStatement(OWLObjectProperty property) {
+		String propertyName = mapper.getPredicateName(property);
+
+		writer.write("#show " + propertyName + "/2.");
 	}
 
 	private void translateInclusion(OWLClassExpression[] inclusion) {
@@ -1610,15 +1625,35 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	@Override
 	public void visit(OWLSubPropertyChainOfAxiom arg0) {
 		// TODO Auto-generated method stub
-		String superPropertyName = (mapper.getPredicateName(arg0.getSuperProperty().asOWLObjectProperty()));
+		String superPropertyName = null;
+		OWLObjectPropertyExpression superPropertyExpression = arg0.getSuperProperty();
 
 		int counter = 1;
 		writer.print(":-");
+
 		for (OWLObjectPropertyExpression subPropertyExpression : arg0.getPropertyChain()) {
-			String subPropertyName = mapper.getPredicateName(subPropertyExpression.asOWLObjectProperty());
-			writer.print(String.format("%s(X%d,X%d),", subPropertyName, counter, ++counter));
+			int firstCounter = counter;
+			int secondCounter = ++counter;
+			String subPropertyName = null;
+
+			if (subPropertyExpression instanceof OWLObjectInverseOf) {
+				int temp = firstCounter;
+				firstCounter = secondCounter;
+				secondCounter = temp;
+				subPropertyName = mapper.getPredicateName(((OWLObjectInverseOf) subPropertyExpression).getInverse().asOWLObjectProperty());
+			} else {
+				subPropertyName = mapper.getPredicateName(subPropertyExpression.asOWLObjectProperty());
+			}
+
+			writer.print(String.format("%s(X%d,X%d),", subPropertyName, firstCounter, secondCounter));
 		}
-		writer.print(String.format("not %s(X%d,X%d).", superPropertyName, 1, counter));
+		if (superPropertyExpression instanceof OWLObjectInverseOf) {
+			superPropertyName = mapper.getPredicateName(((OWLObjectInverseOf) superPropertyExpression).getInverse().asOWLObjectProperty());
+			writer.print(String.format("not %s(X%d,X%d).", superPropertyName, counter, 1));
+		} else {
+			superPropertyName = mapper.getPredicateName(arg0.getSuperProperty().asOWLObjectProperty());
+			writer.print(String.format("not %s(X%d,X%d).", superPropertyName, 1, counter));
+		}
 	}
 
 	/* (non-Javadoc)
