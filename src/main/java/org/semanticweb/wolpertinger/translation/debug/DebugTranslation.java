@@ -1459,7 +1459,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String subjectName = mapper.getConstantName(subject);
 		String objectName = mapper.getConstantName(object);
 
-		writer.print(ASP2CoreSymbols.CLASSICAL_NEGATION);
+		writer.print("not_");
 		writer.print(propertyName);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.print(subjectName);
@@ -1757,7 +1757,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 		if (classExpression instanceof OWLObjectComplementOf) {
 			OWLClass owlClass = classAssertion.getClassExpression().getComplementNNF().asOWLClass();
-			writer.print(ASP2CoreSymbols.CLASSICAL_NEGATION);
+			writer.print("not_");
 			writer.print(mapper.getPredicateName(owlClass));
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print(mapper.getConstantName(individual));
