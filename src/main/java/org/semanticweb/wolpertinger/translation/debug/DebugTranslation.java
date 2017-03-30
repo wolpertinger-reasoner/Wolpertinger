@@ -117,7 +117,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLSubPropertyChainAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSymmetricObjectPropertyAxiomImpl;
 
 /**
- * Implementation of the naive translation proposed in our paper, for encoding
+ * Implementation of the debug translation proposed in our paper, for encoding
  * a normalized OWL DL ontology into an answer set program.
  * <p>
  *
@@ -127,10 +127,10 @@ import uk.ac.manchester.cs.owl.owlapi.OWLSymmetricObjectPropertyAxiomImpl;
  * @see OWLClassExpressionVisitor
  *
  * @author Lukas Schweizer
+ * @author Satyadharma Tirtarasa
  *
  */
 public class DebugTranslation implements OWLOntologyTranslator {
-
 	//private Configuration configuration;
 	private PrintWriter writer;
 	private SignatureMapper mapper;
