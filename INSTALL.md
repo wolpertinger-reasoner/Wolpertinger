@@ -22,5 +22,5 @@ java -jar wolpertinger.jar --help
 
 Use the Sudoku example Ontology:
 ```
-java -jar wolpertinger.jar --translate Sudoku-9x9.owl
+java -jar wolpertinger.jar --translate=naive Sudoku-9x9.owl
 ```
