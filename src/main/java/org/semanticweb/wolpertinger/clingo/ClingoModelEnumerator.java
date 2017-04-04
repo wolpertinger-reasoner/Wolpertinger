@@ -55,7 +55,7 @@ public class ClingoModelEnumerator {
 			Collection<String> answers = clingo.solve(lpFilePath, _number);
 			return answers;
 		} catch (SolvingException se) {
-			System.out.println("ERROR SOLVING");
+			System.out.println("Error Solving : " + se.getMessage());
 			//log.error("Something happend while enumerating models!", se);
 		}
 
