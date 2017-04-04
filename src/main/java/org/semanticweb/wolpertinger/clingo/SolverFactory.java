@@ -43,7 +43,7 @@ public final class SolverFactory {
 		} else {
 			//defaults
 			clingoExec = "clingo.exe";
-			clingoParameters = new String[] {"-warn=no-atom-undefined", "--quiet=0,2,2", "--verbose=0"};
+			clingoParameters = new String[] {"--warn=no-atom-undefined", "--quiet=0,2,2", "--verbose=0"};
 		}
 	}
 

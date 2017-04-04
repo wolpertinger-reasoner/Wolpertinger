@@ -126,6 +126,44 @@ public class WolpertingerCli {
 		}
     }
 
+    static protected class ConsistencyAction implements TranslationAction {
+    	public ConsistencyAction() {
+    		super();
+    	}
+
+		@Override
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			if (wolpertinger.isConsistent()) {
+				output.println("Input ontologies are consistent");
+			} else {
+				output.println("Input ontologies are inconsistent");
+			}
+			output.flush();
+		}
+    }
+
+    static protected class ModelEnumerationAction implements TranslationAction {
+    	int number = 0;
+
+    	public ModelEnumerationAction(int number) {
+    		super();
+    		this.number = number;
+    	}
+
+		@Override
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			Collection<String> models = wolpertinger.enumerateModels(number);
+			if (number == 0) {
+				output.printf("Models (requested ALL): \n");
+			} else {
+				output.printf("Models (requested %d): \n", number);
+			}
+			for (String model : models) {
+				output.println(model);
+			}
+			output.flush();
+		}
+    }
 
 	@SuppressWarnings("serial")
 	protected static class UsageException extends IllegalArgumentException {
@@ -153,7 +191,10 @@ public class WolpertingerCli {
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('e', "entail", groupActions, true, "FILE", "check whether ontology FILE is entailed by input ontology"),
 			new Option('d', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, domain is the set of individuals in the input ontology"),
+			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many of models; NUMBER=0 means asking for ALL models"),
+			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
+
 	};
 
 	public static void main(String[] args) {
@@ -292,6 +333,21 @@ public class WolpertingerCli {
 				}
 				break;
 
+				//consistency
+				case 'c': {
+					TranslationAction action = new ConsistencyAction();
+					actions.add(action);
+				}
+				break;
+
+				//enumerate models
+				case 'm': {
+					String arg = getopt.getOptarg();
+					int number = Integer.parseInt(arg);
+					TranslationAction action = new ModelEnumerationAction(number);
+					actions.add(action);
+				}
+				break;
 				//justification
 				case 'j': {
 					TranslationAction action = new JustificationAction();
