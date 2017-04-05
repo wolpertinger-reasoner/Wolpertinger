@@ -43,13 +43,13 @@ public final class SolverFactory {
 		} else {
 			//defaults
 			clingoExec = "clingo.exe";
-			clingoParameters = new String[] {"-W no-atom-undefined", "--quiet=0,2,2", "--verbose=0"};
+			clingoParameters = new String[] {"--warn=no-atom-undefined", "--quiet=0,2,2", "--verbose=0"};
 		}
 	}
 
 	private String[] getClingoParameters(Configuration _configuration) {
 		String warnValue = _configuration.getString("clingo.clasp.warn","no-atom-undefined");
-		String warnOption = String.format("-W%s", warnValue);
+		String warnOption = String.format("--warn=%s", warnValue);
 
 		String quietValue = _configuration.getString("clingo.clasp.quiet", "0,2,2");
 		String quietOption = String.format("--quiet=%s", quietValue);

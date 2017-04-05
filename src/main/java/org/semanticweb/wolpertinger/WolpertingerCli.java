@@ -21,7 +21,6 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,15 +28,12 @@ import java.net.URI;
 import java.text.BreakIterator;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -48,16 +44,6 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.semanticweb.wolpertinger.translation.direct.DirectTranslation;
-import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
-import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
-import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
-
-import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLNamedIndividualImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectIntersectionOfImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
 
 /**
  * Command Line Interface for Wolpertinger.
@@ -140,6 +126,44 @@ public class WolpertingerCli {
 		}
     }
 
+    static protected class ConsistencyAction implements TranslationAction {
+    	public ConsistencyAction() {
+    		super();
+    	}
+
+		@Override
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			if (wolpertinger.isConsistent()) {
+				output.println("Input ontologies are consistent");
+			} else {
+				output.println("Input ontologies are inconsistent");
+			}
+			output.flush();
+		}
+    }
+
+    static protected class ModelEnumerationAction implements TranslationAction {
+    	int number = 0;
+
+    	public ModelEnumerationAction(int number) {
+    		super();
+    		this.number = number;
+    	}
+
+		@Override
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			Collection<String> models = wolpertinger.enumerateModels(number);
+			if (number == 0) {
+				output.printf("Models (requested ALL): \n");
+			} else {
+				output.printf("Models (requested %d): \n", number);
+			}
+			for (String model : models) {
+				output.println(model);
+			}
+			output.flush();
+		}
+    }
 
 	@SuppressWarnings("serial")
 	protected static class UsageException extends IllegalArgumentException {
@@ -167,7 +191,10 @@ public class WolpertingerCli {
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('e', "entail", groupActions, true, "FILE", "check whether ontology FILE is entailed by input ontology"),
 			new Option('d', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, domain is the set of individuals in the input ontology"),
+			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many of models; NUMBER=0 means asking for ALL models"),
+			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
+
 	};
 
 	public static void main(String[] args) {
@@ -306,6 +333,21 @@ public class WolpertingerCli {
 				}
 				break;
 
+				//consistency
+				case 'c': {
+					TranslationAction action = new ConsistencyAction();
+					actions.add(action);
+				}
+				break;
+
+				//enumerate models
+				case 'm': {
+					String arg = getopt.getOptarg();
+					int number = Integer.parseInt(arg);
+					TranslationAction action = new ModelEnumerationAction(number);
+					actions.add(action);
+				}
+				break;
 				//justification
 				case 'j': {
 					TranslationAction action = new JustificationAction();
