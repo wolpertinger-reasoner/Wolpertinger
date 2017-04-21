@@ -23,7 +23,7 @@
 
 	<groupId>org.semanticweb.wolpertinger</groupId>
 	<artifactId>wolpertinger</artifactId>
-	<version>0.9b</version>
+	<version>1.0</version>
 	<packaging>jar</packaging>
 
 	<name>wolpertinger</name>
