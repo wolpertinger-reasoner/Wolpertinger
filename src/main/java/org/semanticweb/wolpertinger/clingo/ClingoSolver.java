@@ -6,8 +6,6 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
-
-import org.apache.commons.lang3.ArrayUtils;
 //import org.apache.log4j.Logger;
 
 /**
@@ -65,6 +63,8 @@ public class ClingoSolver implements Solver {
 			return answersets;
 		}
 		catch (IOException e) {
+			//throw new SolvingException("IO problems in piped communication with clingo.");
+			e.printStackTrace();
 			throw new SolvingException("IO problems in piped communication with clingo.");
 		}
 	}

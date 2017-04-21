@@ -17,11 +17,29 @@ import org.apache.commons.configuration2.builder.fluent.Parameters;
 public final class SolverFactory {
 
 	//private static Logger log = Logger.getLogger(SolverFactory.class);
-	private static String PROPERTY_FILE = String.format("%s%s%s","etc", File.separator, "modenum.properties");
+	private static String PROPERTY_FILE = String.format("%s%s%s","etc", File.separator, "clingo.conf");
 
 	private String[] clingoParameters;
 	private String clingoExec;
 
+	// Just a Test
+	static final class OsUtils
+	{
+	   private static String OS = null;
+	   public static String getOsName()
+	   {
+	      if(OS == null) { OS = System.getProperty("os.name").toLowerCase(); }
+	      return OS;
+	   }
+	   public static boolean isWindows()
+	   {
+	      return getOsName().startsWith("windows");
+	   }
+
+	   public static boolean isUnix() {
+		   return getOsName().indexOf("nux") >= 0 || getOsName().indexOf("mac") >= 0;
+	   }
+	}
 
 	private SolverFactory() {
 		Configuration configuration = null;
@@ -42,7 +60,11 @@ public final class SolverFactory {
 			clingoExec = configuration.getString("clingo.exec", "clingo.exe");
 		} else {
 			//defaults
-			clingoExec = "clingo.exe";
+			if (OsUtils.isUnix()) 
+				clingoExec = "clingo";
+			else if (OsUtils.isWindows()) 
+				clingoExec = "clingo.exe";
+			
 			clingoParameters = new String[] {"--warn=no-atom-undefined", "--quiet=0,2,2", "--verbose=0"};
 		}
 	}

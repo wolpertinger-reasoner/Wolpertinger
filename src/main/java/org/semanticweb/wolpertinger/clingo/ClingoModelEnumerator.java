@@ -3,15 +3,8 @@
  */
 package org.semanticweb.wolpertinger.clingo;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.LinkedList;
-
 //import org.apache.log4j.Logger;
-
 import org.semanticweb.owlapi.model.OWLOntology;
 
 /**
@@ -55,8 +48,9 @@ public class ClingoModelEnumerator {
 			Collection<String> answers = clingo.solve(lpFilePath, _number);
 			return answers;
 		} catch (SolvingException se) {
-			System.out.println("Error Solving : " + se.getMessage());
+			//System.out.println("Error Solving : " + se.getMessage());
 			//log.error("Something happend while enumerating models!", se);
+			se.printStackTrace();
 		}
 
 		return null;
