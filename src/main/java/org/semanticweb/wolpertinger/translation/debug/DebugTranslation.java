@@ -1693,7 +1693,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	 */
 	@Override
 	public void visit(OWLSymmetricObjectPropertyAxiom symmetricProperty) {
-		writer.write(ASP2CoreSymbols.IMPLICATION);
+		writer.write("icons " + ASP2CoreSymbols.IMPLICATION);
 
 		OWLObjectPropertyExpression property = symmetricProperty.getProperty();
 
@@ -1701,6 +1701,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String cVar = var.currentVar();
 		String nVar = var.nextVariable();
 
+		writer.write(String.format(" activated(%d), ", nConstraints++));
 		writer.write(propertyName);
 		writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.write(cVar);
@@ -1708,8 +1709,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.write(nVar);
 		writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
 		writer.write(ASP2CoreSymbols.CONJUNCTION);
-		writer.write(ASP2CoreSymbols.NAF);
-		writer.write(ASP2CoreSymbols.SPACE);
+		writer.write(ASP2CoreSymbols.NAF + "_");
 		writer.write(propertyName);
 		writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.write(nVar);
