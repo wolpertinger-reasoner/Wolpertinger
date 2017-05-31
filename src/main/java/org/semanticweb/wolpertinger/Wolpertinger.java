@@ -17,16 +17,30 @@
 */
 package org.semanticweb.wolpertinger;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.coode.owlapi.rdfxml.parser.OWLRDFConsumer;
+import org.coode.owlapi.rdfxml.parser.ObjectOneOfTranslator;
+import org.semanticweb.owlapi.apibinding.OWLFunctionalSyntaxFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.expression.OWLClassExpressionParser;
+import org.semanticweb.owlapi.expression.ParserException;
+import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
+import org.semanticweb.owlapi.io.OWLParserException;
+import org.semanticweb.owlapi.io.OWLXMLOntologyFormat;
 import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -35,12 +49,18 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
+import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectOneOf;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
+import org.semanticweb.owlapi.model.OWLOntologyFormat;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.reasoner.BufferingMode;
 import org.semanticweb.owlapi.reasoner.FreshEntityPolicy;
 import org.semanticweb.owlapi.reasoner.IndividualNodeSetPolicy;
@@ -49,6 +69,8 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
+import org.semanticweb.owlapi.util.DefaultPrefixManager;
+import org.semanticweb.owlapi.util.OWLClassExpressionCollector;
 import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
@@ -57,7 +79,10 @@ import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
+import jdk.nashorn.internal.runtime.regexp.JoniRegExp.Factory;
+import oracle.jrockit.jfr.parser.ParseException;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassExpressionImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
@@ -171,6 +196,46 @@ public class Wolpertinger implements OWLReasoner {
 				}
 			}
 		}
+	}
+	public void axiomFunction(File file){
+		Set<OWLAxiom> s = rootOntology.getAxioms();
+		Set<OWLNamedIndividual> ind_names = null;
+		Set<OWLNamedIndividual> result = new HashSet<>();
+		
+ 		for (OWLAxiom owlAxiom : s) {
+			if (owlAxiom.getAxiomType().toString() == "Declaration"){
+				ind_names = owlAxiom.getIndividualsInSignature();
+				for (OWLNamedIndividual owlNamedIndividual : ind_names) {
+					if (result.contains(owlNamedIndividual) == false){
+						result.add(owlNamedIndividual);
+					}
+				}
+			}
+ 		}
+ 		
+		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+		OWLDataFactory factory = manager.getOWLDataFactory();
+		OWLDifferentIndividualsAxiom dif = factory.getOWLDifferentIndividualsAxiom(result);
+		PrefixManager pManager = new DefaultPrefixManager("");
+		OWLClassExpression thing = factory.getOWLClass("owl:Thing", pManager);
+		OWLObjectOneOf oneof = factory.getOWLObjectOneOf(result);
+		OWLSubClassOfAxiom axiom = factory.getOWLSubClassOfAxiom(thing, oneof);
+		
+		manager.addAxiom(rootOntology, axiom);
+		manager.addAxiom(rootOntology, dif);
+		
+		OWLOntologyFormat format = manager.getOntologyFormat(rootOntology);
+		OWLXMLOntologyFormat owlxmlFormat = new OWLXMLOntologyFormat();
+		file = file.getAbsoluteFile(); 
+	    BufferedOutputStream outputStream;
+		try {
+			outputStream = new BufferedOutputStream(new FileOutputStream(file));
+			manager.saveOntology(rootOntology, new OWLFunctionalSyntaxOntologyFormat(), outputStream);
+		} catch (FileNotFoundException | OWLOntologyStorageException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	    System.out.println(file.toString() + " was successfully created!");
 	}
 
 //	public void outputNormalizedOntology(PrintWriter writer) {
