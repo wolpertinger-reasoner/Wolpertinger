@@ -25,22 +25,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.coode.owlapi.rdfxml.parser.OWLRDFConsumer;
-import org.coode.owlapi.rdfxml.parser.ObjectOneOfTranslator;
-import org.semanticweb.owlapi.apibinding.OWLFunctionalSyntaxFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.expression.OWLClassExpressionParser;
-import org.semanticweb.owlapi.expression.ParserException;
 import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
-import org.semanticweb.owlapi.io.OWLParserException;
 import org.semanticweb.owlapi.io.OWLXMLOntologyFormat;
 import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -70,7 +62,6 @@ import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
-import org.semanticweb.owlapi.util.OWLClassExpressionCollector;
 import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
@@ -78,11 +69,7 @@ import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
-
-import jdk.nashorn.internal.runtime.regexp.JoniRegExp.Factory;
-import oracle.jrockit.jfr.parser.ParseException;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLClassExpressionImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
@@ -224,8 +211,6 @@ public class Wolpertinger implements OWLReasoner {
 		manager.addAxiom(rootOntology, axiom);
 		manager.addAxiom(rootOntology, dif);
 		
-		OWLOntologyFormat format = manager.getOntologyFormat(rootOntology);
-		OWLXMLOntologyFormat owlxmlFormat = new OWLXMLOntologyFormat();
 		file = file.getAbsoluteFile(); 
 	    BufferedOutputStream outputStream;
 		try {
