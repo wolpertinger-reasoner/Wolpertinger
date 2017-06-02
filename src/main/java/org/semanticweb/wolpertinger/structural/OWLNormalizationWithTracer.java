@@ -43,105 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.ClassExpressionType;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
-import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
-import org.semanticweb.owlapi.model.OWLAxiomVisitor;
-import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLClassExpression;
-import org.semanticweb.owlapi.model.OWLClassExpressionVisitorEx;
-import org.semanticweb.owlapi.model.OWLDataAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLDataComplementOf;
-import org.semanticweb.owlapi.model.OWLDataExactCardinality;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLDataHasValue;
-import org.semanticweb.owlapi.model.OWLDataIntersectionOf;
-import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
-import org.semanticweb.owlapi.model.OWLDataMinCardinality;
-import org.semanticweb.owlapi.model.OWLDataOneOf;
-import org.semanticweb.owlapi.model.OWLDataProperty;
-import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
-import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
-import org.semanticweb.owlapi.model.OWLDataRange;
-import org.semanticweb.owlapi.model.OWLDataSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLDataUnionOf;
-import org.semanticweb.owlapi.model.OWLDataVisitorEx;
-import org.semanticweb.owlapi.model.OWLDatatype;
-import org.semanticweb.owlapi.model.OWLDatatypeDefinitionAxiom;
-import org.semanticweb.owlapi.model.OWLDatatypeRestriction;
-import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
-import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLDisjointUnionAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLFacetRestriction;
-import org.semanticweb.owlapi.model.OWLFunctionalDataPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLHasKeyAxiom;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLIndividual;
-import org.semanticweb.owlapi.model.OWLIndividualAxiom;
-import org.semanticweb.owlapi.model.OWLInverseFunctionalObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom;
-import org.semanticweb.owlapi.model.OWLIrreflexiveObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLLiteral;
-import org.semanticweb.owlapi.model.OWLNamedIndividual;
-import org.semanticweb.owlapi.model.OWLNegativeDataPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLObjectAllValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectComplementOf;
-import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
-import org.semanticweb.owlapi.model.OWLObjectHasSelf;
-import org.semanticweb.owlapi.model.OWLObjectHasValue;
-import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
-import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
-import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
-import org.semanticweb.owlapi.model.OWLObjectOneOf;
-import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
-import org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom;
-import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
-import org.semanticweb.owlapi.model.OWLObjectUnionOf;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
-import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom;
-import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
-import org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
-import org.semanticweb.owlapi.model.SWRLArgument;
-import org.semanticweb.owlapi.model.SWRLAtom;
-import org.semanticweb.owlapi.model.SWRLBuiltInAtom;
-import org.semanticweb.owlapi.model.SWRLClassAtom;
-import org.semanticweb.owlapi.model.SWRLDArgument;
-import org.semanticweb.owlapi.model.SWRLDataPropertyAtom;
-import org.semanticweb.owlapi.model.SWRLDataRangeAtom;
-import org.semanticweb.owlapi.model.SWRLDifferentIndividualsAtom;
-import org.semanticweb.owlapi.model.SWRLIArgument;
-import org.semanticweb.owlapi.model.SWRLIndividualArgument;
-import org.semanticweb.owlapi.model.SWRLLiteralArgument;
-import org.semanticweb.owlapi.model.SWRLObjectPropertyAtom;
-import org.semanticweb.owlapi.model.SWRLObjectVisitor;
-import org.semanticweb.owlapi.model.SWRLRule;
-import org.semanticweb.owlapi.model.SWRLSameIndividualAtom;
-import org.semanticweb.owlapi.model.SWRLVariable;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.wolpertinger.structural.OWLNormalization.AxiomVisitor;
+import org.semanticweb.wolpertinger.structural.OWLNormalization.RuleNormalizer;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
@@ -159,7 +63,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
  * 		\forall R.\neg { a } intact.
  * These concepts are then clausified in a more efficient way.
  */
-public class OWLNormalization {
+public class OWLNormalizationWithTracer {
     protected final OWLDataFactory m_factory;
     protected final OWLAxioms m_axioms;
     protected final int m_firstReplacementIndex;
@@ -170,7 +74,11 @@ public class OWLNormalization {
     protected final Map<OWLDataRange,OWLDatatype> m_dataRangeDefinitions; // contains custom datatype definitions from DatatypeDefinition axioms
     protected final Set<OWLNamedIndividual> m_domain;
 
-    public OWLNormalization(OWLDataFactory factory,OWLAxioms axioms,int firstReplacementIndex) {
+    public HashMap<OWLClassExpression[], OWLClassExpression[]> tracer;
+    public HashMap<OWLClassExpression[], OWLClassExpression[]> finalTracer;
+    public HashMap<OWLAxiom, Object> axiomTracer;
+
+    public OWLNormalizationWithTracer(OWLDataFactory factory,OWLAxioms axioms,int firstReplacementIndex) {
         m_factory=factory;
         m_axioms=axioms;
         m_firstReplacementIndex=firstReplacementIndex;
@@ -180,9 +88,11 @@ public class OWLNormalization {
         m_plVisitor=new PLVisitor();
         m_dataRangeDefinitions=new HashMap<OWLDataRange,OWLDatatype>();
         m_domain = new HashSet<OWLNamedIndividual>();
+        tracer = new HashMap<OWLClassExpression[], OWLClassExpression[]> ();
+        finalTracer = new HashMap<OWLClassExpression[], OWLClassExpression[]> ();
     }
 
-    public OWLNormalization(OWLDataFactory factory,OWLAxioms axioms,int firstReplacementIndex, Set<OWLNamedIndividual> domain) {
+    public OWLNormalizationWithTracer(OWLDataFactory factory,OWLAxioms axioms,int firstReplacementIndex, Set<OWLNamedIndividual> domain) {
     	this(factory, axioms, firstReplacementIndex);
     	m_domain.addAll(domain);
     }
@@ -398,6 +308,8 @@ public class OWLNormalization {
         ClassExpressionNormalizer classExpressionNormalizer=new ClassExpressionNormalizer(inclusions,dataRangeInclusions);
         // normalize all class expression inclusions
         while (!inclusions.isEmpty()) {
+        	int inclusionIndex = inclusions.size() - 1;
+        	OWLClassExpression[] expr = inclusions.get(inclusionIndex);
             OWLClassExpression simplifiedDescription=m_expressionManager.getNNF(m_expressionManager.getSimplified(m_factory.getOWLObjectUnionOf(inclusions.remove(inclusions.size()-1))));
             if (!simplifiedDescription.isOWLThing()) {
                 if (simplifiedDescription instanceof OWLObjectUnionOf) {
@@ -408,6 +320,11 @@ public class OWLNormalization {
                         for (int index=0;index<descriptions.length;index++)
                             descriptions[index]=descriptions[index].accept(classExpressionNormalizer);
                         m_axioms.m_conceptInclusions.add(descriptions);
+                        if(tracer.get(expr) != null) {
+                        	finalTracer.put(descriptions,tracer.get(expr));
+                        } else {
+                        	finalTracer.put(descriptions,expr);
+                        }
                     }
                 }
                 else if (simplifiedDescription instanceof OWLObjectIntersectionOf) {
@@ -419,6 +336,12 @@ public class OWLNormalization {
                     OWLClassExpression normalized=simplifiedDescription.accept(classExpressionNormalizer);
                     m_axioms.m_conceptInclusions.add(new OWLClassExpression[] { normalized });
                 }
+            }
+            for (int ii = inclusionIndex; ii < inclusions.size(); ii++) {
+            	if (tracer.containsKey(expr)) {
+            		expr = tracer.get(expr);
+            	}
+            	tracer.put(inclusions.get(ii), expr);
             }
         }
         // normalize data range inclusions
@@ -851,7 +774,10 @@ public class OWLNormalization {
 // Original version
         @Override
 		public void visit(OWLSubClassOfAxiom axiom) {
-            m_classExpressionInclusionsAsDisjunctions.add(new OWLClassExpression[] { negative(axiom.getSubClass()),positive(axiom.getSuperClass()) });
+        	OWLClassExpression n = negative(axiom.getSubClass());
+        	OWLClassExpression p = positive(axiom.getSuperClass());
+
+            m_classExpressionInclusionsAsDisjunctions.add(new OWLClassExpression[] { n, p});
         }
 
         /**
@@ -906,11 +832,17 @@ public class OWLNormalization {
             }
             OWLClassExpression[] descriptions=new OWLClassExpression[axiom.getClassExpressions().size()];
             axiom.getClassExpressions().toArray(descriptions);
+
+
             for (int i=0;i<descriptions.length;i++)
                 descriptions[i]=m_expressionManager.getComplementNNF(descriptions[i]);
-            for (int i=0;i<descriptions.length;i++)
-                for (int j=i+1;j<descriptions.length;j++)
-                    m_classExpressionInclusionsAsDisjunctions.add(new OWLClassExpression[] { descriptions[i],descriptions[j] });
+            for (int i=0;i<descriptions.length;i++) {
+                for (int j=i+1;j<descriptions.length;j++) {
+                	OWLClassExpression[] nDescriptions = new OWLClassExpression[] { descriptions[i],descriptions[j] };
+                	tracer.put(nDescriptions, descriptions);
+                    m_classExpressionInclusionsAsDisjunctions.add(nDescriptions);
+                }
+            }
         }
         @Override
 		public void visit(OWLDisjointUnionAxiom axiom) {

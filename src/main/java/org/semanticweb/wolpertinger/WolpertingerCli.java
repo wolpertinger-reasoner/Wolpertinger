@@ -162,7 +162,21 @@ public class WolpertingerCli {
 			output.flush();
 		}
     }
+    
+    static protected class AxiomatizationAction implements TranslationAction {
+    	File file;
+    	public AxiomatizationAction(File axiomatizedOntology) {
+    		super();
+    		this.file = axiomatizedOntology;
+    	}
 
+		@Override
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			wolpertinger.axiomFunction(file);
+			}
+		}
+    
+    
 	@SuppressWarnings("serial")
 	protected static class UsageException extends IllegalArgumentException {
 		public UsageException(String inMessage) {
@@ -192,6 +206,7 @@ public class WolpertingerCli {
 			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many of models; NUMBER=0 means asking for ALL models"),
 			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
+			new Option('a', "axiomatize", groupActions, true, "FILE", "???"),
 
 	};
 
@@ -350,6 +365,19 @@ public class WolpertingerCli {
 				case 'j': {
 					TranslationAction action = new JustificationAction();
 					actions.add(action);
+				}
+				break;
+				case 'a': {
+					String arg = getopt.getOptarg();
+					File axiomatizedOntology;
+					if (arg == null) {
+						throw new UsageException("Empty value for argument --axiomatize");
+					}
+					else {
+						axiomatizedOntology = new File(arg);
+						TranslationAction action = new AxiomatizationAction(axiomatizedOntology);
+						actions.add(action);
+					}
 				}
 				break;
 				default:
