@@ -66,6 +66,7 @@ import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
+import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
@@ -158,7 +159,25 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public void naffTranslate(PrintWriter output, boolean debugFlag) {
-		DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag);
+		clearState();
+
+		OWLAxioms axioms = new OWLAxioms();
+
+		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
+		if(configuration.getDomainIndividuals() == null) {
+			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
+		}
+
+		OWLNormalizationWithTracer normalization = new OWLNormalizationWithTracer(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
+
+		for (OWLOntology ontology : importClosure) {
+			normalization.processOntology(ontology);
+		}
+
+		axioms.m_namedIndividuals.clear();
+		axioms.m_namedIndividuals.addAll(configuration.getDomainIndividuals());
+
+		DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag, normalization);
 		translation.translateOntology(axioms);
 	}
 

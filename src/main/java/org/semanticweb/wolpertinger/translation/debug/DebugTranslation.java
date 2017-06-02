@@ -101,6 +101,7 @@ import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.ComplexObjectPropertyInclusion;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.DisjunctiveRule;
+import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
@@ -117,8 +118,9 @@ import uk.ac.manchester.cs.owl.owlapi.OWLSubPropertyChainAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSymmetricObjectPropertyAxiomImpl;
 
 /**
- * Implementation of the debug translation proposed in our paper, for encoding
- * a normalized OWL DL ontology into an answer set program.
+ * Implementation of the debug translation, for encoding a normalized
+ * OWL DL ontology into an answer set program. Each answer of the program
+ * corresponds to a justification of the ontology inconsistency.
  * <p>
  *
  * </p>
@@ -145,12 +147,17 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	private int nIndividuals;
 	private boolean debugFlag;
 
+	// storing information which cardinality auxiliary predicates should be computed
+	private HashMap<OWLClass, HashSet<OWLObjectProperty>> nraSet;
+	private HashMap<OWLClass, HashSet<OWLObjectProperty>> nraComplementSet;
+
+	private OWLNormalizationWithTracer normalization;
 	/**
 	 * Creates a {@link NaiveTranslation} instance
 	 * @param configuration
 	 * @param writer
 	 */
-	public DebugTranslation(Configuration configuration, PrintWriter writer, boolean debugFlag) {
+	public DebugTranslation(Configuration configuration, PrintWriter writer, boolean debugFlag, OWLNormalizationWithTracer normalization) {
 		// TODO: based on config parameter instantiate the name mappers (nice,std)
 		this.mapper = SignatureMapper.ASP2CoreMapping;
 		this.newInclusions = new LinkedList<OWLClassExpression[]>();
@@ -159,7 +166,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		this.writer = writer;
 		this.nConstraints = 0;
 		this.debugFlag = debugFlag;
-
+		this.nraSet = new HashMap<OWLClass, HashSet<OWLObjectProperty>>();
+		this.nraComplementSet = new HashMap<OWLClass, HashSet<OWLObjectProperty>>();
+		this.normalization = normalization;
 		var = new VariableIssuer();
 	}
 
@@ -174,7 +183,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
 		}
 
-		OWLNormalization normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
+		normalization = new OWLNormalizationWithTracer(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
 
 		for (OWLOntology ontology : importClosure) {
 			normalization.processOntology(ontology);
@@ -231,8 +240,18 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.println();
 		writer.println("% TBox Axiom");
 		writer.println();
+		HashMap<OWLClassExpression[], Integer> counterHash = new HashMap<OWLClassExpression[], Integer> ();
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
-			translateInclusion(inclusion, nConstraints++);
+			int axiomNumber = 0;
+			OWLClassExpression[] originalAxiom = normalization.finalTracer.get(inclusion);
+
+			if (counterHash.keySet().contains(originalAxiom)) {
+				axiomNumber = counterHash.get(originalAxiom);
+			} else {
+				counterHash.put(originalAxiom, nConstraints);
+				axiomNumber = nConstraints++;
+			}
+			translateInclusion(inclusion, axiomNumber);
 			var.reset();
 		}
 
@@ -391,25 +410,26 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.println();
 		}
 
-		// Neg Property
+		// NRA
 		writer.println();
 		writer.println("% Negation Axiom");
 		writer.println();
 		for (OWLClass owlClass : normalizedOntology.m_classes) {
+			boolean needLineBreak = false;
 			for (OWLObjectProperty owlProperty : normalizedOntology.m_objectProperties) {
-				createPropertyNegation(owlClass, owlProperty);
-				createNegatedPropertyNegation(owlClass, owlProperty);
+				if(nraSet.containsKey(owlClass) && nraSet.get(owlClass).contains(owlProperty)) {
+					createPropertyNegation(owlClass, owlProperty);
+					needLineBreak = true;
+				}
 				var.reset();
-				writer.println();
-			}
-		}
-
-		// Everything follows for here too
-		for (OWLClass owlClass : normalizedOntology.m_classes) {
-			for (OWLObjectProperty owlProperty : normalizedOntology.m_objectProperties) {
-				createEverythingFollowsPropertyNegation(owlClass, owlProperty);
+				if(nraComplementSet.containsKey(owlClass) && nraComplementSet.get(owlClass).contains(owlProperty)) {
+					createNegatedPropertyNegation(owlClass, owlProperty);
+					needLineBreak = true;
+				}
 				var.reset();
-				writer.println();
+				if (needLineBreak) {
+					writer.println();
+				}
 			}
 		}
 
@@ -559,10 +579,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	}
 
 	private void createIconsClass(OWLClass owlClass) {
-		String owlThing = "thing";
-
 		String className = mapper.getPredicateName(owlClass);
-		String negClassName = "-" + className;
 
 		writer.print("icons " + ASP2CoreSymbols.IMPLICATION + " ");
 
@@ -582,8 +599,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	}
 
 	private void createIconsImpactClass(OWLClass owlClass) {
-		String owlThing = "thing";
-
 		String className = mapper.getPredicateName(owlClass);
 		String negClassName = "not_" + className;
 
@@ -615,7 +630,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	private void createExtensionGuess(OWLObjectProperty property) {
 		String owlThing = "thing";
 		String propertyName = mapper.getPredicateName(property);
-		String negPropertyName = "-" + propertyName;
 
 		String currentVar = var.currentVar();
 		String nextVar = var.nextVariable();
@@ -655,7 +669,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	}
 
 	private void createPropertyNegation(OWLClass owlClass, OWLObjectProperty owlProperty) {
-		String owlThing = "thing";
 		String propertyName = mapper.getPredicateName(owlProperty);
 		String negPropertyName = "not_" + propertyName;
 
@@ -707,7 +720,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	}
 
 	private void createNegatedPropertyNegation(OWLClass owlClass, OWLObjectProperty owlProperty) {
-		String owlThing = "thing";
 		String propertyName = mapper.getPredicateName(owlProperty);
 		String negPropertyName = "not_" + propertyName;
 
@@ -715,7 +727,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String nextVar = var.nextVariable();
 
 		String className = mapper.getPredicateName(owlClass);
-		String negClassName = "not_" + className;
 
 		String classPredicateName = propertyName + "_not_" + className;
 		String negClassPredicateName = "not_" + classPredicateName;
@@ -758,43 +769,41 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.println();
 	}
 
-	private void createEverythingFollowsPropertyNegation(OWLClass owlClass, OWLObjectProperty owlProperty) {
-		String owlThing = "thing";
-		String propertyName = mapper.getPredicateName(owlProperty);
-		String negPropertyName = "not_" + propertyName;
-
-		String currentVar = var.currentVar();
-		String nextVar = var.nextVariable();
-
-		String className = mapper.getPredicateName(owlClass);
-		String negClassName = "not_" + className;
-
-		String classPredicateName = propertyName + "_" + className;
-		String negClassPredicateName = "not_" + classPredicateName;
-
-		writer.print(negClassPredicateName);
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(currentVar);
-		writer.print(",");
-		writer.print(nextVar);
-		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(" :- icons, ");
-		writer.print("thing");
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(currentVar);
-		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(ASP2CoreSymbols.CONJUNCTION);
-		writer.print("thing");
-		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(nextVar);
-		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(ASP2CoreSymbols.EOR);
-	}
+//	private void createEverythingFollowsPropertyNegation(OWLClass owlClass, OWLObjectProperty owlProperty) {
+//		String owlThing = "thing";
+//		String propertyName = mapper.getPredicateName(owlProperty);
+//		String negPropertyName = "not_" + propertyName;
+//
+//		String currentVar = var.currentVar();
+//		String nextVar = var.nextVariable();
+//
+//		String className = mapper.getPredicateName(owlClass);
+//		String negClassName = "not_" + className;
+//
+//		String classPredicateName = propertyName + "_" + className;
+//		String negClassPredicateName = "not_" + classPredicateName;
+//
+//		writer.print(negClassPredicateName);
+//		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+//		writer.print(currentVar);
+//		writer.print(",");
+//		writer.print(nextVar);
+//		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+//		writer.print(" :- icons, ");
+//		writer.print("thing");
+//		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+//		writer.print(currentVar);
+//		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+//		writer.print(ASP2CoreSymbols.CONJUNCTION);
+//		writer.print("thing");
+//		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+//		writer.print(nextVar);
+//		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+//		writer.print(ASP2CoreSymbols.EOR);
+//	}
 
 	private void createIconsProperty(OWLObjectProperty property) {
-		String owlThing = "thing";
 		String propertyName = mapper.getPredicateName(property);
-		String negPropertyName = "-" + propertyName;
 
 		String currentVar = var.currentVar();
 		String nextVar = var.nextVariable();
@@ -821,9 +830,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	}
 
 	private void createIconsImpactProperty(OWLObjectProperty property) {
-		String owlThing = "thing";
 		String propertyName = mapper.getPredicateName(property);
-		String negPropertyName = "-" + propertyName;
 
 		String currentVar = var.currentVar();
 		String nextVar = var.nextVariable();
@@ -881,7 +888,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.write("#show " + propertyName + "/2.");
 	}
 
-	//TODO NAFF TRANSLATION?
+	// TODO NAFF TRANSLATION?
 	private void createComplexInclusion(ComplexObjectPropertyInclusion complexObjPropertyInclusion) {
 		LinkedList<String> chainPredicateNameList = new LinkedList<String> ();
 		for (OWLObjectPropertyExpression e : complexObjPropertyInclusion.m_subObjectProperties) {
@@ -1259,6 +1266,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			isComplement = true;
 			OWLClassExpression classExpr = ((OWLObjectComplementOf) filler).getOperand();
 			fillerName = mapper.getPredicateName(classExpr.asOWLClass());
+
+			if(comperator.equals("<"))
+				addComplementNRA(classExpr.asOWLClass(),property.asOWLObjectProperty());
 			if (isAuxiliaryClass(classExpr.asOWLClass()))
 				auxClasses.add(classExpr.asOWLClass());
 		}
@@ -1267,14 +1277,14 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			// since the normalization for max-cardinality uses an "optimization".
 			OWLObjectOneOf oneOf = (OWLObjectOneOf) filler;
 			OWLClass auxOneOf= getOneOfAuxiliaryClass(oneOf);
-
 			fillerName = mapper.getPredicateName(auxOneOf);
 		}
 		else {
 			assert filler instanceof OWLClass;
-
 			fillerName = mapper.getPredicateName(filler.asOWLClass());
 
+			if(comperator.equals("<"))
+				addNRA(filler.asOWLClass(),property.asOWLObjectProperty());
 			if (isAuxiliaryClass(filler.asOWLClass()))
 				auxClasses.add(filler.asOWLClass());
 		}
@@ -1594,7 +1604,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	@Override
 	public void visit(OWLDisjointDataPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
-
 	}
 
 	/**
@@ -1968,4 +1977,33 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 	}
 
+	private void addNRA (OWLClass c, OWLObjectProperty p) {
+		if (nraSet.containsKey(c)) {
+			HashSet<OWLObjectProperty> set = nraSet.get(c);
+			if (set.contains(p)) {
+				return;
+			} else {
+				set.add(p);
+			}
+		}  else {
+			HashSet<OWLObjectProperty> set = new HashSet<OWLObjectProperty> ();
+			set.add(p);
+			nraSet.put(c, set);
+		}
+	}
+
+	private void addComplementNRA (OWLClass c, OWLObjectProperty p) {
+		if (nraComplementSet.containsKey(c)) {
+			HashSet<OWLObjectProperty> set = nraComplementSet.get(c);
+			if (set.contains(p)) {
+				return;
+			} else {
+				set.add(p);
+			}
+		}  else {
+			HashSet<OWLObjectProperty> set = new HashSet<OWLObjectProperty> ();
+			set.add(p);
+			nraComplementSet.put(c, set);
+		}
+	}
 }
