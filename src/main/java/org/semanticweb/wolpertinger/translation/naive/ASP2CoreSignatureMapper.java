@@ -54,7 +54,7 @@ public class ASP2CoreSignatureMapper extends SignatureMapper {
 			predicateName = "aux" + owlClass.getIRI().toString().substring(owlClass.getIRI().toString().lastIndexOf("#")+1, owlClass.getIRI().toString().length());
 		}
 		else {
-			predicateName = owlClass.getIRI().getFragment().toLowerCase();
+			predicateName = owlClass.getIRI().getFragment().toLowerCase().replace('-', '_').replace('.', '_');
 		}
 
 		return putPredicateMapping(predicateName, owlClass);

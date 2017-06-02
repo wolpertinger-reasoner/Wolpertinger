@@ -398,6 +398,7 @@ public class WolpertingerCli {
                     status.log(2,"Ontology parsed in " + String.valueOf(parseTime) + " msec.");
                     startTime = System.currentTimeMillis();
                     Wolpertinger wolpertinger = new Wolpertinger(configuration, ontology);
+                    
                    // Prefixes prefixes=hermit.getPrefixes();
 //                    if (defaultPrefix!=null) {
 //                        try {

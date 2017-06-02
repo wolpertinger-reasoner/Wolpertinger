@@ -362,9 +362,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 
 		// SWRL Rules
-		for (DisjunctiveRule rule : normalizedOntology.m_rules) {
-			throw new NotImplementedException();
-		}
+//		for (DisjunctiveRule rule : normalizedOntology.m_rules) {
+//			writer.println(rule);
+//		}
 
 		// add #showp/n.  satements if required
 		for (IRI conceptIRI : configuration.getConceptNamesToProjectOn()) {
