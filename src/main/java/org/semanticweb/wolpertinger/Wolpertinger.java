@@ -206,8 +206,8 @@ public class Wolpertinger implements OWLReasoner {
 	public void axiomFunction(File file){
 		Set<OWLAxiom> s = rootOntology.getAxioms();
 		Set<OWLNamedIndividual> ind_names = null;
-		Set<OWLNamedIndividual> result = new HashSet<>();
-		
+		Set<OWLNamedIndividual> result = new HashSet<OWLNamedIndividual>();
+
  		for (OWLAxiom owlAxiom : s) {
 			if (owlAxiom.getAxiomType().toString() == "Declaration"){
 				ind_names = owlAxiom.getIndividualsInSignature();
@@ -218,7 +218,7 @@ public class Wolpertinger implements OWLReasoner {
 				}
 			}
  		}
- 		
+
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory factory = manager.getOWLDataFactory();
 		OWLDifferentIndividualsAxiom dif = factory.getOWLDifferentIndividualsAxiom(result);
@@ -226,16 +226,19 @@ public class Wolpertinger implements OWLReasoner {
 		OWLClassExpression thing = factory.getOWLClass("owl:Thing", pManager);
 		OWLObjectOneOf oneof = factory.getOWLObjectOneOf(result);
 		OWLSubClassOfAxiom axiom = factory.getOWLSubClassOfAxiom(thing, oneof);
-		
+
 		manager.addAxiom(rootOntology, axiom);
 		manager.addAxiom(rootOntology, dif);
-		
-		file = file.getAbsoluteFile(); 
+
+		file = file.getAbsoluteFile();
 	    BufferedOutputStream outputStream;
 		try {
 			outputStream = new BufferedOutputStream(new FileOutputStream(file));
 			manager.saveOntology(rootOntology, new OWLFunctionalSyntaxOntologyFormat(), outputStream);
-		} catch (FileNotFoundException | OWLOntologyStorageException e1) {
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (OWLOntologyStorageException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
