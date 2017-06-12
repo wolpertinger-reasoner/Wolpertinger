@@ -70,6 +70,7 @@ import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
+
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
@@ -448,8 +449,20 @@ public class Wolpertinger implements OWLReasoner {
 
 	@Override
 	public Version getReasonerVersion() {
-		// TODO Auto-generated method stub
-		return null;
+		String versionString = getClass().getPackage().getImplementationVersion();
+        String[] splitted;
+        int version[]=new int[4];
+        if (versionString!=null) {
+            splitted=versionString.split("\\.");
+            for (int ii = 0; ii < 4; ii++) {
+            	if (ii < splitted.length) {
+            		version[ii]=Integer.parseInt(splitted[ii]);
+            	} else {
+            		version[ii]=0;
+            	}
+            }
+        }
+        return new Version(version[0],version[1],version[2],version[3]);
 	}
 
 	@Override
@@ -645,7 +658,5 @@ public class Wolpertinger implements OWLReasoner {
 	@Override
 	public void precomputeInferences(InferenceType... arg0) {
 		// TODO Auto-generated method stub
-
 	}
-
 }

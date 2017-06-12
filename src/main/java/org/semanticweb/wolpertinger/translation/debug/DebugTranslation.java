@@ -139,6 +139,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	private VariableIssuer var;
 
 	private Set<OWLClass> auxClasses;
+
 	// inclusions resutling from, e.g. resolving nominals
 	private Collection<OWLClassExpression[]> newInclusions;
 	private Configuration configuration;
@@ -242,6 +243,16 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.println();
 		HashMap<OWLClassExpression[], Integer> counterHash = new HashMap<OWLClassExpression[], Integer> ();
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
+			boolean hasDataTypeClassExpression = false;
+			for (int ii = 0; ii < inclusion.length; ii++) {
+				OWLClassExpression c = inclusion[ii];
+				if (c instanceof OWLDataSomeValuesFrom || c instanceof OWLDataAllValuesFrom ||
+					c instanceof OWLDataMaxCardinality) {
+					hasDataTypeClassExpression = true;
+					continue;
+				}
+			}
+			if (hasDataTypeClassExpression) continue;
 			int axiomNumber = 0;
 			OWLClassExpression[] originalAxiom = normalization.finalTracer.get(inclusion);
 
@@ -272,7 +283,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		}
 
 		for(OWLObjectPropertyExpression objPropertyExp : normalizedOntology.m_asymmetricObjectProperties) {
-			//
 			OWLAsymmetricObjectPropertyAxiomImpl asyProp = new OWLAsymmetricObjectPropertyAxiomImpl(objPropertyExp, new LinkedList<OWLAnnotation>());
 			asyProp.accept(this);
 			var.reset();
@@ -317,7 +327,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			var.reset();
 			writer.println();
 		}
-
 
 		// translate remaining new inclusions, mainly dealing with auxiliary classes
 		for (OWLClassExpression[] inclusion : newInclusions) {
@@ -414,7 +423,10 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.println();
 		writer.println("% Negation Axiom");
 		writer.println();
-		for (OWLClass owlClass : normalizedOntology.m_classes) {
+		Collection<OWLClass> allClasses = new LinkedList<OWLClass> ();
+		allClasses.addAll(normalizedOntology.m_classes);
+		allClasses.addAll(auxClasses);
+		for (OWLClass owlClass : allClasses) {
 			boolean needLineBreak = false;
 			for (OWLObjectProperty owlProperty : normalizedOntology.m_objectProperties) {
 				if(nraSet.containsKey(owlClass) && nraSet.get(owlClass).contains(owlProperty)) {
@@ -428,10 +440,10 @@ public class DebugTranslation implements OWLOntologyTranslator {
 				}
 				var.reset();
 				if (needLineBreak) {
-					writer.println();
 				}
 			}
 		}
+
 
 		// Property Guess
 		writer.println();
@@ -464,10 +476,10 @@ public class DebugTranslation implements OWLOntologyTranslator {
 					writer.println();
 				}
 
-		// SWRL Rules
-		for (DisjunctiveRule rule : normalizedOntology.m_rules) {
-			throw new NotImplementedException();
-		}
+				// SWRL Rules
+//				for (DisjunctiveRule rule : normalizedOntology.m_rules) {
+//					writer.println(rule);
+//				}
 
 		// add #show p/n. statements if required
 		for (IRI conceptIRI : configuration.getConceptNamesToProjectOn()) {
@@ -524,6 +536,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			if (!isFirst) {
 				writer.print(ASP2CoreSymbols.CONJUNCTION + " ");
 			}
+			//writer.print("----" + classExp + "----");
 			classExp.accept(this);
 			isFirst=false;
 		}

@@ -204,6 +204,7 @@ public class OWLNormalization {
         AxiomVisitor axiomVisitor=new AxiomVisitor();
 
         for (OWLAxiom axiom : axioms) {
+        	axiom = preprocessAssertion(axiom);
     		axiom.accept(axiomVisitor);
         }
 

@@ -227,6 +227,16 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 		// TBox axioms
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
+			boolean hasDataTypeClassExpression = false;
+			for (int ii = 0; ii < inclusion.length; ii++) {
+				OWLClassExpression c = inclusion[ii];
+				if (c instanceof OWLDataSomeValuesFrom || c instanceof OWLDataAllValuesFrom ||
+					c instanceof OWLDataMaxCardinality) {
+					hasDataTypeClassExpression = true;
+					continue;
+				}
+			}
+			if (hasDataTypeClassExpression) continue;
 			translateInclusion(inclusion);
 			var.reset();
 		}
@@ -352,8 +362,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			}
 		}
 		//}
-
-
 
 		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
 			createExtensionGuess(property);
