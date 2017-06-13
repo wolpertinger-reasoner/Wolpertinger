@@ -382,20 +382,23 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.println();
 		}
 
-		// show statement
+		writer.flush();
+	}
+
+	private void createShowStatementForClasses(OWLAxioms normalizedOntology) {
 		for (OWLClass owlClass : normalizedOntology.m_classes) {
 			createShowStatement(owlClass);
 			writer.println();
 		}
+	}
 
+	private void createShowStatementForProperties(OWLAxioms normalizedOntology) {
 		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
 			createShowStatement(property);
 			writer.println();
 		}
 
-		writer.flush();
 	}
-
 	private void createShowStatement(OWLClass owlClass) {
 		String className = mapper.getPredicateName(owlClass);
 
@@ -631,6 +634,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.EOR);
 	}
 
+	public SignatureMapper getSignatureMapper () {
+		return this.mapper;
+	}
 	/**
 	 * Provides a sequence of variables X,Y,Y1,Y2,...
 	 */

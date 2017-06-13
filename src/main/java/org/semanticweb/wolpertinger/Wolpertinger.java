@@ -18,11 +18,15 @@
 package org.semanticweb.wolpertinger;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -64,9 +68,13 @@ import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
+import org.semanticweb.wolpertinger.clingo.ClingoSolver;
+import org.semanticweb.wolpertinger.clingo.SolverFactory;
+import org.semanticweb.wolpertinger.clingo.SolvingException;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
+import org.semanticweb.wolpertinger.translation.SignatureMapper;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
@@ -90,7 +98,6 @@ public class Wolpertinger implements OWLReasoner {
 
 	private Configuration configuration;
 
-	private DebugTranslation debugTranslation;
 	private NaiveTranslation naiveTranslation;
 
 	private File tmpFile;
@@ -99,6 +106,9 @@ public class Wolpertinger implements OWLReasoner {
 
 	private ClingoModelEnumerator enumerator;
 	private OWLNormalization normalization;
+
+	private boolean satisfiableClassesComputed;
+	private List<String> satisfiableClasses;
 
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
@@ -650,8 +660,39 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	@Override
-	public boolean isSatisfiable(OWLClassExpression arg0) {
-		// TODO Auto-generated method stub
+	public boolean isSatisfiable(OWLClassExpression classExpression) {
+		SignatureMapper mapper = naiveTranslation.getSignatureMapper();
+		if(!satisfiableClassesComputed) {
+			ClingoSolver solver = SolverFactory.INSTANCE.createClingoBraveSolver();
+			try {
+				File satisfiableClassFile = File.createTempFile("wolpertinger-satisfiable-program", ".lp");
+				satisfiableClassFile.deleteOnExit();
+				PrintWriter satisfiableOutput = new PrintWriter(satisfiableClassFile);
+
+				for (OWLClass c : rootOntology.getClassesInSignature(true)) {
+					String className = mapper.getPredicateName(c);
+					satisfiableOutput.write(String.format("%s :- %s(X).", className.toLowerCase(), className.toLowerCase()));
+					satisfiableOutput.println();
+					satisfiableOutput.write("#show " + className + "/0.");
+				}
+				satisfiableOutput.close();
+				Collection<String> results = solver.solve(new String[] {tmpFile.getAbsolutePath(), satisfiableClassFile.getAbsolutePath()}, 0);
+				String[] resultsArray = new String[results.size()];
+				resultsArray = results.toArray(resultsArray);
+				satisfiableClasses = new ArrayList<String>(Arrays.asList(resultsArray[results.size() - 1].split(" ")));
+				satisfiableClassesComputed = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (SolvingException e) {
+				e.printStackTrace();
+			}
+		}
+		if (classExpression instanceof OWLClass) {
+			String className = mapper.getPredicateName((OWLClass) classExpression);
+			if (satisfiableClasses.contains(className)) {
+				return true;
+			}
+		}
 		return false;
 	}
 
