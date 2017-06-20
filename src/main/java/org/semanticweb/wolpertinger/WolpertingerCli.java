@@ -183,7 +183,7 @@ public class WolpertingerCli {
 
 		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-			wolpertinger.axiomFunction(file);
+			wolpertinger.axiomatizeFDSemantics(file);
 			}
 		}
 
@@ -197,7 +197,11 @@ public class WolpertingerCli {
 
 	protected static final String usageString = "java -jar Wolpertinger.jar [OPTION]... IRI...";
 
-	protected static final String groupActions = "Actions", groupMisc = "Miscellaneous", groupDebug = "Debugging", groupOptimize = "Optimization";
+	protected static final String 	groupActions = "Actions", 
+									groupMisc = "Miscellaneous",
+									groupDebug = "Debugging",
+									groupOptimize = "Optimization",
+									groupUtility = "Utility Functions";
 
 	protected static final Option[] options = new Option[] {
 			// misc options
@@ -217,7 +221,7 @@ public class WolpertingerCli {
 			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many of models; NUMBER=0 means asking for ALL models"),
 			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
-			new Option('a', "axiomatize", groupActions, true, "FILE", "???"),
+			new Option('a', "axiomatize", groupUtility, true, "FILE", "For the ontology given, generate axioms that axiomatize the fixed-domain semantics and write the axiomatized ontolgy to FILE."),
 
 	};
 
