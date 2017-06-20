@@ -227,6 +227,16 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 		// TBox axioms
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
+			boolean hasDataTypeClassExpression = false;
+			for (int ii = 0; ii < inclusion.length; ii++) {
+				OWLClassExpression c = inclusion[ii];
+				if (c instanceof OWLDataSomeValuesFrom || c instanceof OWLDataAllValuesFrom ||
+					c instanceof OWLDataMaxCardinality) {
+					hasDataTypeClassExpression = true;
+					continue;
+				}
+			}
+			if (hasDataTypeClassExpression) continue;
 			translateInclusion(inclusion);
 			var.reset();
 		}
@@ -353,8 +363,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 		//}
 
-
-
 		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
 			createExtensionGuess(property);
 			var.reset();
@@ -374,20 +382,23 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.println();
 		}
 
-		// show statement
+		writer.flush();
+	}
+
+	private void createShowStatementForClasses(OWLAxioms normalizedOntology) {
 		for (OWLClass owlClass : normalizedOntology.m_classes) {
 			createShowStatement(owlClass);
 			writer.println();
 		}
+	}
 
+	private void createShowStatementForProperties(OWLAxioms normalizedOntology) {
 		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
 			createShowStatement(property);
 			writer.println();
 		}
 
-		writer.flush();
 	}
-
 	private void createShowStatement(OWLClass owlClass) {
 		String className = mapper.getPredicateName(owlClass);
 
@@ -623,6 +634,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.EOR);
 	}
 
+	public SignatureMapper getSignatureMapper () {
+		return this.mapper;
+	}
 	/**
 	 * Provides a sequence of variables X,Y,Y1,Y2,...
 	 */

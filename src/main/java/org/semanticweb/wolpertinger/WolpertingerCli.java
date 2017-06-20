@@ -66,6 +66,17 @@ public class WolpertingerCli {
         }
     }
 
+    protected static final String versionString;
+    static {
+        String version=WolpertingerCli.class.getPackage().getImplementationVersion();
+        if (version == null) {
+        	version = "<no version set>";
+        } else {
+        	version = version + ".0.0";
+        }
+        versionString=version;
+    }
+
     protected interface TranslationAction {
     	void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output);
     }
@@ -152,9 +163,9 @@ public class WolpertingerCli {
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			Collection<String> models = wolpertinger.enumerateModels(number);
 			if (number == 0) {
-				output.printf("Models (requested ALL): \n");
+				output.printf("Found " + models.size() + " models (requested ALL): \n");
 			} else {
-				output.printf("Models (requested %d): \n", number);
+				output.printf("Found " + models.size() + " models (requested %d): \n", number);
 			}
 			for (String model : models) {
 				output.println(model);
@@ -162,7 +173,7 @@ public class WolpertingerCli {
 			output.flush();
 		}
     }
-    
+
     static protected class AxiomatizationAction implements TranslationAction {
     	File file;
     	public AxiomatizationAction(File axiomatizedOntology) {
@@ -175,8 +186,8 @@ public class WolpertingerCli {
 			wolpertinger.axiomFunction(file);
 			}
 		}
-    
-    
+
+
 	@SuppressWarnings("serial")
 	protected static class UsageException extends IllegalArgumentException {
 		public UsageException(String inMessage) {
@@ -259,7 +270,10 @@ public class WolpertingerCli {
 						}
 				}
 				break;
-
+				case 'V': {
+					System.out.println("Wolpertinger Version : " + versionString);
+				}
+				break;
 				case 'p': {
 					String arg = getopt.getOptarg();
 					HashSet<IRI> iris = new HashSet<IRI>();
@@ -426,7 +440,7 @@ public class WolpertingerCli {
                     status.log(2,"Ontology parsed in " + String.valueOf(parseTime) + " msec.");
                     startTime = System.currentTimeMillis();
                     Wolpertinger wolpertinger = new Wolpertinger(configuration, ontology);
-                    
+
                    // Prefixes prefixes=hermit.getPrefixes();
 //                    if (defaultPrefix!=null) {
 //                        try {

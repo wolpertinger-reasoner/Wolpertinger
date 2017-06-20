@@ -18,16 +18,23 @@
 package org.semanticweb.wolpertinger;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
+import java.util.Stack;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
@@ -40,9 +47,11 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectComplementOf;
 import org.semanticweb.owlapi.model.OWLObjectOneOf;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -59,12 +68,17 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
+import org.semanticweb.owlapi.reasoner.impl.OWLClassNode;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
+import org.semanticweb.wolpertinger.clingo.ClingoSolver;
+import org.semanticweb.wolpertinger.clingo.SolverFactory;
+import org.semanticweb.wolpertinger.clingo.SolvingException;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
+import org.semanticweb.wolpertinger.translation.SignatureMapper;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
@@ -88,7 +102,6 @@ public class Wolpertinger implements OWLReasoner {
 
 	private Configuration configuration;
 
-	private DebugTranslation debugTranslation;
 	private NaiveTranslation naiveTranslation;
 
 	private File tmpFile;
@@ -98,6 +111,13 @@ public class Wolpertinger implements OWLReasoner {
 	private ClingoModelEnumerator enumerator;
 	private OWLNormalization normalization;
 
+	private boolean satisfiableClassesComputed;
+	private List<String> satisfiableClasses;
+
+	private HashMap<OWLClass,HashSet<OWLClass>> classHierarchy;
+	private HashSet<OWLClass> equalsToTopClasses;
+	private HashSet<OWLClass> equalsToBottomClasses;
+
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
 	}
@@ -106,6 +126,8 @@ public class Wolpertinger implements OWLReasoner {
 		this.rootOntology = rootOntology;
 		this.configuration = configuration;
 		loadOntology();
+		equalsToTopClasses = new HashSet<OWLClass> ();
+		equalsToBottomClasses = new HashSet<OWLClass> ();
 	}
 
 	/**
@@ -188,20 +210,98 @@ public class Wolpertinger implements OWLReasoner {
 		return enumerator.enumerateModels(number);
 	}
 
-	public void classify() {
-		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature();
+	public void classifyClasses() {
+		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(true);
+		HashMap<OWLClass,HashSet<OWLClass>> dag = new HashMap<OWLClass,HashSet<OWLClass>> ();
+
+		for (OWLClass cl : allClasses) {
+			OWLObjectComplementOf negated = new OWLObjectComplementOfImpl(cl);
+			if (!isSatisfiable(cl)) {
+				equalsToBottomClasses.add(cl);
+			}
+			if (!isSatisfiable(negated)) {
+				equalsToTopClasses.add(cl);
+			} else {
+
+			}
+		}
+
+		for (OWLClass cl : allClasses) {
+			dag.put(cl, new HashSet<OWLClass> ());
+		}
 		for (OWLClass subClass : allClasses) {
-			for (OWLClass superClass : allClasses) {
-				boolean entailed = isEntailed(new OWLSubClassOfAxiomImpl (subClass, superClass, new HashSet<OWLAnnotation> ()));
-				System.out.print(subClass.getIRI().getFragment() + " -> " + superClass.getIRI().getFragment());
+			HashSet<OWLClass> superClasses = dag.get(subClass);
+			for (OWLClass superClassCandidate : allClasses) {
+				if (subClass.equals(superClassCandidate)) {
+					continue;
+				}
+
+				boolean entailed = isEntailed(new OWLSubClassOfAxiomImpl (subClass, superClassCandidate, new HashSet<OWLAnnotation> ()));
 				if (entailed) {
-					System.out.println(" YES");
+					superClasses.add(superClassCandidate);
 				} else {
-					System.out.println(" NO");
+
 				}
 			}
 		}
+
+		// compute equivalent class
+		HashMap<OWLClass, OWLClass> classRepresentative = new HashMap<OWLClass, OWLClass> ();
+		for (OWLClass cl : allClasses) {
+			// already represented
+			if (classRepresentative.keySet().contains(cl)) {
+				continue;
+			}
+			HashSet<OWLClass> superClasses = dag.get(cl);
+			for (OWLClass cl2 : superClasses) {
+				// equivalent
+				if (dag.get(cl2).contains(cl)) {
+					classRepresentative.put(cl2, cl);
+				}
+			}
+		}
+
+		// compute transitive reduction of dag
+		for (OWLClass cl : allClasses) {
+			Collection<OWLClass> superClasses = dag.get(cl);
+			OWLClass[] tmpSuperClasses = new OWLClass[superClasses.size()];
+
+			for (OWLClass superClass : superClasses.toArray(tmpSuperClasses)) {
+				if (!dag.get(cl).contains(superClass)){
+					// has been removed
+				}
+				HashSet<OWLClass> marked = new HashSet<OWLClass> ();
+
+		        // depth-first search using an explicit stack
+		        Stack<OWLClass> stack = new Stack<OWLClass>();
+		        marked.add(superClass);
+		        stack.push(superClass);
+		        while (!stack.isEmpty()) {
+		            OWLClass v = stack.peek();
+		            HashSet<OWLClass> superSuperClasses = dag.get(v);
+		            for (OWLClass superSuperClass : superSuperClasses) {
+		            	if (!marked.contains(superSuperClass)) {
+		            		marked.add(superSuperClass);
+		            		stack.add(superSuperClass);
+		            		continue;
+		            	}
+
+		            }
+            		stack.pop();
+		        }
+		        HashSet<OWLClass> directSuperClasses = dag.get(cl);
+		        for (OWLClass indirectSuperClass : marked) {
+		        	if (indirectSuperClass.equals(superClass)) {
+
+		        	} else {
+		        		directSuperClasses.remove(indirectSuperClass);
+		        	}
+		        }
+			}
+		}
+		classHierarchy = dag;
 	}
+
 	public void axiomFunction(File file){
 		Set<OWLAxiom> s = rootOntology.getAxioms();
 		Set<OWLNamedIndividual> ind_names = null;
@@ -265,6 +365,9 @@ public class Wolpertinger implements OWLReasoner {
 	// OWLReasoner implementations up from here
 	// --------------
 
+	////////////////////////////
+	// Reasoner-related methods
+	////////////////////////////
 	@Override
 	public void dispose() {
 		// TODO Auto-generated method stub
@@ -278,21 +381,26 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	@Override
-	public Node<OWLClass> getBottomClassNode() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getReasonerName() {
+		return getClass().getPackage().getImplementationTitle();
 	}
 
 	@Override
-	public Node<OWLDataProperty> getBottomDataPropertyNode() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Node<OWLObjectPropertyExpression> getBottomObjectPropertyNode() {
-		// TODO Auto-generated method stub
-		return null;
+	public Version getReasonerVersion() {
+		String versionString = getClass().getPackage().getImplementationVersion();
+        String[] splitted;
+        int version[]=new int[4];
+        if (versionString!=null) {
+            splitted=versionString.split("\\.");
+            for (int ii = 0; ii < 4; ii++) {
+            	if (ii < splitted.length) {
+            		version[ii]=Integer.parseInt(splitted[ii]);
+            	} else {
+            		version[ii]=0;
+            	}
+            }
+        }
+        return new Version(version[0],version[1],version[2],version[3]);
 	}
 
 	@Override
@@ -302,66 +410,13 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	@Override
-	public NodeSet<OWLClass> getDataPropertyDomains(OWLDataProperty arg0,
-			boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
+	public OWLOntology getRootOntology() {
+		return this.rootOntology;
 	}
 
-	@Override
-	public Set<OWLLiteral> getDataPropertyValues(OWLNamedIndividual arg0,
-			OWLDataProperty arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLNamedIndividual> getDifferentIndividuals(
-			OWLNamedIndividual arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLClass> getDisjointClasses(OWLClassExpression arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLDataProperty> getDisjointDataProperties(
-			OWLDataPropertyExpression arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLObjectPropertyExpression> getDisjointObjectProperties(
-			OWLObjectPropertyExpression arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Node<OWLClass> getEquivalentClasses(OWLClassExpression arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Node<OWLDataProperty> getEquivalentDataProperties(
-			OWLDataProperty arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Node<OWLObjectPropertyExpression> getEquivalentObjectProperties(
-			OWLObjectPropertyExpression arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	////////////////////////////
+	// Utility methods
+	////////////////////////////
 	@Override
 	public FreshEntityPolicy getFreshEntityPolicy() {
 		// TODO Auto-generated method stub
@@ -370,48 +425,6 @@ public class Wolpertinger implements OWLReasoner {
 
 	@Override
 	public IndividualNodeSetPolicy getIndividualNodeSetPolicy() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression,
-			boolean arg1) {
-		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature();
-		OWLNamedIndividualNodeSet result = new OWLNamedIndividualNodeSet ();
-		for (OWLNamedIndividual individual : individuals) {
-			OWLClassAssertionAxiom impl = new OWLClassAssertionAxiomImpl (individual, classExpression, new HashSet<OWLAnnotation> ());
-			if(isEntailed(impl)) {
-				result.addEntity(individual);
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public Node<OWLObjectPropertyExpression> getInverseObjectProperties(
-			OWLObjectPropertyExpression arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLClass> getObjectPropertyDomains(
-			OWLObjectPropertyExpression arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLClass> getObjectPropertyRanges(
-			OWLObjectPropertyExpression arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLNamedIndividual> getObjectPropertyValues(
-			OWLNamedIndividual arg0, OWLObjectPropertyExpression arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -441,102 +454,9 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	@Override
-	public String getReasonerName() {
-		return getClass().getPackage().getImplementationTitle();
-	}
-
-	@Override
-	public Version getReasonerVersion() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public OWLOntology getRootOntology() {
-		return this.rootOntology;
-	}
-
-	@Override
-	public Node<OWLNamedIndividual> getSameIndividuals(OWLNamedIndividual arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLClass> getSubClasses(OWLClassExpression arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLDataProperty> getSubDataProperties(OWLDataProperty arg0,
-			boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLObjectPropertyExpression> getSubObjectProperties(
-			OWLObjectPropertyExpression arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLClass> getSuperClasses(OWLClassExpression arg0,
-			boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLDataProperty> getSuperDataProperties(
-			OWLDataProperty arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLObjectPropertyExpression> getSuperObjectProperties(
-			OWLObjectPropertyExpression arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public long getTimeOut() {
 		// TODO Auto-generated method stub
 		return 0;
-	}
-
-	@Override
-	public Node<OWLClass> getTopClassNode() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Node<OWLDataProperty> getTopDataPropertyNode() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Node<OWLObjectPropertyExpression> getTopObjectPropertyNode() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public NodeSet<OWLClass> getTypes(OWLNamedIndividual arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Node<OWLClass> getUnsatisfiableClasses() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -544,6 +464,10 @@ public class Wolpertinger implements OWLReasoner {
 		// TODO Auto-generated method stub
 
 	}
+
+	////////////////////////////
+	// Ontology-related methods
+	////////////////////////////
 
 	@Override
 	public boolean isConsistent() {
@@ -574,7 +498,9 @@ public class Wolpertinger implements OWLReasoner {
 		}
 
 		for (OWLAxiom axiom : axiomSet) {
-			if(axiom instanceof OWLSubClassOfAxiom) {
+			if (axiom instanceof OWLDeclarationAxiom) {
+
+			} else if (axiom instanceof OWLSubClassOfAxiom) {
 				OWLAxioms tempAxioms = new OWLAxioms ();
 				Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
 				OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
@@ -605,6 +531,8 @@ public class Wolpertinger implements OWLReasoner {
 				NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
 				axiomTranslation.individualAssertionMode((OWLNamedIndividual) classAssertionAxiom.getIndividual());
 				axiomTranslation.translateEntailment(tempAxioms);
+			} else {
+
 			}
 		}
 		entailmentOutput.print(ASP2CoreSymbols.IMPLICATION);
@@ -612,7 +540,7 @@ public class Wolpertinger implements OWLReasoner {
 		entailmentOutput.print(" violation.");
 		entailmentOutput.close();
 
-		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
+		ClingoModelEnumerator enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
 
 		if (enumerator.enumerateModels(1).size() == 0) {
 			tmpEntailmentFile.delete();
@@ -636,15 +564,274 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	@Override
-	public boolean isSatisfiable(OWLClassExpression arg0) {
+	public void precomputeInferences(InferenceType... arg0) {
 		// TODO Auto-generated method stub
-		return false;
+	}
+
+	////////////////////////////
+	// Class-related methods
+	////////////////////////////
+	@Override
+	public Node<OWLClass> getBottomClassNode() {
+		OWLClassNode bottomClassNode = OWLClassNode.getTopNode();
+		for (OWLClass cl : equalsToBottomClasses) {
+			bottomClassNode.add(cl);
+		}
+		return bottomClassNode;
 	}
 
 	@Override
-	public void precomputeInferences(InferenceType... arg0) {
+	public NodeSet<OWLClass> getDisjointClasses(OWLClassExpression arg0) {
 		// TODO Auto-generated method stub
+		return null;
+	}
 
+	@Override
+	public Node<OWLClass> getEquivalentClasses(OWLClassExpression arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLClass> getSubClasses(OWLClassExpression arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLClass> getSuperClasses(OWLClassExpression arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Node<OWLClass> getTopClassNode() {
+		OWLClassNode topClassNode = OWLClassNode.getTopNode();
+		for (OWLClass cl : equalsToTopClasses) {
+			topClassNode.add(cl);
+		}
+		return topClassNode;
+	}
+
+	@Override
+	public Node<OWLClass> getUnsatisfiableClasses() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isSatisfiable(OWLClassExpression classExpression) {
+		SignatureMapper mapper = naiveTranslation.getSignatureMapper();
+		if(!satisfiableClassesComputed) {
+			ClingoSolver solver = SolverFactory.INSTANCE.createClingoBraveSolver();
+			try {
+				File satisfiableClassFile = File.createTempFile("wolpertinger-satisfiable-program", ".lp");
+				satisfiableClassFile.deleteOnExit();
+				PrintWriter satisfiableOutput = new PrintWriter(satisfiableClassFile);
+
+				for (OWLClass c : rootOntology.getClassesInSignature(true)) {
+					String className = mapper.getPredicateName(c);
+					satisfiableOutput.write(String.format("%s :- %s(X).", className.toLowerCase(), className.toLowerCase()));
+					satisfiableOutput.println();
+					satisfiableOutput.write(String.format("not_%s :- -%s(X).", className.toLowerCase(), className.toLowerCase()));
+					satisfiableOutput.println();
+					satisfiableOutput.write("#show not_" + className.toLowerCase() + "/0.");
+					satisfiableOutput.write("#show " + className.toLowerCase() + "/0.");
+				}
+				satisfiableOutput.close();
+				Collection<String> results = solver.solve(new String[] {tmpFile.getAbsolutePath(), satisfiableClassFile.getAbsolutePath()}, 0);
+				String[] resultsArray = new String[results.size()];
+				resultsArray = results.toArray(resultsArray);
+				satisfiableClasses = new ArrayList<String>(Arrays.asList(resultsArray[results.size() - 1].split(" ")));
+				satisfiableClassesComputed = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (SolvingException e) {
+				e.printStackTrace();
+			}
+		}
+		if (classExpression instanceof OWLClass) {
+			String className = mapper.getPredicateName((OWLClass) classExpression);
+			if (satisfiableClasses.contains(className)) {
+				return true;
+			}
+		} else if (classExpression instanceof OWLObjectComplementOf &&
+				   ((OWLObjectComplementOf) classExpression).getOperand() instanceof OWLClass) {
+			OWLClassExpression cl = ((OWLObjectComplementOf) classExpression).getOperand();
+			String className = mapper.getPredicateName((OWLClass) cl);
+			if (satisfiableClasses.contains("not_" + className)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	////////////////////////////
+	// Object Property-related methods
+	////////////////////////////
+
+	@Override
+	public Node<OWLObjectPropertyExpression> getBottomObjectPropertyNode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLObjectPropertyExpression> getDisjointObjectProperties(
+			OWLObjectPropertyExpression arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Node<OWLObjectPropertyExpression> getEquivalentObjectProperties(
+			OWLObjectPropertyExpression arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Node<OWLObjectPropertyExpression> getInverseObjectProperties(
+			OWLObjectPropertyExpression arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLObjectPropertyExpression> getSubObjectProperties(
+			OWLObjectPropertyExpression arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLNamedIndividual> getObjectPropertyValues(
+			OWLNamedIndividual arg0, OWLObjectPropertyExpression arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLClass> getObjectPropertyDomains(
+			OWLObjectPropertyExpression arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLClass> getObjectPropertyRanges(
+			OWLObjectPropertyExpression arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLObjectPropertyExpression> getSuperObjectProperties(
+			OWLObjectPropertyExpression arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Node<OWLObjectPropertyExpression> getTopObjectPropertyNode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	////////////////////////////
+	// Data Property-related methods
+	////////////////////////////
+
+	@Override
+	public Node<OWLDataProperty> getBottomDataPropertyNode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLClass> getDataPropertyDomains(OWLDataProperty arg0,
+			boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<OWLLiteral> getDataPropertyValues(OWLNamedIndividual arg0,
+			OWLDataProperty arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLNamedIndividual> getDifferentIndividuals(
+			OWLNamedIndividual arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLDataProperty> getDisjointDataProperties(
+			OWLDataPropertyExpression arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Node<OWLDataProperty> getEquivalentDataProperties(
+			OWLDataProperty arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLDataProperty> getSubDataProperties(OWLDataProperty arg0,
+			boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLDataProperty> getSuperDataProperties(
+			OWLDataProperty arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Node<OWLDataProperty> getTopDataPropertyNode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	////////////////////////////
+	// Individual-related methods
+	////////////////////////////
+
+
+	@Override
+	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression,
+			boolean arg1) {
+		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(true);
+		OWLNamedIndividualNodeSet result = new OWLNamedIndividualNodeSet ();
+		for (OWLNamedIndividual individual : individuals) {
+			OWLClassAssertionAxiom impl = new OWLClassAssertionAxiomImpl (individual, classExpression, new HashSet<OWLAnnotation> ());
+			if(isEntailed(impl)) {
+				result.addEntity(individual);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Node<OWLNamedIndividual> getSameIndividuals(OWLNamedIndividual arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public NodeSet<OWLClass> getTypes(OWLNamedIndividual arg0, boolean arg1) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
