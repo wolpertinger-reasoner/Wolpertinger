@@ -1,8 +1,10 @@
-## Wolpertinger - A Bounded Model Reasoner for OWL DL (SROIQ)
+## Wolpertinger - A Fixed-Domain Reasoner
 
-Wolpertinger is a simple tool, which translates OWL DL ontologies into an answer
-set program accepted by gringo (version 4.4), respectively clingo (4.4) (http://potassco.sourceforge.net).
+Wolpertinger is reasoner for OWL DL (SROIQ), thath adheres to the fixed-domain semantics [1].
 
-Each obtained answer set, when using clasp or clingo, corresponds to a so-called bounded model.
-That is, a model where the domain is induced by exactly those individuals
-occurring within the ontology.
+# References
+
+[1] Sarah Alice Gaggle, Sebastian Rudolph, Lukas Schweizer: Fixed-Domain Reasoning for Description Logics. In ECAI 2016.
+https://iccl.inf.tu-dresden.de/web/Inproceedings3091
+  
+
