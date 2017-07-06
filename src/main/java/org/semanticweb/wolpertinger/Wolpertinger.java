@@ -301,12 +301,12 @@ public class Wolpertinger implements OWLReasoner {
 
 	public void axiomatizeFDSemantics(File file){
 		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(true);
- 		
+
  		if (individuals.isEmpty()) {
  			System.out.println("No named individuals in given ontology!");
  			return;
  		}
- 			
+
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory factory = manager.getOWLDataFactory();
 		OWLDifferentIndividualsAxiom allDiff = factory.getOWLDifferentIndividualsAxiom(individuals);
@@ -406,14 +406,12 @@ public class Wolpertinger implements OWLReasoner {
 	////////////////////////////
 	@Override
 	public FreshEntityPolicy getFreshEntityPolicy() {
-		// TODO Auto-generated method stub
-		return null;
+		return FreshEntityPolicy.DISALLOW;
 	}
 
 	@Override
 	public IndividualNodeSetPolicy getIndividualNodeSetPolicy() {
-		// TODO Auto-generated method stub
-		return null;
+		return IndividualNodeSetPolicy.BY_NAME;
 	}
 
 	@Override
