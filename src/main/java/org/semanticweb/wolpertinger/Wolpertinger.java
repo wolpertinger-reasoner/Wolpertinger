@@ -17,6 +17,10 @@
 */
 package org.semanticweb.wolpertinger;
 
+import hierarchy.Hierarchy;
+import hierarchy.HierarchyBuilder;
+import hierarchy.HierarchyNode;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,6 +40,7 @@ import java.util.Stack;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
 import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -65,6 +70,7 @@ import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.impl.OWLClassNode;
+import org.semanticweb.owlapi.reasoner.impl.OWLClassNodeSet;
 import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.util.Version;
@@ -72,6 +78,7 @@ import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 import org.semanticweb.wolpertinger.clingo.ClingoSolver;
 import org.semanticweb.wolpertinger.clingo.SolverFactory;
 import org.semanticweb.wolpertinger.clingo.SolvingException;
+import org.semanticweb.wolpertinger.model.AtomicConcept;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
@@ -81,6 +88,7 @@ import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
@@ -103,6 +111,7 @@ public class Wolpertinger implements OWLReasoner {
 
 	private File tmpFile;
 	private PrintWriter output;
+	private boolean classified;
 	private boolean baseProgramReady;
 
 	private ClingoModelEnumerator enumerator;
@@ -111,9 +120,12 @@ public class Wolpertinger implements OWLReasoner {
 	private boolean satisfiableClassesComputed;
 	private List<String> satisfiableClasses;
 
-	private HashMap<OWLClass,HashSet<OWLClass>> classHierarchy;
+
+
 	private HashSet<OWLClass> equalsToTopClasses;
 	private HashSet<OWLClass> equalsToBottomClasses;
+
+	private Hierarchy<OWLClass> classHierarchy;
 
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
@@ -123,8 +135,7 @@ public class Wolpertinger implements OWLReasoner {
 		this.rootOntology = rootOntology;
 		this.configuration = configuration;
 		loadOntology();
-		equalsToTopClasses = new HashSet<OWLClass> ();
-		equalsToBottomClasses = new HashSet<OWLClass> ();
+		classified = false;
 	}
 
 	/**
@@ -208,8 +219,14 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public void classifyClasses() {
+		if (classified) {
+			return;
+		}
+		classified = true;
+		equalsToTopClasses = new HashSet<OWLClass> ();
+		equalsToBottomClasses = new HashSet<OWLClass> ();
 		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(true);
-		HashMap<OWLClass,HashSet<OWLClass>> dag = new HashMap<OWLClass,HashSet<OWLClass>> ();
+		HashMap<OWLClass,HashSet<OWLClass>> superClassHierarchy = new HashMap<OWLClass,HashSet<OWLClass>> ();
 
 		for (OWLClass cl : allClasses) {
 			OWLObjectComplementOf negated = new OWLObjectComplementOfImpl(cl);
@@ -224,16 +241,19 @@ public class Wolpertinger implements OWLReasoner {
 		}
 
 		for (OWLClass cl : allClasses) {
-			dag.put(cl, new HashSet<OWLClass> ());
+			superClassHierarchy.put(cl, new HashSet<OWLClass> ());
 		}
-		for (OWLClass subClass : allClasses) {
-			HashSet<OWLClass> superClasses = dag.get(subClass);
+
+		// TODO optimize checking
+		for (OWLClass subClassCandidate : allClasses) {
+			HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
 			for (OWLClass superClassCandidate : allClasses) {
-				if (subClass.equals(superClassCandidate)) {
+				if (subClassCandidate.equals(superClassCandidate)) {
+					// same class, no need to check
 					continue;
 				}
 
-				boolean entailed = isEntailed(new OWLSubClassOfAxiomImpl (subClass, superClassCandidate, new HashSet<OWLAnnotation> ()));
+				boolean entailed = isEntailed(new OWLSubClassOfAxiomImpl (subClassCandidate, superClassCandidate, new HashSet<OWLAnnotation> ()));
 				if (entailed) {
 					superClasses.add(superClassCandidate);
 				} else {
@@ -242,29 +262,50 @@ public class Wolpertinger implements OWLReasoner {
 			}
 		}
 
-		// compute equivalent class
+		// check equivalent classes
 		HashMap<OWLClass, OWLClass> classRepresentative = new HashMap<OWLClass, OWLClass> ();
+		HashMap<OWLClass, HashSet<OWLClass>> classRepresented = new HashMap<OWLClass, HashSet<OWLClass>> ();
 		for (OWLClass cl : allClasses) {
-			// already represented
-			if (classRepresentative.keySet().contains(cl)) {
-				continue;
-			}
-			HashSet<OWLClass> superClasses = dag.get(cl);
-			for (OWLClass cl2 : superClasses) {
-				// equivalent
-				if (dag.get(cl2).contains(cl)) {
-					classRepresentative.put(cl2, cl);
+			HashSet<OWLClass> superClasses = superClassHierarchy.get(cl);
+			for (OWLClass equivalentCandidate : superClasses) {
+				if (classRepresentative.keySet().contains(cl)) {
+					continue;
+				}
+				if (superClassHierarchy.get(equivalentCandidate).contains(cl)) {
+					classRepresentative.put(equivalentCandidate, cl);
+					if(!classRepresented.containsKey(cl)) {
+						HashSet<OWLClass> newSet = new HashSet<OWLClass> ();
+						newSet.add(equivalentCandidate);
+						classRepresented.put(cl, newSet);
+					} else {
+						HashSet<OWLClass> existedSet = classRepresented.get(cl);
+						existedSet.add(equivalentCandidate);
+					}
+
 				}
 			}
 		}
 
+		Set<OWLClass> representedClasses = classRepresentative.keySet();
+		for (OWLClass cl : allClasses) {
+			HashSet<OWLClass> superClasses = superClassHierarchy.get(cl);
+			superClasses.removeAll(representedClasses);
+		}
+
+		for (OWLClass cl : representedClasses) {
+			superClassHierarchy.remove(cl);
+		}
+
 		// compute transitive reduction of dag
 		for (OWLClass cl : allClasses) {
-			Collection<OWLClass> superClasses = dag.get(cl);
+			Collection<OWLClass> superClasses = superClassHierarchy.get(cl);
+			if(superClasses == null) {
+				continue;
+			}
 			OWLClass[] tmpSuperClasses = new OWLClass[superClasses.size()];
 
 			for (OWLClass superClass : superClasses.toArray(tmpSuperClasses)) {
-				if (!dag.get(cl).contains(superClass)){
+				if (!superClassHierarchy.get(cl).contains(superClass)){
 					// has been removed
 				}
 				HashSet<OWLClass> marked = new HashSet<OWLClass> ();
@@ -275,7 +316,7 @@ public class Wolpertinger implements OWLReasoner {
 		        stack.push(superClass);
 		        while (!stack.isEmpty()) {
 		            OWLClass v = stack.peek();
-		            HashSet<OWLClass> superSuperClasses = dag.get(v);
+		            HashSet<OWLClass> superSuperClasses = superClassHierarchy.get(v);
 		            for (OWLClass superSuperClass : superSuperClasses) {
 		            	if (!marked.contains(superSuperClass)) {
 		            		marked.add(superSuperClass);
@@ -286,7 +327,7 @@ public class Wolpertinger implements OWLReasoner {
 		            }
             		stack.pop();
 		        }
-		        HashSet<OWLClass> directSuperClasses = dag.get(cl);
+		        HashSet<OWLClass> directSuperClasses = superClassHierarchy.get(cl);
 		        for (OWLClass indirectSuperClass : marked) {
 		        	if (indirectSuperClass.equals(superClass)) {
 
@@ -296,7 +337,10 @@ public class Wolpertinger implements OWLReasoner {
 		        }
 			}
 		}
-		classHierarchy = dag;
+		OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
+		OWLClass nothing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLNothing();
+
+		classHierarchy = HierarchyBuilder.buildHierarchy(superClassHierarchy, classRepresentative, thing, nothing, equalsToTopClasses, equalsToBottomClasses);
 	}
 
 	public void axiomatizeFDSemantics(File file){
@@ -456,7 +500,7 @@ public class Wolpertinger implements OWLReasoner {
 
 	@Override
 	public boolean isConsistent() {
-        Collection<String> models = enumerator.enumerateAllModels();
+        Collection<String> models = enumerator.enumerateModels(1);
 		return !models.isEmpty();
 	}
 
@@ -558,11 +602,8 @@ public class Wolpertinger implements OWLReasoner {
 	////////////////////////////
 	@Override
 	public Node<OWLClass> getBottomClassNode() {
-		OWLClassNode bottomClassNode = OWLClassNode.getTopNode();
-		for (OWLClass cl : equalsToBottomClasses) {
-			bottomClassNode.add(cl);
-		}
-		return bottomClassNode;
+		classifyClasses();
+		return owlClassHierarchyNodeToNode(classHierarchy.getBottomNode());
 	}
 
 	@Override
@@ -572,36 +613,80 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	@Override
-	public Node<OWLClass> getEquivalentClasses(OWLClassExpression arg0) {
-		// TODO Auto-generated method stub
+	public Node<OWLClass> getEquivalentClasses(OWLClassExpression queryClassExpression) {
+		if (queryClassExpression.isOWLNothing()) {
+            return getBottomClassNode();
+        } else if (queryClassExpression.isOWLThing()) {
+        	return getTopClassNode();
+        } else if (queryClassExpression instanceof OWLClass ){
+        	OWLClass queryClass = (OWLClass) queryClassExpression;
+        	return owlClassHierarchyNodeToNode(classHierarchy.getNodeForElement(queryClass));
+        }
 		return null;
 	}
 
 	@Override
-	public NodeSet<OWLClass> getSubClasses(OWLClassExpression arg0, boolean arg1) {
-		// TODO Auto-generated method stub
+	public NodeSet<OWLClass> getSubClasses(OWLClassExpression queryClassExpression, boolean direct) {
+		if (queryClassExpression instanceof OWLClass) {
+			Set<HierarchyNode<OWLClass>> result;
+			OWLClass queryClass = (OWLClass) queryClassExpression;
+			HierarchyNode<OWLClass> hierarchyNode = classHierarchy.getNodeForElement(queryClass);
+			if (direct) {
+				result = hierarchyNode.getChildNodes();
+			} else {
+				result=new HashSet<HierarchyNode<OWLClass>>(hierarchyNode.getDescendantNodes());
+	            result.remove(hierarchyNode);
+	        }
+			return owlClassHierarchyNodesToNodeSet(result);
+		}
 		return null;
 	}
 
 	@Override
-	public NodeSet<OWLClass> getSuperClasses(OWLClassExpression arg0, boolean arg1) {
-		// TODO Auto-generated method stub
+	public NodeSet<OWLClass> getSuperClasses(OWLClassExpression queryClassExpression, boolean direct) {
+		if (queryClassExpression instanceof OWLClass) {
+			Set<HierarchyNode<OWLClass>> result;
+			OWLClass queryClass = (OWLClass) queryClassExpression;
+			HierarchyNode<OWLClass> hierarchyNode = classHierarchy.getNodeForElement(queryClass);
+			if (direct) {
+				result = hierarchyNode.getParentNodes();
+			} else {
+				result=new HashSet<HierarchyNode<OWLClass>>(hierarchyNode.getAncestorNodes());
+	            result.remove(hierarchyNode);
+	        }
+			return owlClassHierarchyNodesToNodeSet(result);
+		}
 		return null;
 	}
+
+	// taken from HermiT. instead of using AtomicConcept, we directly use OWLClass
+	protected NodeSet<OWLClass> owlClassHierarchyNodesToNodeSet(Collection<HierarchyNode<OWLClass>> hierarchyNodes) {
+        Set<Node<OWLClass>> result=new HashSet<Node<OWLClass>>();
+        for (HierarchyNode<OWLClass> hierarchyNode : hierarchyNodes) {
+            Node<OWLClass> node=owlClassHierarchyNodeToNode(hierarchyNode);
+            if (node.getSize()!=0)
+                result.add(node);
+        }
+        return new OWLClassNodeSet(result);
+    }
+
+	protected Node<OWLClass> owlClassHierarchyNodeToNode(HierarchyNode<OWLClass> hierarchyNode) {
+        Set<OWLClass> result=new HashSet<OWLClass>();
+        for (OWLClass concept : hierarchyNode.getEquivalentElements()) {
+            result.add(concept);
+        }
+        return new OWLClassNode(result);
+    }
 
 	@Override
 	public Node<OWLClass> getTopClassNode() {
-		OWLClassNode topClassNode = OWLClassNode.getTopNode();
-		for (OWLClass cl : equalsToTopClasses) {
-			topClassNode.add(cl);
-		}
-		return topClassNode;
+		classifyClasses();
+		return owlClassHierarchyNodeToNode(classHierarchy.getTopNode());
 	}
 
 	@Override
 	public Node<OWLClass> getUnsatisfiableClasses() {
-		// TODO Auto-generated method stub
-		return null;
+		return getBottomClassNode();
 	}
 
 	@Override
