@@ -4,4 +4,4 @@
 *.jar
 target/**
 .settings/**
-/target/
+*/target/
