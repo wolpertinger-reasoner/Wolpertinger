@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Lesser General Public License
    along with HermiT.  If not, see <http://www.gnu.org/licenses/>.
 */
-package hierarchy;
+package org.semanticweb.wolpertinger.hierarchy;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

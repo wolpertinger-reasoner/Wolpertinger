@@ -1,4 +1,4 @@
-package hierarchy;
+package org.semanticweb.wolpertinger.hierarchy;
 
 import java.util.HashMap;
 import java.util.HashSet;
