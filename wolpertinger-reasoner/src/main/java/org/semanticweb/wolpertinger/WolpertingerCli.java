@@ -89,21 +89,20 @@ public class WolpertingerCli {
     		this.debugFlag = debugFlag;
     	}
 
-		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.naffTranslate(new PrintWriter(System.out), debugFlag);
 		}
     }
 
     static protected class NaiveTranslationAction implements TranslationAction {
-		@Override
+		
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.naiveTranslate(new PrintWriter(System.out));
 		}
     }
 
     static protected class DirectTranslationAction implements TranslationAction {
-		@Override
+		
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			DirectTranslation translation = new DirectTranslation(configuration, output);
 		}
@@ -117,7 +116,7 @@ public class WolpertingerCli {
     		this.owlOntology = owlOntology;
     	}
 
-		@Override
+		
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			Set<OWLAxiom> axioms = owlOntology.getAxioms();
 			System.out.println("Is entailed? : " + wolpertinger.isEntailed(axioms));
@@ -129,7 +128,6 @@ public class WolpertingerCli {
     		super();
     	}
 
-		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.naffTranslate(new PrintWriter(System.out), true);
 		}
@@ -140,7 +138,6 @@ public class WolpertingerCli {
     		super();
     	}
 
-		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			if (wolpertinger.isConsistent()) {
 				output.println("Input ontologies are consistent");
@@ -159,7 +156,6 @@ public class WolpertingerCli {
     		this.number = number;
     	}
 
-		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			Collection<String> models = wolpertinger.enumerateModels(number);
 			if (number == 0) {
@@ -181,7 +177,6 @@ public class WolpertingerCli {
     		this.file = axiomatizedOntology;
     	}
 
-		@Override
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.axiomatizeFDSemantics(file);
 			}

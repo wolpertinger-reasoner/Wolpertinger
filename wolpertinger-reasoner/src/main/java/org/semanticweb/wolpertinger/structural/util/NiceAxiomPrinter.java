@@ -100,7 +100,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAnnotationAssertionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -109,7 +109,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubAnnotationPropertyOfAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -118,7 +118,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAnnotationPropertyDomainAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -127,7 +127,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAnnotationPropertyRangeAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -136,7 +136,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDeclarationAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDeclarationAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -145,7 +145,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubClassOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubClassOfAxiom subClassAxiom) {
 		OWLClassExpression subClass = subClassAxiom.getSubClass();
 		OWLClassExpression supClass = subClassAxiom.getSuperClass();
@@ -157,7 +157,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLNegativeObjectPropertyAssertionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -166,7 +166,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAsymmetricObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -175,7 +175,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLReflexiveObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -184,7 +184,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointClassesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointClassesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -193,7 +193,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDataPropertyDomainAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -202,7 +202,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectPropertyDomainAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -211,7 +211,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLEquivalentObjectPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -220,7 +220,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLNegativeDataPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLNegativeDataPropertyAssertionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -229,7 +229,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDifferentIndividualsAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -238,7 +238,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointDataPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -247,7 +247,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointObjectPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -256,7 +256,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectPropertyRangeAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -265,7 +265,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectPropertyAssertionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -274,7 +274,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLFunctionalObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -283,7 +283,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubObjectPropertyOfAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -292,7 +292,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointUnionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointUnionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -301,7 +301,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSymmetricObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -310,7 +310,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDataPropertyRangeAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -319,7 +319,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLFunctionalDataPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLFunctionalDataPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -328,7 +328,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLEquivalentDataPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -337,7 +337,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLClassAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLClassAssertionAxiom classAssertion) {
 		OWLIndividual individual = classAssertion.getIndividual();
 		OWLClassExpression classExpression = classAssertion.getClassExpression();
@@ -358,7 +358,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLEquivalentClassesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -367,7 +367,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDataPropertyAssertionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -376,7 +376,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLTransitiveObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -385,7 +385,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLIrreflexiveObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLIrreflexiveObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -394,7 +394,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubDataPropertyOfAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -403,7 +403,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLInverseFunctionalObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLInverseFunctionalObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -412,7 +412,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSameIndividualAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSameIndividualAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -421,7 +421,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubPropertyChainOfAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -430,7 +430,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLInverseObjectPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -439,7 +439,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLHasKeyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLHasKeyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -448,7 +448,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDatatypeDefinitionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDatatypeDefinitionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -457,7 +457,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.SWRLRule)
 	 */
-	@Override
+	
 	public void visit(SWRLRule arg0) {
 		// TODO Auto-generated method stub
 
@@ -475,7 +475,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 		return Prefixes.isInternalIRI(auxClass.getIRI().toString());
 	}
 
-	@Override
+	
 	public void visit(OWLClass arg0) {
 		if (isAuxiliaryClass(arg0)) {
 			//TODO invoke name mapper here
@@ -486,7 +486,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 		}
 	}
 
-	@Override
+	
 	public void visit(OWLObjectIntersectionOf arg0) {
 		boolean isFirst=true;
 		for (OWLClassExpression operand : arg0.getOperands()) {
@@ -497,7 +497,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 		}
 	}
 
-	@Override
+	
 	public void visit(OWLObjectUnionOf arg0) {
 		boolean isFirst=true;
 		for (OWLClassExpression operand : arg0.getOperands()) {
@@ -508,13 +508,13 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 		}
 	}
 
-	@Override
+	
 	public void visit(OWLObjectComplementOf arg0) {
 		writer.print("-");
 		arg0.getOperand().accept(this);
 	}
 
-	@Override
+	
 	public void visit(OWLObjectSomeValuesFrom arg0) {
 		writer.print("Exists ");
 		writer.print(arg0.getProperty().getNamedProperty().getIRI().getFragment());
@@ -522,7 +522,7 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 		arg0.getFiller().accept(this);
 	}
 
-	@Override
+	
 	public void visit(OWLObjectAllValuesFrom arg0) {
 		writer.print("ForAll ");
 		writer.print(arg0.getProperty().getNamedProperty().getIRI().getFragment());
@@ -530,73 +530,73 @@ public class NiceAxiomPrinter implements OWLAxiomVisitor, OWLClassExpressionVisi
 		arg0.getFiller().accept(this);
 	}
 
-	@Override
+	
 	public void visit(OWLObjectHasValue arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLObjectMinCardinality arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLObjectExactCardinality arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLObjectMaxCardinality arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLObjectHasSelf arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLObjectOneOf arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLDataSomeValuesFrom arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLDataAllValuesFrom arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLDataHasValue arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLDataMinCardinality arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLDataExactCardinality arg0) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	
 	public void visit(OWLDataMaxCardinality arg0) {
 		// TODO Auto-generated method stub
 		

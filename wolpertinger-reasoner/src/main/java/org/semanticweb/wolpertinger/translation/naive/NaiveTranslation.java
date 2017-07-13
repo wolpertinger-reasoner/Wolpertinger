@@ -196,7 +196,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 * Translate the given {@link OWLOntology}.
 	 * Note that the result is written to the PrintWriter, which was given in the constructor.
 	 */
-	@Override
+	
 	public void translateOntology(OWLOntology rootOntology) {
 		translateOntology(loadOntology(rootOntology));
 	}
@@ -676,12 +676,12 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			this.individualName = individualName;
 		}
 
-		@Override
+		
 		public String currentVar () {
 			return individualName;
 		}
 
-		@Override
+		
 		public String nextVariable() {
 			return individualName;
 		}
@@ -696,7 +696,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAnnotationAssertionAxiom arg0) {
 		throw new NotImplementedException();
 	}
@@ -704,7 +704,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubAnnotationPropertyOfAxiom arg0) {
 		throw new NotImplementedException();
 	}
@@ -712,7 +712,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAnnotationPropertyDomainAxiom arg0) {
 		throw new NotImplementedException();
 	}
@@ -720,7 +720,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAnnotationAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAnnotationPropertyRangeAxiom arg0) {
 		throw new NotImplementedException();
 	}
@@ -753,7 +753,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLClass)
 	 */
-	@Override
+	
 	public void visit(OWLClass owlClass) {
 		String predicateName = mapper.getPredicateName(owlClass);
 		writer.print(ASP2CoreSymbols.NAF + " ");
@@ -768,7 +768,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectIntersectionOf)
 	 */
-	@Override
+	
 	public void visit(OWLObjectIntersectionOf arg0) {
 		// should not occur since axioms are normalized
 		throw new NotImplementedException();
@@ -777,7 +777,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectUnionOf)
 	 */
-	@Override
+	
 	public void visit(OWLObjectUnionOf arg0) {
 		// should not occur since axioms are normalized
 		throw new NotImplementedException();
@@ -789,7 +789,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 * Thereofre we test here whether the operand
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectComplementOf)
 	 */
-	@Override
+	
 	public void visit(OWLObjectComplementOf objComplementOf) {
 		OWLClassExpression operand = objComplementOf.getOperand();
 
@@ -830,7 +830,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectSomeValuesFrom objExistential) {
 		// we require normalized axioms, therefore we can do the following
 		OWLObjectPropertyExpression property = objExistential.getProperty();
@@ -847,7 +847,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectAllValuesFrom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectAllValuesFrom allValFrom) {
 		OWLObjectProperty property;
 		boolean isInverseOf = false;
@@ -948,7 +948,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectHasValue)
 	 */
-	@Override
+	
 	public void visit(OWLObjectHasValue arg0) {
 		// TODO Auto-generated method stub
 
@@ -984,7 +984,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectMinCardinality)
 	 */
-	@Override
+	
 	public void visit(OWLObjectMinCardinality minCardinality) {
 		visitCardinalityRestriction(minCardinality);
 	}
@@ -992,7 +992,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectExactCardinality)
 	 */
-	@Override
+	
 	public void visit(OWLObjectExactCardinality exactCardinality) {
 		visitCardinalityRestriction(exactCardinality);
 	}
@@ -1000,7 +1000,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectMaxCardinality)
 	 */
-	@Override
+	
 	public void visit(OWLObjectMaxCardinality maxCardinality) {
 		visitCardinalityRestriction(maxCardinality);
 	}
@@ -1087,7 +1087,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectHasSelf)
 	 */
-	@Override
+	
 	public void visit(OWLObjectHasSelf owlHasSelf) {
 		OWLObjectProperty property = owlHasSelf.getProperty().asOWLObjectProperty();
 		String propertyName = mapper.getPredicateName(property);
@@ -1107,7 +1107,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLObjectOneOf)
 	 */
-	@Override
+	
 	public void visit(OWLObjectOneOf owlOneOf) {
 		boolean isFirst=true;
 		for (OWLIndividual individual : owlOneOf.getIndividuals()) {
@@ -1138,7 +1138,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLDataSomeValuesFrom)
 	 */
-	@Override
+	
 	public void visit(OWLDataSomeValuesFrom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1147,7 +1147,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLDataAllValuesFrom)
 	 */
-	@Override
+	
 	public void visit(OWLDataAllValuesFrom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1156,7 +1156,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLDataHasValue)
 	 */
-	@Override
+	
 	public void visit(OWLDataHasValue arg0) {
 		// TODO Auto-generated method stub
 
@@ -1165,7 +1165,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLDataMinCardinality)
 	 */
-	@Override
+	
 	public void visit(OWLDataMinCardinality arg0) {
 		// TODO Auto-generated method stub
 
@@ -1174,7 +1174,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLDataExactCardinality)
 	 */
-	@Override
+	
 	public void visit(OWLDataExactCardinality arg0) {
 		// TODO Auto-generated method stub
 
@@ -1183,7 +1183,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLClassExpressionVisitor#visit(org.semanticweb.owlapi.model.OWLDataMaxCardinality)
 	 */
-	@Override
+	
 	public void visit(OWLDataMaxCardinality arg0) {
 		// TODO Auto-generated method stub
 
@@ -1192,7 +1192,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDeclarationAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDeclarationAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1201,7 +1201,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubClassOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubClassOfAxiom arg0) {
 		throw new IllegalStateException("At this stage OWLSubClassOfAxioms should have been normalized and replaced by OWLObjectUnionOf");
 	}
@@ -1210,7 +1210,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLNegativeObjectPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLNegativeObjectPropertyAssertionAxiom negObjPropertyAssertion) {
 		//assert !negObjPropertyAssertion.getProperty().isAnonymous();
 
@@ -1240,7 +1240,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLAsymmetricObjectPropertyAxiom asymetricProperty) {
 		writer.write(ASP2CoreSymbols.IMPLICATION);
 
@@ -1276,7 +1276,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 * </code>
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLReflexiveObjectPropertyAxiom refPropertyAxiom) {
 		OWLObjectPropertyExpression property = refPropertyAxiom.getProperty();
 		String propertyName = mapper.getPredicateName(property.getNamedProperty());
@@ -1300,7 +1300,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointClassesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointClassesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1309,7 +1309,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDataPropertyDomainAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1318,7 +1318,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectPropertyDomainAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1327,7 +1327,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLEquivalentObjectPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1336,7 +1336,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLNegativeDataPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLNegativeDataPropertyAssertionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1345,7 +1345,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDifferentIndividualsAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1354,7 +1354,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointDataPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointDataPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1365,7 +1365,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 * <code>:- r(X,Y), s(X,Y), ...</code>
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointObjectPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointObjectPropertiesAxiom disProperties) {
 		writer.write(ASP2CoreSymbols.IMPLICATION);
 
@@ -1395,7 +1395,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectPropertyRangeAxiom arg0) {
 		throw new IllegalStateException("OWLObjectRangeAxiom should have been normalized (rewritten) already.");
 	}
@@ -1403,7 +1403,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLObjectPropertyAssertionAxiom objPropertyAssertion) {
 		OWLObjectProperty property = objPropertyAssertion.getProperty().asOWLObjectProperty();
 		OWLNamedIndividual subject = objPropertyAssertion.getSubject().asOWLNamedIndividual();
@@ -1425,7 +1425,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLFunctionalObjectPropertyAxiom arg0) {
 		throw new IllegalStateException("OWLFunctionalObjectPropertyAxiom should have been normalized (rewritten) already.");
 	}
@@ -1433,7 +1433,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubObjectPropertyOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubObjectPropertyOfAxiom arg0) {
 		throw new NotImplementedException();
 	}
@@ -1441,7 +1441,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDisjointUnionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDisjointUnionAxiom arg0) {
 		throw new IllegalStateException("OWLDisjointUnionAxiom should have been normalized (rewritten) already.");
 	}
@@ -1454,7 +1454,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSymmetricObjectPropertyAxiom symmetricProperty) {
 		writer.write(ASP2CoreSymbols.IMPLICATION);
 		OWLObjectPropertyExpression property = symmetricProperty.getProperty();
@@ -1484,7 +1484,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDataPropertyRangeAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1493,7 +1493,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLFunctionalDataPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLFunctionalDataPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1502,7 +1502,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLEquivalentDataPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLEquivalentDataPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1512,7 +1512,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 *
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLClassAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLClassAssertionAxiom classAssertion) {
 		OWLClassExpression classExpression = classAssertion.getClassExpression();
 		OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
@@ -1557,7 +1557,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLEquivalentClassesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLEquivalentClassesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1566,7 +1566,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDataPropertyAssertionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1575,7 +1575,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLTransitiveObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1589,7 +1589,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 * </code>
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLIrreflexiveObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLIrreflexiveObjectPropertyAxiom irrPropertyAxiom) {
 		OWLObjectPropertyExpression property = irrPropertyAxiom.getProperty();
 		String propertyName = mapper.getPredicateName(property.getNamedProperty());
@@ -1609,7 +1609,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubDataPropertyOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubDataPropertyOfAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1618,7 +1618,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLInverseFunctionalObjectPropertyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLInverseFunctionalObjectPropertyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1627,7 +1627,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSameIndividualAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSameIndividualAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1636,7 +1636,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLSubPropertyChainOfAxiom arg0) {
 		// TODO Auto-generated method stub
 		String superPropertyName = null;
@@ -1673,7 +1673,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLInverseObjectPropertiesAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1682,7 +1682,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLHasKeyAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLHasKeyAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1691,7 +1691,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.OWLDatatypeDefinitionAxiom)
 	 */
-	@Override
+	
 	public void visit(OWLDatatypeDefinitionAxiom arg0) {
 		// TODO Auto-generated method stub
 
@@ -1700,7 +1700,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.model.OWLAxiomVisitor#visit(org.semanticweb.owlapi.model.SWRLRule)
 	 */
-	@Override
+	
 	public void visit(SWRLRule arg0) {
 		// TODO Auto-generated method stub
 
@@ -1714,19 +1714,19 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 
 	}
 
-	@Override
+	
 	public void visit(OWLObjectProperty arg0) {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
+	
 	public void visit(OWLObjectInverseOf arg0) {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
+	
 	public void visit(OWLDataProperty arg0) {
 		// TODO Auto-generated method stub
 

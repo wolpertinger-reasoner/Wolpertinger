@@ -58,7 +58,6 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration#getFreshEntityPolicy()
 	 */
-	@Override
 	public FreshEntityPolicy getFreshEntityPolicy() {
 		// TODO Auto-generated method stub
 		return null;
@@ -67,7 +66,6 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration#getIndividualNodeSetPolicy()
 	 */
-	@Override
 	public IndividualNodeSetPolicy getIndividualNodeSetPolicy() {
 		// TODO Auto-generated method stub
 		return null;
@@ -76,7 +74,6 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration#getProgressMonitor()
 	 */
-	@Override
 	public ReasonerProgressMonitor getProgressMonitor() {
 		// TODO Auto-generated method stub
 		return null;
@@ -85,7 +82,6 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	/* (non-Javadoc)
 	 * @see org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration#getTimeOut()
 	 */
-	@Override
 	public long getTimeOut() {
 		// TODO Auto-generated method stub
 		return 0;
