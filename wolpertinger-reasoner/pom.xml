@@ -118,6 +118,6 @@
 	    <version>1.9.3</version>
 		</dependency>
 	</dependencies>
-	<description>A fixed-domainl reasoner for the Semantic Web.</description>
+	<description>A fixed-domain reasoner for the Semantic Web.</description>
 	<url>https://github.com/wolpertinger-reasoner/</url>
 </project>
