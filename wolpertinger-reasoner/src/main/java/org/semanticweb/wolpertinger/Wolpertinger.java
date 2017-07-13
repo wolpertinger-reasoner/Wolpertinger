@@ -17,10 +17,6 @@
 */
 package org.semanticweb.wolpertinger;
 
-import hierarchy.Hierarchy;
-import hierarchy.HierarchyBuilder;
-import hierarchy.HierarchyNode;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -78,6 +74,9 @@ import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
 import org.semanticweb.wolpertinger.clingo.ClingoSolver;
 import org.semanticweb.wolpertinger.clingo.SolverFactory;
 import org.semanticweb.wolpertinger.clingo.SolvingException;
+import org.semanticweb.wolpertinger.hierarchy.Hierarchy;
+import org.semanticweb.wolpertinger.hierarchy.HierarchyBuilder;
+import org.semanticweb.wolpertinger.hierarchy.HierarchyNode;
 import org.semanticweb.wolpertinger.model.AtomicConcept;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
