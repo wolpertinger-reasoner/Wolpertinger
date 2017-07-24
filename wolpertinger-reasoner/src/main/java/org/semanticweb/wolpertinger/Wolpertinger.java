@@ -36,7 +36,6 @@ import java.util.Stack;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
 import org.semanticweb.owlapi.model.AxiomType;
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -77,7 +76,6 @@ import org.semanticweb.wolpertinger.clingo.SolvingException;
 import org.semanticweb.wolpertinger.hierarchy.Hierarchy;
 import org.semanticweb.wolpertinger.hierarchy.HierarchyBuilder;
 import org.semanticweb.wolpertinger.hierarchy.HierarchyNode;
-import org.semanticweb.wolpertinger.model.AtomicConcept;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
@@ -87,7 +85,6 @@ import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
@@ -111,7 +108,6 @@ public class Wolpertinger implements OWLReasoner {
 	private File tmpFile;
 	private PrintWriter output;
 	private boolean classified;
-	private boolean baseProgramReady;
 
 	private ClingoModelEnumerator enumerator;
 	private OWLNormalization normalization;
@@ -165,7 +161,6 @@ public class Wolpertinger implements OWLReasoner {
 			output = new PrintWriter(tmpFile);
 			naiveTranslation = new NaiveTranslation(configuration, output);
 			naiveTranslation.translateOntology(axioms);
-			baseProgramReady = true;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -336,8 +331,8 @@ public class Wolpertinger implements OWLReasoner {
 		        }
 			}
 		}
-		OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
-		OWLClass nothing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLNothing();
+		OWLClass thing = getOWLDataFactory().getOWLThing();
+		OWLClass nothing = getOWLDataFactory().getOWLNothing();
 
 		classHierarchy = HierarchyBuilder.buildHierarchy(superClassHierarchy, classRepresentative, thing, nothing, equalsToTopClasses, equalsToBottomClasses);
 	}
@@ -401,9 +396,9 @@ public class Wolpertinger implements OWLReasoner {
 
 	public void dispose() {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
 	public void flush() {
 		// TODO Auto-generated method stub
 
@@ -429,7 +424,7 @@ public class Wolpertinger implements OWLReasoner {
         }
         return new Version(version[0],version[1],version[2],version[3]);
 	}
-
+	
 	public BufferingMode getBufferingMode() {
 		// TODO Auto-generated method stub
 		return null;
@@ -450,37 +445,31 @@ public class Wolpertinger implements OWLReasoner {
 		return IndividualNodeSetPolicy.BY_NAME;
 	}
 
-	
 	public Set<OWLAxiom> getPendingAxiomAdditions() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Set<OWLAxiom> getPendingAxiomRemovals() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public List<OWLOntologyChange> getPendingChanges() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Set<InferenceType> getPrecomputableInferenceTypes() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public long getTimeOut() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
-	
 	public void interrupt() {
 		// TODO Auto-generated method stub
 
@@ -490,20 +479,17 @@ public class Wolpertinger implements OWLReasoner {
 	// Ontology-related methods
 	////////////////////////////
 
-	
 	public boolean isConsistent() {
         Collection<String> models = enumerator.enumerateModels(1);
 		return !models.isEmpty();
 	}
 
-	
 	public boolean isEntailed(OWLAxiom axiom) {
 		HashSet<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
 		wrapper.add(axiom);
 		return isEntailed(wrapper);
 	}
 
-	
 	public boolean isEntailed(Set<? extends OWLAxiom> axiomSet) {
 		File tmpEntailmentFile = null;
 		PrintWriter entailmentOutput = null;
@@ -572,19 +558,16 @@ public class Wolpertinger implements OWLReasoner {
 		}
 	}
 
-	
 	public boolean isEntailmentCheckingSupported(AxiomType<?> arg0) {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 	
 	public boolean isPrecomputed(InferenceType arg0) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
-	
 	public void precomputeInferences(InferenceType... arg0) {
 		// TODO Auto-generated method stub
 	}
@@ -598,14 +581,13 @@ public class Wolpertinger implements OWLReasoner {
 		return owlClassHierarchyNodeToNode(classHierarchy.getBottomNode());
 	}
 
-	
 	public NodeSet<OWLClass> getDisjointClasses(OWLClassExpression arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Node<OWLClass> getEquivalentClasses(OWLClassExpression queryClassExpression) {
+		classifyClasses();
 		if (queryClassExpression.isOWLNothing()) {
             return getBottomClassNode();
         } else if (queryClassExpression.isOWLThing()) {
@@ -617,12 +599,13 @@ public class Wolpertinger implements OWLReasoner {
 		return null;
 	}
 
-	
 	public NodeSet<OWLClass> getSubClasses(OWLClassExpression queryClassExpression, boolean direct) {
 		if (queryClassExpression instanceof OWLClass) {
+			classifyClasses();
 			Set<HierarchyNode<OWLClass>> result;
 			OWLClass queryClass = (OWLClass) queryClassExpression;
 			HierarchyNode<OWLClass> hierarchyNode = classHierarchy.getNodeForElement(queryClass);
+
 			if (direct) {
 				result = hierarchyNode.getChildNodes();
 			} else {
@@ -634,9 +617,9 @@ public class Wolpertinger implements OWLReasoner {
 		return null;
 	}
 
-	
 	public NodeSet<OWLClass> getSuperClasses(OWLClassExpression queryClassExpression, boolean direct) {
 		if (queryClassExpression instanceof OWLClass) {
+			classifyClasses();
 			Set<HierarchyNode<OWLClass>> result;
 			OWLClass queryClass = (OWLClass) queryClassExpression;
 			HierarchyNode<OWLClass> hierarchyNode = classHierarchy.getNodeForElement(queryClass);
@@ -670,18 +653,15 @@ public class Wolpertinger implements OWLReasoner {
         return new OWLClassNode(result);
     }
 
-	
 	public Node<OWLClass> getTopClassNode() {
 		classifyClasses();
 		return owlClassHierarchyNodeToNode(classHierarchy.getTopNode());
 	}
 
-	
 	public Node<OWLClass> getUnsatisfiableClasses() {
 		return getBottomClassNode();
 	}
 
-	
 	public boolean isSatisfiable(OWLClassExpression classExpression) {
 		SignatureMapper mapper = naiveTranslation.getSignatureMapper();
 		if(!satisfiableClassesComputed) {
@@ -732,69 +712,59 @@ public class Wolpertinger implements OWLReasoner {
 	// Object Property-related methods
 	////////////////////////////
 
-	
 	public Node<OWLObjectPropertyExpression> getBottomObjectPropertyNode() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLObjectPropertyExpression> getDisjointObjectProperties(
 			OWLObjectPropertyExpression arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Node<OWLObjectPropertyExpression> getEquivalentObjectProperties(
 			OWLObjectPropertyExpression arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Node<OWLObjectPropertyExpression> getInverseObjectProperties(
 			OWLObjectPropertyExpression arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLObjectPropertyExpression> getSubObjectProperties(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLNamedIndividual> getObjectPropertyValues(
 			OWLNamedIndividual arg0, OWLObjectPropertyExpression arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLClass> getObjectPropertyDomains(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLClass> getObjectPropertyRanges(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLObjectPropertyExpression> getSuperObjectProperties(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Node<OWLObjectPropertyExpression> getTopObjectPropertyNode() {
 		// TODO Auto-generated method stub
 		return null;
@@ -804,62 +774,53 @@ public class Wolpertinger implements OWLReasoner {
 	// Data Property-related methods
 	////////////////////////////
 
-	
 	public Node<OWLDataProperty> getBottomDataPropertyNode() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLClass> getDataPropertyDomains(OWLDataProperty arg0,
 			boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Set<OWLLiteral> getDataPropertyValues(OWLNamedIndividual arg0,
 			OWLDataProperty arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLNamedIndividual> getDifferentIndividuals(
 			OWLNamedIndividual arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLDataProperty> getDisjointDataProperties(
 			OWLDataPropertyExpression arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Node<OWLDataProperty> getEquivalentDataProperties(
 			OWLDataProperty arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLDataProperty> getSubDataProperties(OWLDataProperty arg0,
 			boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLDataProperty> getSuperDataProperties(
 			OWLDataProperty arg0, boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public Node<OWLDataProperty> getTopDataPropertyNode() {
 		// TODO Auto-generated method stub
 		return null;
@@ -869,8 +830,6 @@ public class Wolpertinger implements OWLReasoner {
 	// Individual-related methods
 	////////////////////////////
 
-
-	
 	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression,
 			boolean arg1) {
 		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(true);
@@ -884,16 +843,13 @@ public class Wolpertinger implements OWLReasoner {
 		return result;
 	}
 
-	
 	public Node<OWLNamedIndividual> getSameIndividuals(OWLNamedIndividual arg0) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	
 	public NodeSet<OWLClass> getTypes(OWLNamedIndividual arg0, boolean arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }

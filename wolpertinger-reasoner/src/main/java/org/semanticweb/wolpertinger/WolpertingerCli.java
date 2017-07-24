@@ -34,14 +34,15 @@ import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
-import org.semanticweb.wolpertinger.translation.direct.DirectTranslation;
 
 /**
  * Command Line Interface for Wolpertinger.
@@ -95,16 +96,14 @@ public class WolpertingerCli {
     }
 
     static protected class NaiveTranslationAction implements TranslationAction {
-		
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.naiveTranslate(new PrintWriter(System.out));
 		}
     }
 
     static protected class DirectTranslationAction implements TranslationAction {
-		
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-			DirectTranslation translation = new DirectTranslation(configuration, output);
+			//DirectTranslation translation = new DirectTranslation(configuration, output);
 		}
     }
 
@@ -116,7 +115,6 @@ public class WolpertingerCli {
     		this.owlOntology = owlOntology;
     	}
 
-		
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			Set<OWLAxiom> axioms = owlOntology.getAxioms();
 			System.out.println("Is entailed? : " + wolpertinger.isEntailed(axioms));
@@ -179,9 +177,48 @@ public class WolpertingerCli {
 
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			wolpertinger.axiomatizeFDSemantics(file);
-			}
 		}
+	}
 
+    static protected class SubconceptsActions implements TranslationAction {
+    	final String conceptName;
+    	final boolean direct;
+
+    	public SubconceptsActions(String conceptName, boolean direct) {
+    		super();
+    		this.conceptName = conceptName;
+    		this.direct = direct;
+    	}
+
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+            OWLClass owlClass=OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLClass(IRI.create(conceptName));
+			NodeSet<OWLClass> subconcepts = wolpertinger.getSubClasses(owlClass, direct);
+			for (OWLClass cl : subconcepts.getFlattened()) {
+				output.println(cl);
+			}
+			output.flush();
+		}
+	}
+
+    static protected class SuperconceptsActions implements TranslationAction {
+    	final String conceptName;
+    	final boolean direct;
+
+    	public SuperconceptsActions(String conceptName, boolean direct) {
+    		super();
+    		this.conceptName = conceptName;
+    		this.direct = direct;
+    	}
+
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+            OWLClass owlClass=OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLClass(IRI.create(conceptName));
+			NodeSet<OWLClass> subconcepts = wolpertinger.getSuperClasses(owlClass, direct);
+			for (OWLClass cl : subconcepts.getFlattened()) {
+				output.println(cl);
+			}
+			output.flush();
+		}
+	}
 
 	@SuppressWarnings("serial")
 	protected static class UsageException extends IllegalArgumentException {
@@ -192,7 +229,7 @@ public class WolpertingerCli {
 
 	protected static final String usageString = "java -jar Wolpertinger.jar [OPTION]... IRI...";
 
-	protected static final String 	groupActions = "Actions", 
+	protected static final String 	groupActions = "Actions",
 									groupMisc = "Miscellaneous",
 									groupDebug = "Debugging",
 									groupOptimize = "Optimization",
@@ -212,10 +249,13 @@ public class WolpertingerCli {
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output); supported values are 'naive' and 'naff'"),
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('e', "entail", groupActions, true, "FILE", "check whether ontology FILE is entailed by input ontology"),
-			new Option('d', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, domain is the set of individuals in the input ontology"),
+			new Option('D', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, domain is the set of individuals in the input ontology"),
+			new Option('d', "direct", groupActions, "apply direct sub/superclasses for next query"),
 			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many of models; NUMBER=0 means asking for ALL models"),
 			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
+			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
+			new Option('S', "supers", groupActions, true, "CLASS", "output classes subsuming by CLASS"),
 			new Option('a', "axiomatize", groupUtility, true, "FILE", "For the ontology given, generate axioms that axiomatize the fixed-domain semantics and write the axiomatized ontolgy to FILE."),
 
 	};
@@ -226,6 +266,7 @@ public class WolpertingerCli {
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
 
 			PrintWriter output = new PrintWriter(System.out);
+			boolean direct = false;
 
 			URI base;
 			try {
@@ -241,7 +282,7 @@ public class WolpertingerCli {
 
 			int option;
 			int verbosity=1;
-			int debug = 1;
+			//int debug = 1;
 
 			while ((option = getopt.getopt()) != -1) {
 				switch (option) {
@@ -280,6 +321,10 @@ public class WolpertingerCli {
 						iris.add(IRI.create(sIRI));
 					}
 					configuration.setConceptsToProjectOn(iris);
+				}
+				break;
+				case 'd': {
+					direct = true;
 				}
 				break;
 				// ACTIONS
@@ -342,7 +387,7 @@ public class WolpertingerCli {
 				break;
 
 				//domain file
-				case 'd': {
+				case 'D': {
 					String arg = getopt.getOptarg();
 					IRI domainIRI = null;
 					try {
@@ -393,6 +438,18 @@ public class WolpertingerCli {
 					}
 				}
 				break;
+				case 's': {
+					String arg = getopt.getOptarg();
+					TranslationAction action = new SubconceptsActions(arg, direct);
+					actions.add(action);
+				}
+				break;
+				case 'S': {
+					String arg = getopt.getOptarg();
+					TranslationAction action = new SuperconceptsActions(arg, direct);
+					actions.add(action);
+				}
+				break;
 				default:
 					if (getopt.getOptopt() != 0) {
 						throw new UsageException("invalid option -- " + (char) getopt.getOptopt());
@@ -422,10 +479,10 @@ public class WolpertingerCli {
                     long startTime=System.currentTimeMillis();
 
                     if (iriOntology.isAbsolute()) {
-                        URI uri = URI.create(iriOntology.getStart());
+                        URI uri = URI.create(iriOntology.getNamespace());
                         String scheme = uri.getScheme();
                         if (scheme != null && scheme.equalsIgnoreCase("file")) {
-                            File file = new File(URI.create(iriOntology.getStart()));
+                            File file = new File(URI.create(iriOntology.getNamespace()));
                             if (file.isDirectory()) {
                                 OWLOntologyIRIMapper mapper = new AutoIRIMapper(file, false);
                                 ontologyManager.addIRIMapper(mapper);

@@ -1159,8 +1159,6 @@ public class OWLNormalization {
                 classExpression=definition;
             }
             addFact(m_factory.getOWLClassAssertionAxiom(classExpression,axiom.getIndividual()));
-
-        	OWLIndividual individual = axiom.getIndividual();
         }
         
 		public void visit(OWLObjectPropertyAssertionAxiom axiom) {
