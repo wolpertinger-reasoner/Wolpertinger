@@ -237,24 +237,86 @@ public class Wolpertinger implements OWLReasoner {
 		for (OWLClass cl : allClasses) {
 			superClassHierarchy.put(cl, new HashSet<OWLClass> ());
 		}
-
-		// TODO optimize checking
-		for (OWLClass subClassCandidate : allClasses) {
-			HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
-			for (OWLClass superClassCandidate : allClasses) {
-				if (subClassCandidate.equals(superClassCandidate)) {
-					// same class, no need to check
-					continue;
+	
+		for (OWLClassExpression[] inclusion : axioms.m_conceptInclusions) {
+			if (inclusion.length == 2 && 
+				inclusion[0] instanceof OWLClass && inclusion[1] instanceof OWLObjectComplementOf) {
+				OWLObjectComplementOf complementOf = (OWLObjectComplementOf) inclusion[1];
+				if (complementOf.getOperand() instanceof OWLClass) {					
+					OWLClass superClass = (OWLClass) inclusion[0];
+					OWLClass subClass = (OWLClass) complementOf.getOperand();
+					// check for auxiliary concepts
+					if (!allClasses.contains(superClass) || !allClasses.contains(subClass)) {
+						continue;
+					}
+					superClassHierarchy.get(subClass).add(superClass);
 				}
+			}			
+		}
+		
+		SignatureMapper mapper = naiveTranslation.getSignatureMapper();
+		ClingoSolver solver = SolverFactory.INSTANCE.createClingoBraveSolver();
+		try {
+			File classifyClassFile = File.createTempFile("wolpertinger-classify-program", ".lp");
+			classifyClassFile.deleteOnExit();
+			PrintWriter classifyOutput = new PrintWriter(classifyClassFile);
 
-				boolean entailed = isEntailed(new OWLSubClassOfAxiomImpl (subClassCandidate, superClassCandidate, new HashSet<OWLAnnotation> ()));
-				if (entailed) {
-					superClasses.add(superClassCandidate);
-				} else {
+			for (OWLClass subClassCandidate : allClasses) {
+				HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
+				for (OWLClass superClassCandidate : allClasses) {					
+					if (superClasses.contains(superClassCandidate)) {
+						// listed in the axioms
+						continue;
+					}
+					
+					if (subClassCandidate.equals(superClassCandidate)) {
+						// same class, no need to check
+						continue;
+					}
 
+					String subClassName = mapper.getPredicateName(subClassCandidate);
+					String superClassName = mapper.getPredicateName(superClassCandidate);
+					classifyOutput.write(String.format("not_subClass(%1$s, %2$s) :- %1$s(X), -%2$s(X).", subClassName.toLowerCase(), superClassName.toLowerCase()));					
+					classifyOutput.println();
 				}
 			}
-		}
+			classifyOutput.write("#show not_subClass/2.");				
+			classifyOutput.close();
+			
+			Collection<String> results = solver.solve(new String[] {tmpFile.getAbsolutePath(), classifyClassFile.getAbsolutePath()}, 0);
+			String[] resultsArray = new String[results.size()];
+			resultsArray = results.toArray(resultsArray);
+			ArrayList<String> notSubclasses = new ArrayList<String>(Arrays.asList(resultsArray[results.size() - 1].split(" ")));
+			HashMap<String, HashSet<String>> tmpNotSubclasses = new HashMap<String, HashSet<String>> ();
+			for (String str : notSubclasses) {
+				str = str.substring(13,str.length() - 1);
+				String[] split = str.split(",");
+				if(!tmpNotSubclasses.containsKey(split[0])) {
+					tmpNotSubclasses.put(split[0], new HashSet<String> ());
+				}
+				tmpNotSubclasses.get(split[0]).add(split[1]);
+			}
+			
+			for (OWLClass subClassCandidate : allClasses) {
+				HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
+				for (OWLClass superClassCandidate : allClasses) {
+					if (subClassCandidate.equals(superClassCandidate)) {
+						// same class, no need to check
+						continue;
+					}			
+					String subClassName = mapper.getPredicateName(subClassCandidate);
+					String superClassName = mapper.getPredicateName(superClassCandidate);
+					if(tmpNotSubclasses.get(subClassName) != null &&
+					   !tmpNotSubclasses.get(subClassName).contains(superClassName)) {
+						superClasses.add(superClassCandidate);
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SolvingException e) {
+			e.printStackTrace();
+		}		
 
 		// check equivalent classes
 		HashMap<OWLClass, OWLClass> classRepresentative = new HashMap<OWLClass, OWLClass> ();
@@ -264,7 +326,7 @@ public class Wolpertinger implements OWLReasoner {
 			for (OWLClass equivalentCandidate : superClasses) {
 				if (classRepresentative.keySet().contains(cl)) {
 					continue;
-				}
+				}								
 				if (superClassHierarchy.get(equivalentCandidate).contains(cl)) {
 					classRepresentative.put(equivalentCandidate, cl);
 					if(!classRepresented.containsKey(cl)) {
