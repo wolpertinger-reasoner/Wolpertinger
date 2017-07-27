@@ -894,6 +894,7 @@ public class Wolpertinger implements OWLReasoner {
 
 	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression,
 			boolean arg1) {
+		//TODO Indirect and Arbitrary Class Expr
 		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(true);
 		OWLNamedIndividualNodeSet result = new OWLNamedIndividualNodeSet ();
 		for (OWLNamedIndividual individual : individuals) {
@@ -910,8 +911,16 @@ public class Wolpertinger implements OWLReasoner {
 		return null;
 	}
 
-	public NodeSet<OWLClass> getTypes(OWLNamedIndividual arg0, boolean arg1) {
-		// TODO Auto-generated method stub
-		return null;
+	public NodeSet<OWLClass> getTypes(OWLNamedIndividual individual, boolean arg1) {
+		//TODO Indirect
+		Set<OWLClass> classes = rootOntology.getClassesInSignature();
+		OWLClassNodeSet result = new OWLClassNodeSet ();
+		for (OWLClass cl : classes) {
+			OWLClassAssertionAxiom impl = new OWLClassAssertionAxiomImpl (individual, cl, new HashSet<OWLAnnotation> ());
+			if(isEntailed(impl)) {
+				result.addEntity(cl);
+			}
+		}
+		return result;
 	}
 }

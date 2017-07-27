@@ -36,6 +36,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLException;
+import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -220,6 +221,46 @@ public class WolpertingerCli {
 		}
 	}
 
+    static protected class ConceptInstancesAction implements TranslationAction {
+    	final String conceptName;
+    	final boolean direct;
+
+    	public ConceptInstancesAction(String conceptName, boolean direct) {
+    		super();
+    		this.conceptName = conceptName;
+    		this.direct = direct;
+    	}
+
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+            OWLClass owlClass=OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLClass(IRI.create(conceptName));
+			NodeSet<OWLNamedIndividual> instances = wolpertinger.getInstances(owlClass, direct);
+			for (OWLNamedIndividual ind : instances.getFlattened()) {
+				output.println(ind);
+			}
+			output.flush();
+		}
+	}
+    
+    static protected class IndividualTypesAction implements TranslationAction {
+    	final String individualName;
+    	final boolean direct;
+
+    	public IndividualTypesAction(String individualName, boolean direct) {
+    		super();
+    		this.individualName = individualName;
+    		this.direct = direct;
+    	}
+
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+            OWLNamedIndividual owlIndividual=OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLNamedIndividual(IRI.create(individualName));
+			NodeSet<OWLClass> types = wolpertinger.getTypes(owlIndividual, direct);
+			for (OWLClass cl : types.getFlattened()) {
+				output.println(cl);
+			}
+			output.flush();
+		}
+	}
+    
 	@SuppressWarnings("serial")
 	protected static class UsageException extends IllegalArgumentException {
 		public UsageException(String inMessage) {
@@ -256,6 +297,8 @@ public class WolpertingerCli {
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
 			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
 			new Option('S', "supers", groupActions, true, "CLASS", "output classes subsuming by CLASS"),
+			new Option('i', "instances", groupActions, true, "CLASS", "output instances of the CLASS"),
+			new Option('t', "types", groupActions, true, "INDIVIDUAL", "output types of the INDIVIDUAL"),
 			new Option('a', "axiomatize", groupUtility, true, "FILE", "For the ontology given, generate axioms that axiomatize the fixed-domain semantics and write the axiomatized ontolgy to FILE."),
 
 	};
@@ -447,6 +490,17 @@ public class WolpertingerCli {
 				case 'S': {
 					String arg = getopt.getOptarg();
 					TranslationAction action = new SuperconceptsActions(arg, direct);
+					actions.add(action);
+				}
+				case 't': {
+					String arg = getopt.getOptarg();
+					TranslationAction action = new IndividualTypesAction(arg, direct);
+					actions.add(action);
+				}
+				break;
+				case 'i': {
+					String arg = getopt.getOptarg();
+					TranslationAction action = new ConceptInstancesAction(arg, direct);
 					actions.add(action);
 				}
 				break;
