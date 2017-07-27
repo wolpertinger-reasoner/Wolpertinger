@@ -15,7 +15,6 @@
 	<name>Wolpertinger Reasoner Protege Plug-in</name>
 	<description>A Wolpertinger Reasoner Plug-in for the Protege Ontology Editor.</description>
 
-
 	<packaging>bundle</packaging>
 
 
@@ -26,6 +25,7 @@
 			<groupId>org.semanticweb.wolpertinger</groupId>
 			<artifactId>wolpertinger-reasoner</artifactId>
 			<version>1.0</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -62,9 +62,18 @@
 	<build>
 		<resources>
 			<resource>
-				<directory>src/main/resources</directory>
+				<directory>${basedir}/src/main/resources</directory>
+				<includes>
+					<include>plugin.xml</include>
+				</includes>
 				<filtering>true</filtering>
 			</resource>
+<!-- 			<resource> -->
+<!-- 				<directory>${basedir}/../wolpertinger-reasoner/target</directory> -->
+<!-- 				<includes> -->
+<!-- 					<include>wolpertinger-reasoner-1.0.jar</include> -->
+<!-- 				</includes> -->
+<!-- 			</resource> -->
 		</resources>
 		<plugins>
 			<plugin>
@@ -76,10 +85,46 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+<!-- 			<plugin> -->
+<!-- 				<groupId>org.apache.maven.plugins</groupId> -->
+<!-- 				<artifactId>maven-dependency-plugin</artifactId> -->
+<!-- 				<executions> -->
+<!-- 					<execution> -->
+<!-- 						<id>copy-dependency</id> -->
+<!-- 						<phase>prepare-package</phase> -->
+<!-- 						<goals> -->
+<!-- 							<goal>copy-dependencies</goal> -->
+<!-- 						</goals> -->
+<!-- 						<configuration> -->
+<!-- 							<outputDirectory>${project.build.directory}/classes/lib</outputDirectory> -->
+<!-- 							<overWriteReleases>false</overWriteReleases> -->
+<!-- 							<overWriteSnapshots>false</overWriteSnapshots> -->
+<!-- 							<overWriteIfNewer>true</overWriteIfNewer> -->
+<!-- 						</configuration> -->
+<!-- 					</execution> -->
+<!-- 				</executions> -->
+<!-- 			</plugin> -->
+<!-- 				<plugin> -->
+<!-- 						<artifactId>maven-dependency-plugin</artifactId> -->
+<!-- 						<executions> -->
+<!-- 							<execution> -->
+<!-- 								<id>include-non-bundle-dependencies</id> -->
+<!-- 								<phase>prepare-package</phase> -->
+<!-- 								<goals> -->
+<!-- 									<goal>unpack-dependencies</goal> -->
+<!-- 								</goals> -->
+<!-- 							</execution> -->
+<!-- 						</executions> -->
+<!-- 						<configuration> -->
+<!-- 							<includeScope>provided</includeScope> -->
+<!-- 							<excludes>**/gnu.getopt/*,**/*.SF,**/WolpertingerCLi.class</excludes> -->
+<!-- 							<outputDirectory>${project.build.directory}/classes</outputDirectory> -->
+<!-- 						</configuration> -->
+<!-- 				</plugin> -->
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.0.1</version>
 				<extensions>true</extensions>
 
 				<configuration>
@@ -88,10 +133,22 @@
 						<Bundle-ClassPath>.</Bundle-ClassPath>
 						<Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
 						<Bundle-Vendor>The Protege Development Team</Bundle-Vendor>
+<!-- 						<Implementation-Title>${project.parent.name}</Implementation-Title> -->
+<!-- 						<Implementation-Vendor>${project.organization.name}</Implementation-Vendor> -->
+<!-- 						<Implementation-Version>${project.version}.${maven.build.timestamp}</Implementation-Version> -->
+<!-- 						<Bundle-SymbolicName>${project.groupId};singleton:=true</Bundle-SymbolicName> -->
+<!-- 						<Export-Package>!*</Export-Package> -->
 						<Import-Package>
-							org.protege.editor.owl.*;version="5.2.0", <!-- equivalent to [4.3,infinity) -->
-							*
+							org.protege.editor.owl.*;version="5.2.0",*
 						</Import-Package>
+<!-- 						<Import-Package> -->
+<!-- 							org.semanticweb.wolpertinger.*;version="1.0",* -->
+<!-- 						</Import-Package> -->
+					
+						<Embed-Dependency>wolpertinger-reasoner</Embed-Dependency>
+<!-- 						<Embed-Transitive>true</Embed-Transitive> -->
+<!-- 						<Embed-Directory>${project.build.directory}/classes</Embed-Directory> -->
+<!-- 						<Embed-StripGroup>true</Embed-StripGroup> -->
 					</instructions>
 				</configuration>
 			</plugin>
@@ -104,10 +161,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<dependencyManagement>
-		<dependencies>
-
-
-		</dependencies>
-	</dependencyManagement>
 </project>
