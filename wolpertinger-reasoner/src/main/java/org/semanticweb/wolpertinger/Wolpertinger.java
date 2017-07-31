@@ -26,9 +26,11 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
@@ -488,8 +490,7 @@ public class Wolpertinger implements OWLReasoner {
 	}
 	
 	public BufferingMode getBufferingMode() {
-		// TODO Auto-generated method stub
-		return null;
+		return BufferingMode.NON_BUFFERING;
 	}
 
 	public OWLOntology getRootOntology() {
@@ -508,28 +509,23 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public Set<OWLAxiom> getPendingAxiomAdditions() {
-		// TODO Auto-generated method stub
-		return null;
+		return new HashSet<OWLAxiom>();
 	}
 
 	public Set<OWLAxiom> getPendingAxiomRemovals() {
-		// TODO Auto-generated method stub
-		return null;
+		return new HashSet<OWLAxiom>();
 	}
 
 	public List<OWLOntologyChange> getPendingChanges() {
-		// TODO Auto-generated method stub
-		return null;
+		return new LinkedList<OWLOntologyChange>();
 	}
 
 	public Set<InferenceType> getPrecomputableInferenceTypes() {
-		// TODO Auto-generated method stub
-		return null;
+		return new HashSet<InferenceType>();
 	}
 
 	public long getTimeOut() {
-		// TODO Auto-generated method stub
-		return 0;
+		return 600000;
 	}
 
 	public void interrupt() {
