@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with Wolpertinger.  If not, see <http://www.gnu.org/licenses/>.
 */
-package org.semanticweb.wolpertinger;
+package org.semanticweb.wolpertinger.cli;
 
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
@@ -44,6 +44,8 @@ import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
+import org.semanticweb.wolpertinger.Configuration;
+import org.semanticweb.wolpertinger.Wolpertinger;
 
 /**
  * Command Line Interface for Wolpertinger.

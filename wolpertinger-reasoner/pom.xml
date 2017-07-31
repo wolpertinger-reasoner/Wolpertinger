@@ -1,22 +1,13 @@
-<!-- 
-    Copyright 2015 by the International Center for Computational Logic, Technical University Dresden.
- 
-    This file is part of Wolpertinger.
-
-    Wolpertinger is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Wolpertinger is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Wolpertinger.  If not, see <http://www.gnu.org/licenses/>.
-    
- -->
+<!-- Copyright 2015 by the International Center for Computational Logic, 
+	Technical University Dresden. This file is part of Wolpertinger. Wolpertinger 
+	is free software: you can redistribute it and/or modify it under the terms 
+	of the GNU General Public License as published by the Free Software Foundation, 
+	either version 3 of the License, or (at your option) any later version. Wolpertinger 
+	is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+	without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+	PURPOSE. See the GNU General Public License for more details. You should 
+	have received a copy of the GNU General Public License along with Wolpertinger. 
+	If not, see <http://www.gnu.org/licenses/>. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -41,64 +32,36 @@
 
 	<build>
 		<plugins>
-					<plugin>
-						<artifactId>maven-dependency-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>include-non-bundle-dependencies</id>
-								<phase>prepare-package</phase>
-								<goals>
-									<goal>unpack-dependencies</goal>
-								</goals>
-							</execution>
-						</executions>
-						<configuration>
-							<includeScope>compile</includeScope>
-							<excludes>**/*.SF</excludes>
-							<outputDirectory>${project.build.directory}/classes</outputDirectory>
-						</configuration>
-				</plugin>
 			<plugin>
-				<!-- Build an executable JAR -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.0.2</version>
 				<configuration>
-<!-- 					<includes> -->
-<!-- 						<include>${project.build.directory}/classes/**</include> -->
-<!-- 					</includes> -->
-					<classesDirectory>${project.build.directory}/classes</classesDirectory>
 					<archive>
 						<manifest>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-              				<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
 							<addClasspath>true</addClasspath>
-							<classpathPrefix>.</classpathPrefix>
-							<mainClass>org.semanticweb.wolpertinger.WolpertingerCli</mainClass>
+							<mainClass>
+								org.semanticweb.wolpertinger.cli.WolpertingerCli
+							</mainClass>
+							<classpathPrefix>dependency/</classpathPrefix>
 						</manifest>
 					</archive>
 				</configuration>
 			</plugin>
-
-<!-- 			<plugin> -->
-<!-- 				<groupId>org.apache.maven.plugins</groupId> -->
-<!-- 				<artifactId>maven-dependency-plugin</artifactId> -->
-<!-- 				<version>2.8</version> -->
-<!-- 				<executions> -->
-<!-- 					<execution> -->
-<!-- 						<id>copy-dependencies</id> -->
-<!-- 						<phase>package</phase> -->
-<!-- 						<goals> -->
-<!-- 							<goal>copy-dependencies</goal> -->
-<!-- 						</goals> -->
-<!-- 						<configuration> -->
-<!-- 							exclude junit, we need runtime dependency only -->
-<!-- 							<includeScope>runtime</includeScope> -->
-<!-- 							<outputDirectory>${project.build.directory}/lib/</outputDirectory> -->
-<!-- 						</configuration> -->
-<!-- 					</execution> -->
-<!-- 				</executions> -->
-<!-- 			</plugin> -->
 		</plugins>
 	</build>
 
@@ -113,6 +76,7 @@
 			<groupId>gnu.getopt</groupId>
 			<artifactId>java-getopt</artifactId>
 			<version>1.0.13</version>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>net.sourceforge.owlapi</groupId>
@@ -120,9 +84,9 @@
 			<version>3.5.0</version>
 		</dependency>
 		<dependency>
-    		<groupId>net.sourceforge.owlapi</groupId>
-    		<artifactId>owlapi-apibinding</artifactId>
-    		<version>3.5.0</version>
+			<groupId>net.sourceforge.owlapi</groupId>
+			<artifactId>owlapi-apibinding</artifactId>
+			<version>3.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -130,14 +94,14 @@
 			<version>2.1</version>
 		</dependency>
 		<dependency>
-        <groupId>commons-logging</groupId>
-        <artifactId>commons-logging</artifactId>
-        <version>1.1.1</version>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.1</version>
 		</dependency>
 		<dependency>
-	    <groupId>commons-beanutils</groupId>
-	    <artifactId>commons-beanutils</artifactId>
-	    <version>1.9.3</version>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+			<version>1.9.3</version>
 		</dependency>
 	</dependencies>
 	<description>A fixed-domain reasoner for the Semantic Web.</description>
