@@ -145,10 +145,10 @@
 <!-- 							org.semanticweb.wolpertinger.*;version="1.0",* -->
 <!-- 						</Import-Package> -->
 					
-						<Embed-Dependency>wolpertinger-reasoner</Embed-Dependency>
-<!-- 						<Embed-Transitive>true</Embed-Transitive> -->
-<!-- 						<Embed-Directory>${project.build.directory}/classes</Embed-Directory> -->
-<!-- 						<Embed-StripGroup>true</Embed-StripGroup> -->
+						<Embed-Dependency>*;scope=provided;inline=true</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Embed-Directory>${project.build.directory}/dependency</Embed-Directory>
+						<Embed-StripGroup>true</Embed-StripGroup>
 					</instructions>
 				</configuration>
 			</plugin>
