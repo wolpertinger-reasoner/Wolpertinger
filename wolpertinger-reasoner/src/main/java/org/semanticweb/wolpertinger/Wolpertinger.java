@@ -69,6 +69,8 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.impl.OWLClassNode;
 import org.semanticweb.owlapi.reasoner.impl.OWLClassNodeSet;
 import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
+import org.semanticweb.owlapi.reasoner.impl.OWLObjectPropertyNode;
+import org.semanticweb.owlapi.reasoner.impl.OWLObjectPropertyNodeSet;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
@@ -771,61 +773,61 @@ public class Wolpertinger implements OWLReasoner {
 	////////////////////////////
 
 	public Node<OWLObjectPropertyExpression> getBottomObjectPropertyNode() {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO placeholder
+		return new OWLObjectPropertyNode();
 	}
 
 	public NodeSet<OWLObjectPropertyExpression> getDisjointObjectProperties(
 			OWLObjectPropertyExpression arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLObjectPropertyNodeSet();
 	}
 
 	public Node<OWLObjectPropertyExpression> getEquivalentObjectProperties(
 			OWLObjectPropertyExpression arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLObjectPropertyNode();
 	}
 
 	public Node<OWLObjectPropertyExpression> getInverseObjectProperties(
 			OWLObjectPropertyExpression arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLObjectPropertyNode();
 	}
 
 	public NodeSet<OWLObjectPropertyExpression> getSubObjectProperties(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLObjectPropertyNodeSet();
 	}
 
 	public NodeSet<OWLNamedIndividual> getObjectPropertyValues(
 			OWLNamedIndividual arg0, OWLObjectPropertyExpression arg1) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLNamedIndividualNodeSet();
 	}
 
 	public NodeSet<OWLClass> getObjectPropertyDomains(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLClassNodeSet();
 	}
 
 	public NodeSet<OWLClass> getObjectPropertyRanges(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLClassNodeSet();
 	}
 
 	public NodeSet<OWLObjectPropertyExpression> getSuperObjectProperties(
 			OWLObjectPropertyExpression arg0, boolean arg1) {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLObjectPropertyNodeSet();
 	}
 
 	public Node<OWLObjectPropertyExpression> getTopObjectPropertyNode() {
 		// TODO Auto-generated method stub
-		return null;
+		return new OWLObjectPropertyNode();
 	}
 
 	////////////////////////////
