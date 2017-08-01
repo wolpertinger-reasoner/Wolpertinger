@@ -36,12 +36,12 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLException;
-import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.semanticweb.wolpertinger.Configuration;
@@ -194,7 +194,7 @@ public class WolpertingerCli {
     	}
 
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-            OWLClass owlClass=OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLClass(IRI.create(conceptName));
+			OWLClass owlClass = wolpertinger.getClass(conceptName);
 			NodeSet<OWLClass> subconcepts = wolpertinger.getSubClasses(owlClass, direct);
 			for (OWLClass cl : subconcepts.getFlattened()) {
 				output.println(cl);
@@ -214,7 +214,7 @@ public class WolpertingerCli {
     	}
 
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-            OWLClass owlClass=OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLClass(IRI.create(conceptName));
+            OWLClass owlClass = wolpertinger.getClass(conceptName);
 			NodeSet<OWLClass> subconcepts = wolpertinger.getSuperClasses(owlClass, direct);
 			for (OWLClass cl : subconcepts.getFlattened()) {
 				output.println(cl);
@@ -223,6 +223,26 @@ public class WolpertingerCli {
 		}
 	}
 
+    static protected class EquivalentConceptsActions implements TranslationAction {
+    	final String conceptName;
+    	final boolean direct;
+
+    	public EquivalentConceptsActions(String conceptName, boolean direct) {
+    		super();
+    		this.conceptName = conceptName;
+    		this.direct = direct;
+    	}
+
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+            OWLClass owlClass = wolpertinger.getClass(conceptName);
+			Node<OWLClass> equivalentConcepts = wolpertinger.getEquivalentClasses(owlClass);
+			for (OWLClass cl : equivalentConcepts.getEntities()) {
+				output.println(cl);
+			}					
+			output.flush();
+		}
+	}
+    
     static protected class ConceptInstancesAction implements TranslationAction {
     	final String conceptName;
     	final boolean direct;
@@ -234,7 +254,7 @@ public class WolpertingerCli {
     	}
 
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-            OWLClass owlClass=OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLClass(IRI.create(conceptName));
+			OWLClass owlClass = wolpertinger.getClass(conceptName);
 			NodeSet<OWLNamedIndividual> instances = wolpertinger.getInstances(owlClass, direct);
 			for (OWLNamedIndividual ind : instances.getFlattened()) {
 				output.println(ind);
@@ -299,6 +319,7 @@ public class WolpertingerCli {
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
 			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
 			new Option('S', "supers", groupActions, true, "CLASS", "output classes subsuming by CLASS"),
+			new Option('E', "equi", groupActions, true, "CLASS", "output classes equivalent to CLASS"),
 			new Option('i', "instances", groupActions, true, "CLASS", "output instances of the CLASS"),
 			new Option('t', "types", groupActions, true, "INDIVIDUAL", "output types of the INDIVIDUAL"),
 			new Option('a', "axiomatize", groupUtility, true, "FILE", "For the ontology given, generate axioms that axiomatize the fixed-domain semantics and write the axiomatized ontolgy to FILE."),
@@ -494,6 +515,13 @@ public class WolpertingerCli {
 					TranslationAction action = new SuperconceptsActions(arg, direct);
 					actions.add(action);
 				}
+				break;
+				case 'E': {
+					String arg = getopt.getOptarg();
+					TranslationAction action = new EquivalentConceptsActions(arg, direct);
+					actions.add(action);
+				}
+				break;
 				case 't': {
 					String arg = getopt.getOptarg();
 					TranslationAction action = new IndividualTypesAction(arg, direct);

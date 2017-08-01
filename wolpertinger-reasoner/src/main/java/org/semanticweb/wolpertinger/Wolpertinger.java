@@ -38,6 +38,7 @@ import java.util.Stack;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
 import org.semanticweb.owlapi.model.AxiomType;
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -452,6 +453,18 @@ public class Wolpertinger implements OWLReasoner {
 //		}
 //	}
 
+	public OWLClass getClass(String conceptName) {
+		OWLClass owlThing = OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLThing();
+		OWLClass owlNothing = OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLNothing();
+		if (conceptName.equals(owlThing.toString())) {
+			return owlThing;
+		} else if (conceptName.equals(owlNothing.toString())) {
+			return owlNothing;
+		} else {
+			return OWLManager.createOWLOntologyManager().getOWLDataFactory().getOWLClass(IRI.create(conceptName));
+		}
+	}
+	
 	// --------------
 	// OWLReasoner implementations up from here
 	// --------------
