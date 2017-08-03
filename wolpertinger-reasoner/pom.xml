@@ -86,16 +86,16 @@
 			<artifactId>owlapi-apibinding</artifactId>
 			<version>4.2.7</version>
 		</dependency>
-<!-- 		<dependency> -->
-<!-- 			<groupId>net.sourceforge.owlapi</groupId> -->
-<!-- 			<artifactId>owlapi-api</artifactId> -->
-<!-- 			<version>3.5.0</version> -->
-<!-- 		</dependency> -->
-<!-- 		<dependency> -->
-<!-- 			<groupId>net.sourceforge.owlapi</groupId> -->
-<!-- 			<artifactId>owlapi-apibinding</artifactId> -->
-<!-- 			<version>3.5.0</version> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>net.sourceforge.owlapi</groupId> -->
+		<!-- <artifactId>owlapi-api</artifactId> -->
+		<!-- <version>3.5.0</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>net.sourceforge.owlapi</groupId> -->
+		<!-- <artifactId>owlapi-apibinding</artifactId> -->
+		<!-- <version>3.5.0</version> -->
+		<!-- </dependency> -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-configuration2</artifactId>
@@ -110,6 +110,11 @@
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
 			<version>1.9.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.10</version>
 		</dependency>
 	</dependencies>
 	<description>A fixed-domain reasoner for the Semantic Web.</description>

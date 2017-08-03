@@ -104,8 +104,8 @@
 							!org.apache.commons.jxpath.ri.*, !org.apache.commons.*,
 							!org.apache.commons.jxpath, !org.apache.commons.jxpath.ri,
 							!org.apache.commons.jexl2,!org.apache.commons.codec.binary,
-							!org.apache.avalon.framework.logger,!javax.servlet,!
-							gnu.getopt, *
+							!org.apache.avalon.framework.logger,!javax.servlet,!gnu.getopt, 
+							*
 						</Import-Package>
 						<Embed-Transitive>true</Embed-Transitive>
 						<Embed-Directory>target/dependency</Embed-Directory>

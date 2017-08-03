@@ -148,7 +148,7 @@ public class Wolpertinger implements OWLReasoner {
 
 		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
 		if(configuration.getDomainIndividuals() == null) {
-			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
+			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(Imports.INCLUDED));
 		}
 
 		normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
@@ -193,7 +193,7 @@ public class Wolpertinger implements OWLReasoner {
 
 		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
 		if(configuration.getDomainIndividuals() == null) {
-			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(true));
+			configuration.setDomainIndividuals(rootOntology.getIndividualsInSignature(Imports.INCLUDED));
 		}
 
 		OWLNormalizationWithTracer normalization = new OWLNormalizationWithTracer(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
@@ -224,7 +224,7 @@ public class Wolpertinger implements OWLReasoner {
 		classified = true;
 		equalsToTopClasses = new HashSet<OWLClass> ();
 		equalsToBottomClasses = new HashSet<OWLClass> ();
-		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(true);
+		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(Imports.INCLUDED);
 		HashMap<OWLClass,HashSet<OWLClass>> superClassHierarchy = new HashMap<OWLClass,HashSet<OWLClass>> ();
 
 		for (OWLClass cl : allClasses) {
@@ -580,7 +580,7 @@ public class Wolpertinger implements OWLReasoner {
 
 		for (OWLAxiom axiom : axiomSet) {
 			if (axiom instanceof OWLDeclarationAxiom) {
-
+					// skip all declaration axioms
 			} else if (axiom instanceof OWLSubClassOfAxiom) {
 				OWLAxioms tempAxioms = new OWLAxioms ();
 				Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
@@ -745,7 +745,7 @@ public class Wolpertinger implements OWLReasoner {
 				satisfiableClassFile.deleteOnExit();
 				PrintWriter satisfiableOutput = new PrintWriter(satisfiableClassFile);
 
-				for (OWLClass c : rootOntology.getClassesInSignature(true)) {
+				for (OWLClass c : rootOntology.getClassesInSignature(Imports.INCLUDED)) {
 					String className = mapper.getPredicateName(c);
 					satisfiableOutput.write(String.format("%s :- %s(X).", className.toLowerCase(), className.toLowerCase()));
 					satisfiableOutput.println();
@@ -907,7 +907,7 @@ public class Wolpertinger implements OWLReasoner {
 	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression,
 			boolean arg1) {
 		//TODO Indirect and Arbitrary Class Expr
-		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(true);
+		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(Imports.INCLUDED);
 		OWLNamedIndividualNodeSet result = new OWLNamedIndividualNodeSet ();
 		for (OWLNamedIndividual individual : individuals) {
 			OWLClassAssertionAxiom impl = new OWLClassAssertionAxiomImpl (individual, classExpression, new HashSet<OWLAnnotation> ());
