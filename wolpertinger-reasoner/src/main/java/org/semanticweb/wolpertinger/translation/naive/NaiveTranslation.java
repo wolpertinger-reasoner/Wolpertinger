@@ -27,6 +27,7 @@ import java.util.Set;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
@@ -95,13 +96,11 @@ import org.semanticweb.owlapi.model.OWLSubPropertyChainOfAxiom;
 import org.semanticweb.owlapi.model.OWLSymmetricObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.SWRLRule;
-import org.semanticweb.owlapi.model.OWLObjectInverseOf;
 import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.ComplexObjectPropertyInclusion;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
-import org.semanticweb.wolpertinger.structural.OWLAxioms.DisjunctiveRule;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
 
@@ -1675,7 +1674,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	
 	public void visit(OWLInverseObjectPropertiesAxiom arg0) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -1684,7 +1682,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	
 	public void visit(OWLHasKeyAxiom arg0) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -1693,7 +1690,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	
 	public void visit(OWLDatatypeDefinitionAxiom arg0) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -1702,34 +1698,20 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	
 	public void visit(SWRLRule arg0) {
-		// TODO Auto-generated method stub
-
 	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
-
 	
 	public void visit(OWLObjectProperty arg0) {
-		// TODO Auto-generated method stub
-
 	}
 
 	
 	public void visit(OWLObjectInverseOf arg0) {
-		// TODO Auto-generated method stub
-
 	}
 
 	
 	public void visit(OWLDataProperty arg0) {
-		// TODO Auto-generated method stub
+	}
 
+	public void visit(OWLAnnotationProperty arg0) {		
 	}
 
 }

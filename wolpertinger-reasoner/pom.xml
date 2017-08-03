@@ -79,13 +79,23 @@
 		<dependency>
 			<groupId>net.sourceforge.owlapi</groupId>
 			<artifactId>owlapi-api</artifactId>
-			<version>3.5.0</version>
+			<version>4.2.7</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sourceforge.owlapi</groupId>
 			<artifactId>owlapi-apibinding</artifactId>
-			<version>3.5.0</version>
+			<version>4.2.7</version>
 		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>net.sourceforge.owlapi</groupId> -->
+<!-- 			<artifactId>owlapi-api</artifactId> -->
+<!-- 			<version>3.5.0</version> -->
+<!-- 		</dependency> -->
+<!-- 		<dependency> -->
+<!-- 			<groupId>net.sourceforge.owlapi</groupId> -->
+<!-- 			<artifactId>owlapi-apibinding</artifactId> -->
+<!-- 			<version>3.5.0</version> -->
+<!-- 		</dependency> -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-configuration2</artifactId>

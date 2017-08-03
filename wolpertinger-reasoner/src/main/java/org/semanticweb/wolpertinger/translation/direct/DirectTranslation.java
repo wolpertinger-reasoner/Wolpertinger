@@ -24,6 +24,7 @@ import java.util.LinkedList;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
@@ -799,6 +800,11 @@ public class DirectTranslation implements OWLOntologyTranslator {
 	
 	public void translateOntology(OWLOntology rootOntology) {
 		translateOntology(loadOntology(rootOntology));
+	}
+
+	public void visit(OWLAnnotationProperty arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

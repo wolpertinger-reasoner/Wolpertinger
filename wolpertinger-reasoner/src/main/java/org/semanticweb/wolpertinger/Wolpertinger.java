@@ -26,7 +26,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -36,7 +35,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.io.OWLFunctionalSyntaxOntologyFormat;
+import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -60,6 +59,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.PrefixManager;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.BufferingMode;
 import org.semanticweb.owlapi.reasoner.FreshEntityPolicy;
 import org.semanticweb.owlapi.reasoner.IndividualNodeSetPolicy;
@@ -405,7 +405,8 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public void axiomatizeFDSemantics(File file){
-		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(true);
+		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(Imports.INCLUDED);
+		
 
  		if (individuals.isEmpty()) {
  			System.out.println("No named individuals in given ontology!");
@@ -415,7 +416,7 @@ public class Wolpertinger implements OWLReasoner {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory factory = manager.getOWLDataFactory();
 		OWLDifferentIndividualsAxiom allDiff = factory.getOWLDifferentIndividualsAxiom(individuals);
-		PrefixManager pManager = new DefaultPrefixManager("");
+		PrefixManager pManager = new DefaultPrefixManager();
 		OWLClassExpression thing = factory.getOWLClass("owl:Thing", pManager);
 		OWLObjectOneOf oneof = factory.getOWLObjectOneOf(individuals);
 		OWLSubClassOfAxiom axiom = factory.getOWLSubClassOfAxiom(thing, oneof);
@@ -427,7 +428,7 @@ public class Wolpertinger implements OWLReasoner {
 	    BufferedOutputStream outputStream;
 		try {
 			outputStream = new BufferedOutputStream(new FileOutputStream(file));
-			manager.saveOntology(rootOntology, new OWLFunctionalSyntaxOntologyFormat(), outputStream);
+			manager.saveOntology(rootOntology, new OWLXMLDocumentFormat(), outputStream);
 		} catch (FileNotFoundException e1) {
 			System.out.println("There is something wrong with the given filename: " + file.toString());
 		} catch (OWLOntologyStorageException e1) {

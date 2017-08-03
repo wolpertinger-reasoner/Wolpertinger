@@ -27,6 +27,7 @@ import java.util.Set;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
@@ -98,13 +99,12 @@ import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
-import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.ComplexObjectPropertyInclusion;
-import org.semanticweb.wolpertinger.structural.OWLAxioms.DisjunctiveRule;
 import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
 import org.semanticweb.wolpertinger.translation.OWLOntologyTranslator;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
 import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
+import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.manchester.cs.owl.owlapi.OWLAsymmetricObjectPropertyAxiomImpl;
@@ -2018,5 +2018,10 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			set.add(p);
 			nraComplementSet.put(c, set);
 		}
+	}
+
+	public void visit(OWLAnnotationProperty arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }
