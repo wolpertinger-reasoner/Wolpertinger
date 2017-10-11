@@ -153,6 +153,11 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	private HashMap<OWLClass, HashSet<OWLObjectProperty>> nraComplementSet;
 
 	private OWLNormalizationWithTracer normalization;
+	
+	private int axiomsCount;
+	private int aBoxAxiomsCount;
+	private int tBoxAxiomsCount;	
+	private int rBoxAxiomsCount;
 	/**
 	 * Creates a {@link NaiveTranslation} instance
 	 * @param configuration
@@ -244,9 +249,11 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		HashMap<OWLClassExpression[], Integer> counterHash = new HashMap<OWLClassExpression[], Integer> ();
 		for (OWLClassExpression[] inclusion : normalizedOntology.m_conceptInclusions) {
 			boolean hasDataTypeClassExpression = false;
+			// skip axiom with data type
 			for (int ii = 0; ii < inclusion.length; ii++) {
 				OWLClassExpression c = inclusion[ii];
-				if (c instanceof OWLDataSomeValuesFrom || c instanceof OWLDataAllValuesFrom ||
+				if (c instanceof OWLDataSomeValuesFrom || 
+					c instanceof OWLDataAllValuesFrom ||
 					c instanceof OWLDataMaxCardinality) {
 					hasDataTypeClassExpression = true;
 					continue;
@@ -1784,7 +1791,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print(mapper.getConstantName(individual));
 			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-			writer.print(ASP2CoreSymbols.EOR);
 		} else {
 			OWLClass owlClass = classExpression.asOWLClass();
 			OWLClass guard = getNominalGuard(individual);
@@ -1799,16 +1805,18 @@ public class DebugTranslation implements OWLOntologyTranslator {
 				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 				writer.print(var.currentVar());
 				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-				writer.print(ASP2CoreSymbols.EOR);
 			} else {
 				// A(a).
 				writer.print(mapper.getPredicateName(owlClass));
 				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 				writer.print(mapper.getConstantName(individual));
 				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-				writer.print(ASP2CoreSymbols.EOR);
 			}
 		}
+		writer.print(ASP2CoreSymbols.SPACE);
+		writer.write(ASP2CoreSymbols.IMPLICATION);
+		writer.write(String.format(" activated(%d)", nConstraints++));
+		writer.write(ASP2CoreSymbols.EOR);
 	}
 
 	/* (non-Javadoc)
