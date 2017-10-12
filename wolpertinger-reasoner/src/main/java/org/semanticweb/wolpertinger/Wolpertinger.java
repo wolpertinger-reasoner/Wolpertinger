@@ -407,7 +407,6 @@ public class Wolpertinger implements OWLReasoner {
 	public void axiomatizeFDSemantics(File file){
 		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(Imports.INCLUDED);
 		
-
  		if (individuals.isEmpty()) {
  			System.out.println("No named individuals in given ontology!");
  			return;
@@ -475,13 +474,11 @@ public class Wolpertinger implements OWLReasoner {
 	////////////////////////////
 
 	public void dispose() {
-		// TODO Auto-generated method stub
-
+		System.out.println("Wolpertinger: dispose()");
 	}
 
 	public void flush() {
-		// TODO Auto-generated method stub
-
+		System.out.println("Woolpertinger: flush");
 	}
 
 	public String getReasonerName() {
@@ -633,17 +630,14 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public boolean isEntailmentCheckingSupported(AxiomType<?> arg0) {
-		// TODO Auto-generated method stub
-		return false;
+		return arg0 == AxiomType.SUBCLASS_OF ? true : false;
 	}
 	
 	public boolean isPrecomputed(InferenceType arg0) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	public void precomputeInferences(InferenceType... arg0) {
-		// TODO Auto-generated method stub
 	}
 
 	////////////////////////////
@@ -655,9 +649,8 @@ public class Wolpertinger implements OWLReasoner {
 		return owlClassHierarchyNodeToNode(classHierarchy.getBottomNode());
 	}
 
-	public NodeSet<OWLClass> getDisjointClasses(OWLClassExpression arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public NodeSet<OWLClass> getDisjointClasses(OWLClassExpression arg0) throws UnsupportedOperationException {
+		throw new UnsupportedOperationException("getDisjointClasses is not supported yet.");
 	}
 
 	public Node<OWLClass> getEquivalentClasses(OWLClassExpression queryClassExpression) {
@@ -670,7 +663,8 @@ public class Wolpertinger implements OWLReasoner {
         	OWLClass queryClass = (OWLClass) queryClassExpression;
         	return owlClassHierarchyNodeToNode(classHierarchy.getNodeForElement(queryClass));
         }
-		return null;
+		// not supported yet
+		return new OWLClassNode();
 	}
 
 	public NodeSet<OWLClass> getSubClasses(OWLClassExpression queryClassExpression, boolean direct) {
