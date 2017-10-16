@@ -170,6 +170,17 @@ public class Wolpertinger implements OWLReasoner {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+		OWLDataFactory factory = manager.getOWLDataFactory();
+		PrefixManager pManager = new DefaultPrefixManager();
+		OWLClassExpression thing = factory.getOWLClass("owl:Thing", pManager);
+
+		for (OWLNamedIndividual individual : axioms.m_namedIndividuals) {
+			OWLClassAssertionAxiom assertion = factory.getOWLClassAssertionAxiom(thing, individual);
+			manager.addAxiom(rootOntology, assertion);
+		}
+		
 		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath()});
 	}
 
