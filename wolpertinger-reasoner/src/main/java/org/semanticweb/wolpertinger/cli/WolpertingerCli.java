@@ -314,6 +314,7 @@ public class WolpertingerCli {
 			new Option('e', "entail", groupActions, true, "FILE", "check whether ontology FILE is entailed by input ontology"),
 			new Option('D', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, domain is the set of individuals in the input ontology"),
 			new Option('d', "direct", groupActions, "apply direct sub/superclasses for next query"),
+			new Option('f', "filter", groupActions, true, "MODE", "filter what predicates are to be shown in the model; supported values are 'positive' and 'negative'"),
 			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many of models; NUMBER=0 means asking for ALL models"),
 			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
 			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
@@ -387,6 +388,11 @@ public class WolpertingerCli {
 						iris.add(IRI.create(sIRI));
 					}
 					configuration.setConceptsToProjectOn(iris);
+				}
+				break;
+				case 'f': {
+					String arg = getopt.getOptarg();
+					configuration.setFilter(arg);
 				}
 				break;
 				case 'd': {
