@@ -858,26 +858,27 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			property = allValFrom.getProperty().asOWLObjectProperty();
 		}
 
-
 		OWLClassExpression filler = allValFrom.getFiller();
 		String propertyName = mapper.getPredicateName(property);
 
 		//String className = mapper.getPredicateName(fillerClass);
+		
+		String r1Var = var.currentVar();
+		String r2Var = var.nextVariable();
 		String cVar = var.currentVar();
-		String nVar = var.nextVariable();
-
+		
 		if (isInverseOf) {
-			String temp = cVar;
-			cVar = nVar;
-			nVar = temp;
+			String temp = r1Var;
+			r1Var = r2Var;
+			r2Var = temp;
 		}
 
 		// r(X,Y),
 		writer.print(propertyName);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		writer.print(cVar);
+		writer.print(r1Var);
 		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
-		writer.print(nVar);
+		writer.print(r2Var);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 
 		// distinguish -A or A
@@ -892,7 +893,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 				writer.print(ASP2CoreSymbols.CONJUNCTION);
 				writer.write(auxOneOfName);
 				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
-				writer.write(nVar);
+				writer.write(cVar);
 				writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
 			} else {
 				assert !expr.isAnonymous();
@@ -904,7 +905,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 				writer.print(ASP2CoreSymbols.CONJUNCTION);
 				writer.print(predicateName);
 				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-				writer.print(nVar);
+				writer.print(cVar);
 				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 
 				if (isAuxiliaryClass(owlClass)) auxClasses.add(owlClass);
@@ -919,7 +920,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.print(ASP2CoreSymbols.NAF + " ");
 			writer.write(auxOneOfName);
 			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.write(nVar);
+			writer.write(cVar);
 			writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
 		}
 		else if (filler.isOWLNothing()) {
@@ -934,14 +935,12 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.print(ASP2CoreSymbols.NAF + " ");
 			writer.print(predicateName);
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.print(nVar);
+			writer.print(cVar);
 			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 
 			if (isAuxiliaryClass(filler.asOWLClass()))
 				auxClasses.add(filler.asOWLClass());
 		}
-
-		var.reset();
 	}
 
 	/* (non-Javadoc)
