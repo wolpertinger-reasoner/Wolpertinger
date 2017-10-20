@@ -20,9 +20,13 @@ package org.semanticweb.wolpertinger.cli;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.text.BreakIterator;
@@ -36,11 +40,13 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLException;
+import org.semanticweb.owlapi.model.OWLIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
@@ -168,6 +174,32 @@ public class WolpertingerCli {
 				output.println(model);
 			}
 			output.flush();
+			
+			if (!configuration.getAboxDirectory().isEmpty()) {
+				String modelFilePattern = "model%i.ttl";
+				
+				OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+				Collection<Set<OWLAxiom>> aboxes = wolpertinger.enumerateModelsAsOWLAxioms(this.number);
+				
+				int n = 0;
+				for (Set<OWLAxiom> abox : aboxes) {
+					// write to file
+					try {
+						OutputStream out = new BufferedOutputStream(new FileOutputStream(new File(String.format(modelFilePattern, null))));
+						OWLOntology owlABox = manager.createOntology(abox);
+						manager.saveOntology(owlABox, out);
+					} catch (OWLOntologyCreationException e) {
+						System.err.println("Could not create ABox Ontology!");
+					} catch (OWLOntologyStorageException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (FileNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					n += 1;
+				}
+			}
 		}
     }
 
@@ -290,7 +322,7 @@ public class WolpertingerCli {
 		}
 	}
 
-	protected static final String usageString = "java -jar Wolpertinger.jar [OPTION]... IRI...";
+	protected static final String usageString = "java -jar wolpertinger.jar [OPTIONS]... IRI...";
 
 	protected static final String 	groupActions = "Actions",
 									groupMisc = "Miscellaneous",
@@ -312,26 +344,27 @@ public class WolpertingerCli {
 			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output); supported values are 'naive' and 'naff'"),
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('e', "entail", groupActions, true, "FILE", "check whether ontology FILE is entailed by input ontology"),
-			new Option('D', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, domain is the set of individuals in the input ontology"),
+			new Option('D', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, the domain is the implicit set of individuals in the input ontology"),
 			new Option('d', "direct", groupActions, "apply direct sub/superclasses for next query"),
 			new Option('f', "filter", groupActions, true, "MODE", "filter what predicates are to be shown in the model; supported values are 'positive' and 'negative'"),
-			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many of models; NUMBER=0 means asking for ALL models"),
+			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many models; NUMBER=0 means asking for ALL models"),
+			new Option('A', "abox", groupActions, true, "DIRECTORY", "write models as proper assertions in TTL syntax to DIRECTORY"),
 			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
-			new Option('j', "justification", groupActions, "ask for inconsistency justification"),
+			new Option('j', "justification", groupActions, "ask for an inconsistency justification"),
 			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
 			new Option('S', "supers", groupActions, true, "CLASS", "output classes subsuming by CLASS"),
 			new Option('E', "equi", groupActions, true, "CLASS", "output classes equivalent to CLASS"),
 			new Option('i', "instances", groupActions, true, "CLASS", "output instances of the CLASS"),
 			new Option('t', "types", groupActions, true, "INDIVIDUAL", "output types of the INDIVIDUAL"),
 			new Option('a', "axiomatize", groupUtility, true, "FILE", "For the ontology given, generate axioms that axiomatize the fixed-domain semantics and write the axiomatized ontolgy to FILE."),
-
 	};
 
 	public static void main(String[] args) {
 		try {
 			Configuration configuration = new Configuration();
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
-
+			
+			// by default print to System.out
 			PrintWriter output = new PrintWriter(System.out);
 			boolean direct = false;
 
@@ -400,6 +433,14 @@ public class WolpertingerCli {
 				}
 				break;
 				// ACTIONS
+				
+				// ABox
+				case 'A': {
+					String arg = getopt.getOptarg();
+					
+					configuration.setAboxDirectory(arg);
+				}
+				break;
 
 				// translate
 				case 'T': {
@@ -587,23 +628,6 @@ public class WolpertingerCli {
                     startTime = System.currentTimeMillis();
                     Wolpertinger wolpertinger = new Wolpertinger(configuration, ontology);
 
-                   // Prefixes prefixes=hermit.getPrefixes();
-//                    if (defaultPrefix!=null) {
-//                        try {
-//                            prefixes.declareDefaultPrefix(defaultPrefix);
-//                        }
-//                        catch (IllegalArgumentException e) {
-//                            status.log(2,"Default prefix "+defaultPrefix+" could not be registered because there is already a registered default prefix. ");
-//                        }
-//                    }
-//                    for (String prefixName : prefixMappings.keySet()) {
-//                        try {
-//                            prefixes.declarePrefix(prefixName, prefixMappings.get(prefixName));
-//                        }
-//                        catch (IllegalArgumentException e) {
-//                            status.log(2,"Prefixname "+prefixName+" could not be set to "+prefixMappings.get(prefixName)+" because there is already a registered prefix name for the IRI. ");
-//                        }
-//                    }
                     long loadTime = System.currentTimeMillis() - startTime;
                     status.log(2, "Reasoner created in " + String.valueOf(loadTime) + " msec.");
 

@@ -49,6 +49,6 @@ public interface OWLOntologyTranslator extends OWLAxiomVisitor,
 	 * @param solution
 	 * @return
 	 */
-	public Set<OWLIndividualAxiom> retranslateSolution(String solution);
+	public Set<OWLAxiom> retranslateSolution(String solution);
 	
 }

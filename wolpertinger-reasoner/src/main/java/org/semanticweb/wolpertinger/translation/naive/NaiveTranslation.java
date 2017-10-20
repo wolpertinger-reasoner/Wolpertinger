@@ -398,11 +398,11 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	/**
 	 * 
 	 */
-	public Set<OWLIndividualAxiom> retranslateSolution(String answerSet) {
-		HashSet<OWLIndividualAxiom> assertions = new HashSet<OWLIndividualAxiom>();
+	public Set<OWLAxiom> retranslateSolution(String answerSet) {
+		HashSet<OWLAxiom> assertions = new HashSet<OWLAxiom>();
 		
 		for (String fact : answerSet.split(" ")) {
-			OWLIndividualAxiom assertionAxiom = getAssertionAxiom(fact);
+			OWLAxiom assertionAxiom = getAssertionAxiom(fact);
 		
 			if (null != assertionAxiom && !rootOntology.containsAxiom(assertionAxiom, true)) {
 				assertions.add(assertionAxiom);

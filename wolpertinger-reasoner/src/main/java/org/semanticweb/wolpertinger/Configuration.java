@@ -40,6 +40,7 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	private String filter;
 	private Set<IRI> conceptsToProjectOn;
 	private Set<OWLNamedIndividual> domainIndividuals;
+	private String aboxDirectory = ""; // the dirc to write the models to
 
 	public Configuration() {
 		this.conceptsToProjectOn = new HashSet<IRI>();
@@ -114,6 +115,14 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 
 	public void setFilter(String filter) {
 		this.filter = filter;
+	}
+	
+	public String getAboxDirectory() {
+		return aboxDirectory;
+	}
+	
+	public void setAboxDirectory(String directory) {
+		this.aboxDirectory = directory;
 	}
 
 }

@@ -49,6 +49,7 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
+import org.semanticweb.owlapi.model.OWLIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectComplementOf;
@@ -180,9 +181,6 @@ public class Wolpertinger implements OWLReasoner {
 		}
 		
 		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath()});
-		
-		
-		
 	}
 
 	private void clearState() {
@@ -246,6 +244,21 @@ public class Wolpertinger implements OWLReasoner {
 			return stringList;
 		}
 		return models;
+	}
+	
+	public Collection<Set<OWLAxiom>> enumerateAllModelsAsOWLAxioms() {
+		return enumerateModelsAsOWLAxioms(0);
+	}
+	
+	public Collection<Set<OWLAxiom>> enumerateModelsAsOWLAxioms(int number) {
+		Collection<String> models = enumerateModels(number);
+		LinkedList<Set<OWLAxiom>> modelsAsAxioms = new LinkedList<Set<OWLAxiom>>();
+		
+		for (String model : models) {
+			modelsAsAxioms.add(naiveTranslation.retranslateSolution(model));
+		}
+		
+		return modelsAsAxioms;
 	}
 
 	public void classifyClasses() {

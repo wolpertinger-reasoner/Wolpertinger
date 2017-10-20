@@ -31,6 +31,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLAxiomVisitor;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
@@ -212,7 +213,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		translateOntology(loadOntology(rootOntology));
 	}
 	
-	public Set<OWLIndividualAxiom> retranslateSolution(String solution) {
+	public Set<OWLAxiom> retranslateSolution(String solution) {
 		// TODO Auto-generated method stub
 		return null;
 	}
