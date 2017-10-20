@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -31,6 +32,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLAxiomVisitor;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassAssertionAxiom;
@@ -38,12 +40,14 @@ import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLClassExpressionVisitor;
 import org.semanticweb.owlapi.model.OWLDataAllValuesFrom;
 import org.semanticweb.owlapi.model.OWLDataExactCardinality;
+import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDataHasValue;
 import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
 import org.semanticweb.owlapi.model.OWLDataMinCardinality;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDataPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLDataSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLDatatypeDefinitionAxiom;
@@ -98,6 +102,8 @@ import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
+import org.semanticweb.wolpertinger.model.AtomicConcept;
+import org.semanticweb.wolpertinger.model.Individual;
 import org.semanticweb.wolpertinger.structural.OWLAxioms;
 import org.semanticweb.wolpertinger.structural.OWLAxioms.ComplexObjectPropertyInclusion;
 import org.semanticweb.wolpertinger.structural.OWLNormalization;
@@ -139,8 +145,12 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	// inclusions resutling from, e.g. resolving nominals
 	private Collection<OWLClassExpression[]> newInclusions;
 	private Configuration configuration;
+	
+	// 
+	private OWLOntology rootOntology;
 
 	private boolean assertionMode;
+	
 	/**
 	 * Creates a {@link NaiveTranslation} instance
 	 * @param configuration
@@ -197,11 +207,12 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	
 	public void translateOntology(OWLOntology rootOntology) {
+		this.rootOntology = rootOntology;
 		translateOntology(loadOntology(rootOntology));
 	}
 
 	/**
-	 * We have the OWLOntology (ies) now (normalized) in our internal data model representation.
+	 * We have the OWLOntology(ies) now (normalized) in our internal data model representation.
 	 *
 	 * @param normalizedOntology
 	 */
@@ -384,6 +395,70 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		writer.flush();
 	}
 
+	/**
+	 * 
+	 */
+	public Set<OWLIndividualAxiom> retranslateSolution(String answerSet) {
+		HashSet<OWLIndividualAxiom> assertions = new HashSet<OWLIndividualAxiom>();
+		
+		for (String fact : answerSet.split(" ")) {
+			OWLIndividualAxiom assertionAxiom = getAssertionAxiom(fact);
+		
+			if (null != assertionAxiom && !rootOntology.containsAxiom(assertionAxiom, true)) {
+				assertions.add(assertionAxiom);
+			}
+		}
+		
+		return assertions;
+	}
+	
+	/**
+	 * Given an assertion as string, the corresponding OWL axiom is created.
+	 * Note: if the input ontology does not contain the predicate, null is returned.
+	 * 
+	 * @param _assertion Assertions as string, e.g. "color(red)".
+	 * @return {@link OWLAxiom} representing the assertion. In case of an class assertion 
+	 * this is {@link OWLClassAssertionAxiom}, in case of an role assertion it is {@link OWLObjectPropertyAssertionAxiom}.
+	 * <br /><b>Returns null if the assertion is an internal / auxiliary construct not present in the input ontology. </b>
+	 */
+	private OWLIndividualAxiom getAssertionAxiom(String _assertion) {
+		String[] predParts = _assertion.split("\\(|\\)");
+		if (predParts.length == 2) {
+			String predicateName = predParts[0];
+			String argumentString = predParts[1];
+			
+			String[] arguments = argumentString.split(",");
+			if (arguments.length == 1) { // concept assertion
+				String argument = arguments[0];							
+				OWLClass concept = mapper.getOWLClass(predicateName);
+				OWLNamedIndividual individual = mapper.getOWLIndividual(argument);
+				
+				OWLDataFactory factory = OWLManager.getOWLDataFactory();
+
+				if (rootOntology.containsClassInSignature(concept.getIRI()) && 
+						!concept.getIRI().toString().startsWith("internal:") &&
+						!concept.getIRI().toString().startsWith("urn:monum")) {
+						OWLClassAssertionAxiom owlClassAssertion = factory.getOWLClassAssertionAxiom(concept, individual);
+						
+						return owlClassAssertion;
+				}
+			
+			}
+			// now the binary predicates == properties
+			else if (arguments.length == 2) { // role assertion
+				OWLNamedIndividual indiv1 = mapper.getOWLIndividual(arguments[0]);
+				OWLNamedIndividual indiv2 = mapper.getOWLIndividual(arguments[1]);
+				
+				OWLDataFactory factory = OWLManager.getOWLDataFactory();
+				OWLObjectPropertyExpression property = factory.getOWLObjectProperty(IRI.create(predicateName));
+				OWLObjectPropertyAssertionAxiom propAss = factory.getOWLObjectPropertyAssertionAxiom(property, indiv1, indiv2);
+				
+				return propAss;
+			}
+		}
+		return null;
+	}
+	
 	private void createShowStatementForClasses(OWLAxioms normalizedOntology) {
 		for (OWLClass owlClass : normalizedOntology.m_classes) {
 			createShowStatement(owlClass);

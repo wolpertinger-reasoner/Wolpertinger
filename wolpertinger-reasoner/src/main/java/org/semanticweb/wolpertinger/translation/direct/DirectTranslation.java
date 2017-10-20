@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Set;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
@@ -54,6 +55,7 @@ import org.semanticweb.owlapi.model.OWLEquivalentObjectPropertiesAxiom;
 import org.semanticweb.owlapi.model.OWLFunctionalDataPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLFunctionalObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLHasKeyAxiom;
+import org.semanticweb.owlapi.model.OWLIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLInverseFunctionalObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLInverseObjectPropertiesAxiom;
 import org.semanticweb.owlapi.model.OWLIrreflexiveObjectPropertyAxiom;
@@ -779,6 +781,11 @@ public class DirectTranslation implements OWLOntologyTranslator {
 		}
 		
 		writer.flush();
+	}
+	
+	public Set<OWLIndividualAxiom> retranslateSolution(String solution) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	private OWLAxioms loadOntology(OWLOntology rootOntology) {

@@ -17,19 +17,38 @@
 */
 package org.semanticweb.wolpertinger.translation;
 
+import java.util.Set;
+
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLAxiomVisitor;
 import org.semanticweb.owlapi.model.OWLClassExpressionVisitor;
+import org.semanticweb.owlapi.model.OWLIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLPropertyExpressionVisitor;
 
 /**
+ * Interface for rewriting an ontology to a target formalism 
+ * in which the reasoning is carried out.
+ * 
+ * I.e. rewrite into an answer set program.
+ * 
  * @author Lukas Schweizer
  *
  */
 public interface OWLOntologyTranslator extends OWLAxiomVisitor,
 		OWLClassExpressionVisitor, OWLPropertyExpressionVisitor {
 
-	// 
+	/**
+	 *  
+	 * @param rootOntology
+	 */
 	public void translateOntology(OWLOntology rootOntology);
+	
+	/**
+	 * 
+	 * @param solution
+	 * @return
+	 */
+	public Set<OWLIndividualAxiom> retranslateSolution(String solution);
 	
 }

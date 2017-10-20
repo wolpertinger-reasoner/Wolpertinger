@@ -4,6 +4,7 @@
 package org.semanticweb.wolpertinger.clingo;
 
 import java.util.Collection;
+
 //import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLOntology;
 

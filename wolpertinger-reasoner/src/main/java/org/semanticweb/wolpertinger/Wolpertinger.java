@@ -165,7 +165,6 @@ public class Wolpertinger implements OWLReasoner {
 			naiveTranslation = new NaiveTranslation(configuration, output);
 			naiveTranslation.translateOntology(axioms);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -180,6 +179,9 @@ public class Wolpertinger implements OWLReasoner {
 		}
 		
 		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath()});
+		
+		
+		
 	}
 
 	private void clearState() {

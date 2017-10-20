@@ -211,6 +211,11 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	public void translateOntology(OWLOntology rootOntology) {
 		translateOntology(loadOntology(rootOntology));
 	}
+	
+	public Set<OWLIndividualAxiom> retranslateSolution(String solution) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	/**
 	 * We have the OWLOntology (ies) now (normalized) in our internal data model representation.
