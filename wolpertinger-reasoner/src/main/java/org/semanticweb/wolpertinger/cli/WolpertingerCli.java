@@ -165,18 +165,9 @@ public class WolpertingerCli {
 
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
 			Collection<String> models = wolpertinger.enumerateModels(number);
-			if (number == 0) {
-				output.printf("Found " + models.size() + " models (requested ALL): \n");
-			} else {
-				output.printf("Found " + models.size() + " models (requested %d): \n", number);
-			}
-			for (String model : models) {
-				output.println(model);
-			}
-			output.flush();
 			
 			if (!configuration.getAboxDirectory().isEmpty()) {
-				String modelFilePattern = "model%i.ttl";
+				String modelFilePattern = "model%d.ttl";
 				
 				OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 				Collection<Set<OWLAxiom>> aboxes = wolpertinger.enumerateModelsAsOWLAxioms(this.number);
@@ -185,20 +176,29 @@ public class WolpertingerCli {
 				for (Set<OWLAxiom> abox : aboxes) {
 					// write to file
 					try {
-						OutputStream out = new BufferedOutputStream(new FileOutputStream(new File(String.format(modelFilePattern, null))));
+						OutputStream out = new BufferedOutputStream(new FileOutputStream(new File(String.format(configuration.getAboxDirectory() + modelFilePattern, n))));
 						OWLOntology owlABox = manager.createOntology(abox);
 						manager.saveOntology(owlABox, out);
 					} catch (OWLOntologyCreationException e) {
 						System.err.println("Could not create ABox Ontology!");
 					} catch (OWLOntologyStorageException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (FileNotFoundException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					n += 1;
 				}
+			}
+			else {
+				if (number == 0) {
+					output.printf("Found " + models.size() + " models (requested ALL): \n");
+				} else {
+					output.printf("Found " + models.size() + " models (requested %d): \n", number);
+				}
+				for (String model : models) {
+					output.println(model);
+				}
+				output.flush();
 			}
 		}
     }

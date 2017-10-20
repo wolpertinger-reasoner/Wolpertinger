@@ -175,8 +175,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 * Load the root ontology and all imports and apply normalization.
 	 */
 	private OWLAxioms loadOntology(OWLOntology rootOntology) {
+		this.rootOntology = rootOntology;
+		
 		OWLAxioms axioms = new OWLAxioms();
-
 		Collection<OWLOntology> importClosure = rootOntology.getImportsClosure();
 
 		if(configuration.getDomainIndividuals() == null) {
@@ -404,7 +405,8 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		for (String fact : answerSet.split(" ")) {
 			OWLAxiom assertionAxiom = getAssertionAxiom(fact);
 		
-			if (null != assertionAxiom && !rootOntology.containsAxiom(assertionAxiom, true)) {
+			// check if axiom does not already exists
+			if (null != assertionAxiom) {
 				assertions.add(assertionAxiom);
 			}
 		}
@@ -431,17 +433,21 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			if (arguments.length == 1) { // concept assertion
 				String argument = arguments[0];							
 				OWLClass concept = mapper.getOWLClass(predicateName);
+				
+				if (null == concept)
+					return null;
+				
 				OWLNamedIndividual individual = mapper.getOWLIndividual(argument);
 				
 				OWLDataFactory factory = OWLManager.getOWLDataFactory();
 
-				if (rootOntology.containsClassInSignature(concept.getIRI()) && 
-						!concept.getIRI().toString().startsWith("internal:") &&
-						!concept.getIRI().toString().startsWith("urn:monum")) {
+//				if (rootOntology.containsEntityInSignature(concept.getIRI()) && 
+//						!concept.getIRI().toString().startsWith("internal:") &&
+//						!concept.getIRI().toString().startsWith("urn:monum")) {
 						OWLClassAssertionAxiom owlClassAssertion = factory.getOWLClassAssertionAxiom(concept, individual);
 						
 						return owlClassAssertion;
-				}
+				//}
 			
 			}
 			// now the binary predicates == properties
