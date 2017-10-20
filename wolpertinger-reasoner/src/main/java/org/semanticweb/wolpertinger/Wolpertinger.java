@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import java.util.StringTokenizer;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -221,11 +222,30 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public Collection<String> enumerateAllModels() {
-		return enumerator.enumerateAllModels();
+		return enumerator.enumerateModels(0);
 	}
 
 	public Collection<String> enumerateModels(int number) {
-		return enumerator.enumerateModels(number);
+		Collection<String> models = enumerator.enumerateModels(number);
+		String filter = configuration.getFilter();
+		LinkedList<String> stringList = new LinkedList<String> ();
+		if (filter.equals("positive")) {
+			for (String model : models) {
+				StringTokenizer st = new StringTokenizer(model);
+				StringBuilder strBuilder = new StringBuilder();
+				while(st.hasMoreTokens()) {
+					String token = st.nextToken();
+					if(token.startsWith("-")) {
+						continue;
+					} else {
+						strBuilder.append(token + " ");
+					}
+				}
+				stringList.add(strBuilder.toString());
+			}
+			return stringList;
+		}
+		return models;
 	}
 
 	public void classifyClasses() {

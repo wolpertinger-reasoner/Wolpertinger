@@ -37,6 +37,7 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 
 	private static final long serialVersionUID = -2516044809777955981L;
 
+	private String filter;
 	private Set<IRI> conceptsToProjectOn;
 	private Set<OWLNamedIndividual> domainIndividuals;
 
@@ -105,6 +106,14 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 
 	public void setDomainIndividuals(Set<OWLNamedIndividual> domainIndividuals) {
 		this.domainIndividuals = domainIndividuals;
+	}
+
+	public String getFilter() {
+		return filter;
+	}
+
+	public void setFilter(String filter) {
+		this.filter = filter;
 	}
 
 }
