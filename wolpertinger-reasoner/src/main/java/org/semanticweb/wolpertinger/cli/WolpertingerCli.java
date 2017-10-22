@@ -167,25 +167,31 @@ public class WolpertingerCli {
 			Collection<String> models = wolpertinger.enumerateModels(number);
 			
 			if (!configuration.getAboxDirectory().isEmpty()) {
-				String modelFilePattern = "model%d.owl";
+				//String modelFilePattern = "model%d.owl";
+				String targetDir = configuration.getAboxDirectory();
 				
 				OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+
 				Collection<Set<OWLAxiom>> aboxes = wolpertinger.enumerateModelsAsOWLAxioms(this.number);
 				
 				int n = 0;
 				for (Set<OWLAxiom> abox : aboxes) {
+					if (targetDir.endsWith(File.separator))
+						targetDir = targetDir.substring(0, targetDir.length()-1);
+					
+					IRI fileIri = IRI.create(new File(String.format("%s%s%s%d.%s", targetDir, File.separator, "model", n, "owl")).toURI());
+				
 					// write to file
 					try {
-						OutputStream out = new BufferedOutputStream(new FileOutputStream(new File(String.format(configuration.getAboxDirectory() + modelFilePattern, n))));
+						//OutputStream out = new BufferedOutputStream(new FileOutputStream(new File(String.format(configuration.getAboxDirectory() + modelFilePattern, n))));
 						OWLOntology owlABox = manager.createOntology(abox);
-						manager.saveOntology(owlABox, out);
+						manager.setOntologyDocumentIRI(owlABox, fileIri);
+						manager.saveOntology(owlABox);
 					} catch (OWLOntologyCreationException e) {
 						System.err.println("Could not create ABox Ontology!");
 					} catch (OWLOntologyStorageException e) {
 						e.printStackTrace();
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
-					}
+					} 
 					n += 1;
 				}
 			}
