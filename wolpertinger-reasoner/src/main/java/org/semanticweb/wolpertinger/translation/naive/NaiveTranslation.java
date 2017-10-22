@@ -90,6 +90,7 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyRangeAxiom;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLObjectUnionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLProperty;
 import org.semanticweb.owlapi.model.OWLReflexiveObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLSameIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLSubAnnotationPropertyOfAxiom;
@@ -469,9 +470,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			else if (arguments.length == 2) { // role assertion
 				OWLNamedIndividual indiv1 = mapper.getOWLIndividual(arguments[0]);
 				OWLNamedIndividual indiv2 = mapper.getOWLIndividual(arguments[1]);
-				
+			
 				OWLDataFactory factory = OWLManager.getOWLDataFactory();
-				OWLObjectPropertyExpression property = factory.getOWLObjectProperty(IRI.create(predicateName));
+				OWLObjectProperty property = mapper.getOWLObjectProperty(predicateName);
 				OWLObjectPropertyAssertionAxiom propAss = factory.getOWLObjectPropertyAssertionAxiom(property, indiv1, indiv2);
 				
 				return propAss;
