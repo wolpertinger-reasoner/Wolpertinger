@@ -167,7 +167,7 @@ public class WolpertingerCli {
 			Collection<String> models = wolpertinger.enumerateModels(number);
 			
 			if (!configuration.getAboxDirectory().isEmpty()) {
-				String modelFilePattern = "model%d.ttl";
+				String modelFilePattern = "model%d.owl";
 				
 				OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 				Collection<Set<OWLAxiom>> aboxes = wolpertinger.enumerateModelsAsOWLAxioms(this.number);

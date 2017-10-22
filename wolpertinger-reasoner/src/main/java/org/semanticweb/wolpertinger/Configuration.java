@@ -40,24 +40,27 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	private String filter;
 	private Set<IRI> conceptsToProjectOn;
 	private Set<OWLNamedIndividual> domainIndividuals;
-	private String aboxDirectory = ""; // the dirc to write the models to
+	private String aboxDirectory; // the dirc to write the models to
 
 	public Configuration() {
 		this.conceptsToProjectOn = new HashSet<IRI>();
 		this.domainIndividuals = null;
 		this.filter = "";
+		this.aboxDirectory = "";
 	}
 
 	public Configuration(Set<IRI> conceptsToProjectOn) {
 		this.conceptsToProjectOn = conceptsToProjectOn;
 		this.domainIndividuals = null;
 		this.filter = "";
+		this.aboxDirectory = "";
 	}
 
 	public Configuration(Set<IRI> conceptsToProjectOn, Set<OWLNamedIndividual> domainIndividuals) {
 		this.conceptsToProjectOn = conceptsToProjectOn;
 		this.domainIndividuals = domainIndividuals;
 		this.filter = "";
+		this.aboxDirectory = "";
 	}
 
 	/* (non-Javadoc)
@@ -88,8 +91,7 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	 * @see org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration#getTimeOut()
 	 */
 	public long getTimeOut() {
-		// TODO Auto-generated method stub
-		return 0;
+		return 600000;
 	}
 
 	/**

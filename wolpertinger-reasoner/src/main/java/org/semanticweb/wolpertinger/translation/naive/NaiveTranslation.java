@@ -392,6 +392,20 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.write("#show " + conceptName + "/1.");
 			writer.println();
 		}
+		
+		if (configuration.getConceptNamesToProjectOn().isEmpty()) {
+			for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
+				String predicateName = mapper.getPredicateName(property);
+				writer.write("#show " + predicateName + "/2.");
+				writer.println();
+			}
+		
+			for (OWLClass concept : normalizedOntology.m_classes) {
+				String conceptName = mapper.getPredicateName(concept);
+				writer.write("#show " + conceptName + "/1.");
+				writer.println();
+			}
+		}
 
 		writer.flush();
 	}
@@ -441,6 +455,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 				
 				OWLDataFactory factory = OWLManager.getOWLDataFactory();
 
+				// TODO: Somehow this contains-check fails !?
 //				if (rootOntology.containsEntityInSignature(concept.getIRI()) && 
 //						!concept.getIRI().toString().startsWith("internal:") &&
 //						!concept.getIRI().toString().startsWith("urn:monum")) {

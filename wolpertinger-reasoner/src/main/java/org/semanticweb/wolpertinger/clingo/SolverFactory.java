@@ -65,7 +65,7 @@ public final class SolverFactory {
 			else if (OsUtils.isWindows())
 				clingoExec = "clingo.exe";
 
-			clingoParameters = new String[] {"--warn=no-atom-undefined", "--quiet=0,2,2", "--verbose=0"};
+			clingoParameters = new String[] {"--warn=no-atom-undefined", "--quiet=0,2,2", "--verbose=0", "--project"};
 		}
 	}
 
