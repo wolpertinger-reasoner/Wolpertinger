@@ -665,7 +665,7 @@ public class Wolpertinger implements OWLReasoner {
 				axiomTranslation.individualAssertionMode((OWLNamedIndividual) classAssertionAxiom.getIndividual());
 				axiomTranslation.translateEntailment(tempAxioms);
 			} else {
-
+				//TODO: well...
 			}
 		}
 		entailmentOutput.print(ASP2CoreSymbols.IMPLICATION);

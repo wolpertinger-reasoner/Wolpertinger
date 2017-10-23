@@ -164,8 +164,6 @@ public class WolpertingerCli {
     	}
 
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-			Collection<String> models = wolpertinger.enumerateModels(number);
-			
 			if (!configuration.getAboxDirectory().isEmpty()) {
 				//String modelFilePattern = "model%d.owl";
 				String targetDir = configuration.getAboxDirectory();
@@ -174,7 +172,13 @@ public class WolpertingerCli {
 
 				Collection<Set<OWLAxiom>> aboxes = wolpertinger.enumerateModelsAsOWLAxioms(this.number);
 				
-				int n = 0;
+				if (number == 0) {
+					output.printf("Found " + aboxes.size() + " models (requested ALL): \n");
+				} else {
+					output.printf("Found " + aboxes.size() + " models (requested %d): \n", number);
+				}
+				
+				int n = 1;
 				for (Set<OWLAxiom> abox : aboxes) {
 					if (targetDir.endsWith(File.separator))
 						targetDir = targetDir.substring(0, targetDir.length()-1);
@@ -187,6 +191,7 @@ public class WolpertingerCli {
 						OWLOntology owlABox = manager.createOntology(abox);
 						manager.setOntologyDocumentIRI(owlABox, fileIri);
 						manager.saveOntology(owlABox);
+						output.println(String.format("Wrote ABox %d: %s", n, fileIri.toQuotedString()));
 					} catch (OWLOntologyCreationException e) {
 						System.err.println("Could not create ABox Ontology!");
 					} catch (OWLOntologyStorageException e) {
@@ -196,6 +201,8 @@ public class WolpertingerCli {
 				}
 			}
 			else {
+				Collection<String> models = wolpertinger.enumerateModels(number);
+				
 				if (number == 0) {
 					output.printf("Found " + models.size() + " models (requested ALL): \n");
 				} else {
@@ -204,8 +211,8 @@ public class WolpertingerCli {
 				for (String model : models) {
 					output.println(model);
 				}
-				output.flush();
 			}
+			output.flush();
 		}
     }
 
