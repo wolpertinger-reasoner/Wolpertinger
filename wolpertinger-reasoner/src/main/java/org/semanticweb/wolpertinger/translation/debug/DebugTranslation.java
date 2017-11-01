@@ -1120,7 +1120,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	
 	public void visit(OWLObjectSomeValuesFrom objExistential) {
 		// we require normalized axioms, therefore we can do the following
-		OWLObjectProperty property = objExistential.getProperty().asOWLObjectProperty();
+		OWLObjectPropertyExpression property = objExistential.getProperty();
 		OWLClassExpression fillerClass = objExistential.getFiller();
 
 		OWLObjectMinCardinality minCard = new OWLObjectMinCardinalityImpl(property, 1, fillerClass);
@@ -1136,23 +1136,41 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	 */
 	
 	public void visit(OWLObjectAllValuesFrom allValFrom) {
-		OWLObjectProperty property = allValFrom.getProperty().asOWLObjectProperty();
-		OWLClassExpression filler = allValFrom.getFiller();
+		OWLObjectProperty property;
+		boolean isInverseOf = false;
 
+		if(allValFrom.getProperty() instanceof OWLObjectInverseOf) {
+			isInverseOf = true;
+			property = ((OWLObjectInverseOf) allValFrom.getProperty()).getInverse().asOWLObjectProperty();
+		} else {
+			property = allValFrom.getProperty().asOWLObjectProperty();
+		}
+
+		OWLClassExpression filler = allValFrom.getFiller();
 		String propertyName = mapper.getPredicateName(property);
+
 		//String className = mapper.getPredicateName(fillerClass);
+		
+		String r1Var = var.currentVar();
+		String r2Var = var.nextVariable();
+		String cVar = var.currentVar();
+		
+		if (isInverseOf) {
+			String temp = r1Var;
+			r1Var = r2Var;
+			r2Var = temp;
+		}
+
+		// r(X,Y),
 		writer.print(propertyName);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-		String cVar = var.currentVar();
-		String nVar = var.nextVariable();
-		writer.print(cVar);
+		writer.print(r1Var);
 		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
-		writer.print(nVar);
+		writer.print(r2Var);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 
 		// distinguish -A or A
 		// complex fillers are not possible anymore at this stage
-		// TODO NAFF VERSION
 		if (filler instanceof OWLObjectComplementOf) {
 			OWLClassExpression expr = ((OWLObjectComplementOf)filler).getOperand();
 			if (expr instanceof OWLObjectOneOf) {
@@ -1163,17 +1181,19 @@ public class DebugTranslation implements OWLOntologyTranslator {
 				writer.print(ASP2CoreSymbols.CONJUNCTION);
 				writer.write(auxOneOfName);
 				writer.write(ASP2CoreSymbols.BRACKET_OPEN);
-				writer.write(nVar);
+				writer.write(cVar);
 				writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
 			} else {
+				assert !expr.isAnonymous();
+
 				OWLClass owlClass = expr.asOWLClass();
 				String predicateName = mapper.getPredicateName(owlClass);
 
-				//writer.print(ASP2CoreSymbols.NAF + " ");
+				// A(X)
 				writer.print(ASP2CoreSymbols.CONJUNCTION);
 				writer.print(predicateName);
 				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-				writer.print(nVar);
+				writer.print(cVar);
 				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 
 				if (isAuxiliaryClass(owlClass)) auxClasses.add(owlClass);
@@ -1184,12 +1204,11 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			OWLClass auxOneOf = getOneOfAuxiliaryClass(oneOf);
 
 			String auxOneOfName = mapper.getPredicateName(auxOneOf);
-
 			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(ASP2CoreSymbols.NAF + "_");
 			writer.write(auxOneOfName);
 			writer.write(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.write(nVar);
+			writer.write(cVar);
 			writer.write(ASP2CoreSymbols.BRACKET_CLOSE);
 		}
 		else if (filler.isOWLNothing()) {
@@ -1199,18 +1218,17 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			assert filler instanceof OWLClass;
 			String predicateName = mapper.getPredicateName(filler.asOWLClass());
 
+			// not A(X).
 			writer.print(ASP2CoreSymbols.CONJUNCTION);
 			writer.print(ASP2CoreSymbols.NAF + "_");
 			writer.print(predicateName);
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.print(nVar);
+			writer.print(cVar);
 			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 
 			if (isAuxiliaryClass(filler.asOWLClass()))
 				auxClasses.add(filler.asOWLClass());
 		}
-
-		var.reset();
 	}
 
 	/* (non-Javadoc)
@@ -1286,73 +1304,69 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		else
 			comperator = "=";
 
-		boolean isComplement = false;
-
 		if (filler instanceof OWLObjectComplementOf){
-			isComplement = true;
-			OWLClassExpression classExpr = ((OWLObjectComplementOf) filler).getOperand();
-			fillerName = mapper.getPredicateName(classExpr.asOWLClass());
-
-			if(comperator.equals("<"))
-				addComplementNRA(classExpr.asOWLClass(),property.asOWLObjectProperty());
-			if (isAuxiliaryClass(classExpr.asOWLClass()))
-				auxClasses.add(classExpr.asOWLClass());
+			OWLClassExpression operand = ((OWLObjectComplementOf) filler).getOperand();
+			fillerName = mapper.getPredicateName(((OWLObjectComplementOf) filler).getOperand().asOWLClass());
+			fillerName = ASP2CoreSymbols.NAF + "_" + fillerName;
+			if (isAuxiliaryClass(operand.asOWLClass()))
+				auxClasses.add(operand.asOWLClass());
 		}
 		else if (filler instanceof OWLObjectOneOf) {
+			System.out.println("Shouldn't be here anymore");
 			//TODO: in case of a max-cardinality we will never end up within here,
 			// since the normalization for max-cardinality uses an "optimization".
 			OWLObjectOneOf oneOf = (OWLObjectOneOf) filler;
 			OWLClass auxOneOf= getOneOfAuxiliaryClass(oneOf);
+
 			fillerName = mapper.getPredicateName(auxOneOf);
 		}
 		else {
 			assert filler instanceof OWLClass;
+
 			fillerName = mapper.getPredicateName(filler.asOWLClass());
 
-			if(comperator.equals("<"))
-				addNRA(filler.asOWLClass(),property.asOWLObjectProperty());
 			if (isAuxiliaryClass(filler.asOWLClass()))
 				auxClasses.add(filler.asOWLClass());
 		}
 
 		assert property instanceof OWLObjectProperty;
+
+		boolean isInverseOf = false;
+
+		if(property instanceof OWLObjectInverseOf) {
+			isInverseOf = true;
+			property = ((OWLObjectInverseOf) property).getInverse();
+		} else {
+
+		}
+
 		String propertyName = mapper.getPredicateName(property.asOWLObjectProperty());
 
 		String currentVar = var.currentVar();
 		String nextVar = var.nextVariable();
+		String classVar = nextVar;
 
-		if (comperator.equals(">")) {
-			writer.print("#count{");
-			writer.print(nextVar + "," + propertyName + ":");
-			writer.print(propertyName);
-			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.print(currentVar);
-			writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
-			writer.print(nextVar);
-			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-			writer.print(ASP2CoreSymbols.CONJUNCTION);
-			writer.print(fillerName);
-			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.print(nextVar);
-			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-			writer.print("}" + comperator + cardinalityRestriction.getCardinality());
-		} else {
-			writer.print("#count{");
-			writer.print(nextVar + "," + propertyName + ":");
-			writer.print("not_");
-			writer.print(propertyName);
-			writer.print("_");
-			if (isComplement) {
-				writer.print("not_");
-			}
-			writer.print(fillerName);
-			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
-			writer.print(currentVar);
-			writer.print(",");
-			writer.print(nextVar);
-			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-			writer.print("}" + ">" + (nIndividuals - cardinalityRestriction.getCardinality()));
+		if (isInverseOf) {
+			String temp = currentVar;
+			currentVar = nextVar;
+			nextVar = temp;
 		}
+
+		writer.print("#count{");
+		writer.print(classVar + "," + propertyName + ":");
+		writer.print(propertyName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(currentVar);
+		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
+		writer.print(nextVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print(ASP2CoreSymbols.CONJUNCTION);
+		writer.print(fillerName);
+		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
+		writer.print(classVar);
+		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
+		writer.print("}" + comperator + cardinalityRestriction.getCardinality());
+
 		var.reset();
 	}
 
