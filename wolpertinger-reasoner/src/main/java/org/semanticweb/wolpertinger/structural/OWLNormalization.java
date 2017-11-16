@@ -1727,27 +1727,31 @@ public class OWLNormalization {
         
 		public void visit(SWRLClassAtom at) {
             OWLClassExpression c=m_expressionManager.getSimplified(m_expressionManager.getNNF(at.getPredicate()));
-            SWRLVariable variable=getVariableFor(at.getArgument());
+            SWRLIArgument argument=at.getArgument();
             if (m_isPositive) {
                 // head
                 if (c instanceof OWLClass)
-                    m_normalizedHeadAtoms.add(m_factory.getSWRLClassAtom(c,variable));
+                    m_normalizedHeadAtoms.add(m_factory.getSWRLClassAtom(c,argument));
                 else {
+                	/*
                     OWLClass definition=getClassFor(at.getPredicate(),m_alreadyExists);
                     if (!m_alreadyExists[0])
                         m_classExpressionInclusions.add(new OWLClassExpression[] { negative(definition),at.getPredicate() });
-                    m_normalizedHeadAtoms.add(m_factory.getSWRLClassAtom(definition,variable));
+                    m_normalizedHeadAtoms.add(m_factory.getSWRLClassAtom(definition,argument));
+                    */
                 }
             }
             else {
                 // body
                 if (c instanceof OWLClass)
-                    m_normalizedBodyAtoms.add(m_factory.getSWRLClassAtom(c,variable));
+                    m_normalizedBodyAtoms.add(m_factory.getSWRLClassAtom(c,argument));
                 else {
+                	/*
                     OWLClass definition=getClassFor(at.getPredicate(),m_alreadyExists);
                     if (!m_alreadyExists[0])
                         m_classExpressionInclusions.add(new OWLClassExpression[] { negative(at.getPredicate()),definition });
-                    m_normalizedBodyAtoms.add(m_factory.getSWRLClassAtom(definition,variable));
+                    m_normalizedBodyAtoms.add(m_factory.getSWRLClassAtom(definition,argument));
+                	*/
                 }
             }
         }
@@ -1774,8 +1778,28 @@ public class OWLNormalization {
 		public void visit(SWRLObjectPropertyAtom at) {
             OWLObjectPropertyExpression ope=at.getPredicate().getSimplified();
             OWLObjectProperty op=ope.getNamedProperty();
+            
+            SWRLIArgument argument1;
+            SWRLIArgument argument2;
+            
+            if (ope.isAnonymous()) {
+            	argument1=at.getSecondArgument();
+            	argument2=at.getFirstArgument();
+            }
+            else {
+            	argument1=at.getFirstArgument();
+            	argument2=at.getSecondArgument();
+
+            }
+            
+            SWRLAtom newAtom=m_factory.getSWRLObjectPropertyAtom(op,argument1,argument2);
+            
+            
+            /* we omitted the rule normalization from HermiT
             SWRLVariable variable1;
             SWRLVariable variable2;
+            
+            
             if (ope.isAnonymous()) {
                 variable1=getVariableFor(at.getSecondArgument());
                 variable2=getVariableFor(at.getFirstArgument());
@@ -1786,6 +1810,7 @@ public class OWLNormalization {
 
             }
             SWRLAtom newAtom=m_factory.getSWRLObjectPropertyAtom(op,variable1,variable2);
+            */
             if (m_isPositive) {
                 // head
                 m_normalizedHeadAtoms.add(newAtom);
