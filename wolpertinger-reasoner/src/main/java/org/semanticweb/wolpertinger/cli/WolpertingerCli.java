@@ -216,6 +216,19 @@ public class WolpertingerCli {
 		}
     }
 
+    static protected class CautiousModelAction implements TranslationAction {
+    	public CautiousModelAction() {
+    		super();
+    	}
+
+		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
+			String cautiousModel = wolpertinger.computeCautiousModel();
+			output.println(cautiousModel);
+			output.flush();
+		}
+    }
+
+    
     static protected class AxiomatizationAction implements TranslationAction {
     	File file;
     	public AxiomatizationAction(File axiomatizedOntology) {
@@ -362,6 +375,7 @@ public class WolpertingerCli {
 			new Option('f', "filter", groupActions, true, "MODE", "filter what predicates are to be shown in the model; supported values are 'positive' and 'negative'"),
 			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many models; NUMBER=0 means asking for ALL models"),
 			new Option('A', "abox", groupActions, true, "DIRECTORY", "write models as proper assertions in TTL syntax to DIRECTORY"),
+			new Option('C', "cautious", groupActions, "write the cautious model of the ontology"),
 			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
 			new Option('j', "justification", groupActions, "ask for an inconsistency justification"),
 			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
@@ -542,6 +556,11 @@ public class WolpertingerCli {
 					String arg = getopt.getOptarg();
 					int number = Integer.parseInt(arg);
 					TranslationAction action = new ModelEnumerationAction(number);
+					actions.add(action);
+				}
+				break;
+				case 'C': {
+					TranslationAction action = new CautiousModelAction();
 					actions.add(action);
 				}
 				break;

@@ -459,6 +459,21 @@ public class Wolpertinger implements OWLReasoner {
 		classHierarchy = HierarchyBuilder.buildHierarchy(superClassHierarchy, classRepresentative, thing, nothing, equalsToTopClasses, equalsToBottomClasses);
 	}
 
+	public String computeCautiousModel () {
+		ClingoSolver cautiousSolver = SolverFactory.INSTANCE.createClingoCautiousSolver();
+		Collection<String> models = null;
+		try {
+			models = cautiousSolver.solve(new String[] {tmpFile.getAbsolutePath()}, 0);
+		} catch (SolvingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String[] resultsArray = new String[models.size()];
+		resultsArray = models.toArray(resultsArray);
+		return resultsArray[models.size() - 1];
+	}
+	
+	
 	public void axiomatizeFDSemantics(File file){
 		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(Imports.INCLUDED);
 		

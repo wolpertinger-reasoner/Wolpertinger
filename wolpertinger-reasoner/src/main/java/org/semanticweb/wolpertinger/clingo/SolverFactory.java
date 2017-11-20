@@ -101,4 +101,13 @@ public final class SolverFactory {
 		param[3] = "--enum-mode=brave";
 		return new ClingoSolver(clingoExec, param);
 	}
+	
+	public ClingoSolver createClingoCautiousSolver() {
+		String[] param = new String[4];
+		for (int ii = 0; ii < clingoParameters.length; ii++) {
+			param[ii] = clingoParameters[ii];
+		}
+		param[3] = "--enum-mode=cautious";
+		return new ClingoSolver(clingoExec, param);
+	}
 }
