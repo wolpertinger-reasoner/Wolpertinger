@@ -13,6 +13,7 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 /**
  * Unit test for simple App.
@@ -63,6 +64,36 @@ public class WolpertingerTest
 			OWLOntology ontology = manager.createOntology();
 			manager.addAxiom(ontology, fact1);
 			manager.addAxiom(ontology, fact2);
+			
+			Wolpertinger wolpertinger = new Wolpertinger(ontology);
+			
+			assertFalse(wolpertinger.isConsistent());
+		} catch (OWLOntologyCreationException e) {
+			e.printStackTrace();
+			fail();
+		}
+    }
+    
+    public void testUnsatisfiabilityDuetoSimpleSubsumptionViolation() {
+    	OWLDataFactory factory = OWLManager.getOWLDataFactory();
+    	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    	
+    	OWLClassExpression classA = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "A")));
+    	OWLClassExpression classB = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "B")));
+    	OWLClassExpression complClassB = factory.getOWLObjectComplementOf(classB);
+    	
+    	OWLNamedIndividual indiv = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "a")));
+    	
+    	OWLIndividualAxiom fact1 = factory.getOWLClassAssertionAxiom(classA, indiv);
+    	OWLIndividualAxiom fact2 = factory.getOWLClassAssertionAxiom(complClassB, indiv);
+    	
+    	OWLSubClassOfAxiom subClOf = factory.getOWLSubClassOfAxiom(classA, classB);
+    	
+    	try {
+			OWLOntology ontology = manager.createOntology();
+			manager.addAxiom(ontology, fact1);
+			manager.addAxiom(ontology, fact2);
+			manager.addAxiom(ontology, subClOf);
 			
 			Wolpertinger wolpertinger = new Wolpertinger(ontology);
 			
