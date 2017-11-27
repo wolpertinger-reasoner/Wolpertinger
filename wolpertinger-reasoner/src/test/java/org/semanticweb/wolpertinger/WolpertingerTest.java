@@ -4,12 +4,24 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClassExpression;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLIndividualAxiom;
+import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+
 /**
  * Unit test for simple App.
  */
 public class WolpertingerTest 
     extends TestCase
 {
+	private static String PREFIX = "http://www.semanticweb.org/wolpertinger";
+	
     /**
      * Create the test case
      *
@@ -37,7 +49,28 @@ public class WolpertingerTest
      * Atomic clash
      */
     public void testUnsatifiabilityDueToClashInABoxAssertions() {
-    	assertTrue(false);
+    	OWLDataFactory factory = OWLManager.getOWLDataFactory();
+    	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    	
+    	OWLClassExpression expr1 = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "A")));
+    	OWLClassExpression expr2 = factory.getOWLObjectComplementOf(expr1);
+    	OWLNamedIndividual indiv = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "a")));
+    	
+    	OWLIndividualAxiom fact1 = factory.getOWLClassAssertionAxiom(expr1, indiv);
+    	OWLIndividualAxiom fact2 = factory.getOWLClassAssertionAxiom(expr2, indiv);
+    	
+    	try {
+			OWLOntology ontology = manager.createOntology();
+			manager.addAxiom(ontology, fact1);
+			manager.addAxiom(ontology, fact2);
+			
+			Wolpertinger wolpertinger = new Wolpertinger(ontology);
+			
+			assertFalse(wolpertinger.isConsistent());
+		} catch (OWLOntologyCreationException e) {
+			e.printStackTrace();
+			fail();
+		}
     }
     
     /**
