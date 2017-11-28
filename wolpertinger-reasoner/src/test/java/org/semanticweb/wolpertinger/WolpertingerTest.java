@@ -11,9 +11,14 @@ import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
+import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLProperty;
+import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 
 /**
@@ -148,7 +153,41 @@ public class WolpertingerTest
      *  But we have only a domain with 4 elements ...
      */
     public void testUnsatisfiabilityDoToFixedDomain1() {
-    	assertTrue(false);
+    	OWLDataFactory factory = OWLManager.getOWLDataFactory();
+    	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    	
+    	OWLClassExpression classA = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "A")));
+    	OWLClassExpression classB = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "B")));
+    	OWLObjectPropertyExpression roleR = factory.getOWLObjectProperty(IRI.create(String.format("%s#%s", PREFIX, "r")));
+    	
+    	OWLNamedIndividual indA = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "a")));
+    	OWLNamedIndividual indB = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "b")));
+    	OWLNamedIndividual indC = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "c")));
+    	OWLNamedIndividual indD = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "d")));
+
+    	OWLIndividualAxiom fact1 = factory.getOWLClassAssertionAxiom(classA, indA);
+    	OWLIndividualAxiom fact2 = factory.getOWLClassAssertionAxiom(classA, indB);
+    	OWLIndividualAxiom fact3 = factory.getOWLClassAssertionAxiom(classA, indC);
+    	OWLIndividualAxiom fact4 = factory.getOWLClassAssertionAxiom(classA, indD);
+    	
+    	OWLObjectMinCardinality exprRmin5B = factory.getOWLObjectMinCardinality(5, roleR, classB);
+    	OWLSubClassOfAxiom axmAsubRsomeB = factory.getOWLSubClassOfAxiom(classA, exprRmin5B);
+    	
+    	try {
+			OWLOntology ontology = manager.createOntology();
+			manager.addAxiom(ontology, fact1);
+			manager.addAxiom(ontology, fact2);
+			manager.addAxiom(ontology, fact3);
+			manager.addAxiom(ontology, fact4);
+			manager.addAxiom(ontology, axmAsubRsomeB);
+			
+			Wolpertinger wolpertinger = new Wolpertinger(ontology);
+			
+			assertFalse(wolpertinger.isConsistent());
+		} catch (OWLOntologyCreationException e) {
+			e.printStackTrace();
+			fail();
+		}
     }
     
     public void testUnsatisfiabilityDoToFixedDomain2() {
