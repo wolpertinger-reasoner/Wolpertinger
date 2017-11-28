@@ -8,6 +8,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -106,13 +107,39 @@ public class WolpertingerTest
     
     /**
      * Smth like:
-     *    A subClassOf r some B
-     *    A subClassOf r only C
+     *    A subClassOf B
+     *    A subClassOf C
      *    C disjoint with B
      *    ...
      */
     public void testUnsatisfiabilityDueToConflictingAxioms1() {
-    	assertTrue(false);
+    	OWLDataFactory factory = OWLManager.getOWLDataFactory();
+    	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    	
+    	OWLClassExpression classA = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "A")));
+    	OWLClassExpression classB = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "B")));
+    	OWLClassExpression classC = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "C")));
+    	OWLNamedIndividual indiv = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "a")));
+    	
+    	OWLIndividualAxiom fact1 = factory.getOWLClassAssertionAxiom(classA, indiv);
+    	OWLSubClassOfAxiom axmAsubB = factory.getOWLSubClassOfAxiom(classA, classB);
+    	OWLSubClassOfAxiom axmAsubC = factory.getOWLSubClassOfAxiom(classA, classC);
+    	OWLDisjointClassesAxiom axmBdisC = factory.getOWLDisjointClassesAxiom(classB, classC);
+    	
+    	try {
+			OWLOntology ontology = manager.createOntology();
+			manager.addAxiom(ontology, fact1);
+			manager.addAxiom(ontology, axmAsubB);
+			manager.addAxiom(ontology, axmAsubC);
+			manager.addAxiom(ontology, axmBdisC);
+			
+			Wolpertinger wolpertinger = new Wolpertinger(ontology);
+			
+			assertFalse(wolpertinger.isConsistent());
+		} catch (OWLOntologyCreationException e) {
+			e.printStackTrace();
+			fail();
+		}
     }
     
     /**
