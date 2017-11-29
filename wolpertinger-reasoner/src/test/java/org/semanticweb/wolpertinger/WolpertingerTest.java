@@ -1,5 +1,7 @@
 package org.semanticweb.wolpertinger;
 
+import java.util.HashSet;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -12,8 +14,10 @@ import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
 import org.semanticweb.owlapi.model.OWLIndividualAxiom;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
+import org.semanticweb.owlapi.model.OWLObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
+import org.semanticweb.owlapi.model.OWLObjectUnionOf;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -190,12 +194,109 @@ public class WolpertingerTest
 		}
     }
     
-    public void testUnsatisfiabilityDoToFixedDomain2() {
-    	assertTrue(false);
+    private OWLOntology createSimpleGraphColoring() {
+    	OWLOntology ontoColoring = null;
+    	OWLDataFactory factory = OWLManager.getOWLDataFactory();
+    	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    	
+    	OWLObjectPropertyExpression edgeProp = factory.getOWLObjectProperty(IRI.create(String.format("%s#%s", PREFIX, "edge")));
+    	OWLClassExpression classNode = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "Node")));
+    	OWLClassExpression classBlue = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "Blue")));
+    	OWLClassExpression classRed = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "Red")));
+    	OWLClassExpression classGreen = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "Green")));
+    	
+    	OWLNamedIndividual indNode1 = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "node1")));
+    	OWLNamedIndividual indNode2 = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "node2")));
+    	OWLNamedIndividual indNode3 = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "node3")));
+    	OWLNamedIndividual indNode4 = factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "node4")));
+    	
+    	// now the facts
+    	// nodes
+    	OWLIndividualAxiom axmNodeInst4 =factory.getOWLClassAssertionAxiom(classNode, indNode4);
+    	OWLIndividualAxiom axmNodeInst3 =factory.getOWLClassAssertionAxiom(classNode, indNode3);
+    	OWLIndividualAxiom axmNodeInst2 =factory.getOWLClassAssertionAxiom(classNode, indNode2);
+    	OWLIndividualAxiom axmNodeInst1 =factory.getOWLClassAssertionAxiom(classNode, indNode1);
+    	
+    	// 1
+    	// | \
+    	// |  3 - 4
+    	// | /
+    	// 2
+    	//
+    	OWLIndividualAxiom axmEdge12 = factory.getOWLObjectPropertyAssertionAxiom(edgeProp, indNode1, indNode2);
+    	OWLIndividualAxiom axmEdge13 = factory.getOWLObjectPropertyAssertionAxiom(edgeProp, indNode1, indNode3);
+    	OWLIndividualAxiom axmEdge23 = factory.getOWLObjectPropertyAssertionAxiom(edgeProp, indNode2, indNode3);
+    	OWLIndividualAxiom axmEdge34 = factory.getOWLObjectPropertyAssertionAxiom(edgeProp, indNode3, indNode4);
+    	
+    	// symmetry of edge property
+    	OWLObjectPropertyAxiom axmEdgeSym =  factory.getOWLSymmetricObjectPropertyAxiom(edgeProp);
+    	
+    	// axioms
+    	OWLObjectUnionOf exprColorUnion = factory.getOWLObjectUnionOf(classBlue, classRed, classGreen);
+    	OWLSubClassOfAxiom axmNodeColorings = factory.getOWLSubClassOfAxiom(classNode, exprColorUnion);
+    	
+    	// coloring constraints
+    	OWLSubClassOfAxiom axmRedConstraint = factory.getOWLSubClassOfAxiom(classRed, factory.getOWLObjectAllValuesFrom(edgeProp, factory.getOWLObjectUnionOf(classGreen, classBlue)));
+    	OWLSubClassOfAxiom axmBlueConstraint = factory.getOWLSubClassOfAxiom(classBlue, factory.getOWLObjectAllValuesFrom(edgeProp, factory.getOWLObjectUnionOf(classGreen, classRed)));
+    	OWLSubClassOfAxiom axmGreenConstraint = factory.getOWLSubClassOfAxiom(classGreen, factory.getOWLObjectAllValuesFrom(edgeProp, factory.getOWLObjectUnionOf(classRed, classBlue)));
+    	OWLDisjointClassesAxiom axmDisColors = factory.getOWLDisjointClassesAxiom(classRed, classBlue, classGreen);
+    	
+    	try {
+			ontoColoring = manager.createOntology(); 
+			
+			manager.addAxiom(ontoColoring, axmNodeInst1);
+			manager.addAxiom(ontoColoring, axmNodeInst2);
+			manager.addAxiom(ontoColoring, axmNodeInst3);
+			manager.addAxiom(ontoColoring, axmNodeInst4);
+			
+			manager.addAxiom(ontoColoring, axmEdge12);
+			manager.addAxiom(ontoColoring, axmEdge13);
+			manager.addAxiom(ontoColoring, axmEdge23);
+			manager.addAxiom(ontoColoring, axmEdge34);
+			
+			manager.addAxiom(ontoColoring, axmEdgeSym);
+			manager.addAxiom(ontoColoring, axmNodeColorings);
+			manager.addAxiom(ontoColoring, axmRedConstraint);
+			manager.addAxiom(ontoColoring, axmBlueConstraint);
+			manager.addAxiom(ontoColoring, axmGreenConstraint);
+			manager.addAxiom(ontoColoring, axmDisColors);
+		} catch (OWLOntologyCreationException e) {
+			e.printStackTrace();
+		}
+    	
+    	return ontoColoring;
     }
     
-    public void testSimple3ColoringHas4AnswerSets() {
-    	assertTrue(false);
+    public void testSatisfiabilityOfSimpleGraphColring3Colors() {
+    	OWLOntology simpleGraphOntology = createSimpleGraphColoring();
+    	
+    	Wolpertinger wolpert  = new Wolpertinger(simpleGraphOntology);
+    	
+    	assertTrue(wolpert.isConsistent());
+    }
+    
+    public void testUnsatisfiabilityOfGraphColoringOverDomainOfSizeTwo() {
+    	OWLDataFactory factory = OWLManager.getOWLDataFactory();
+    	
+    	HashSet<OWLNamedIndividual> domain = new HashSet<OWLNamedIndividual>();
+    	domain.add(factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "d1"))));
+    	domain.add(factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "d2"))));
+    	
+    	OWLOntology simpleGraphOntology = createSimpleGraphColoring();
+    	
+    	Configuration config = new Configuration(new HashSet<IRI>(), domain);
+    	
+    	Wolpertinger wolpert = new Wolpertinger(config, simpleGraphOntology);
+    	
+    	assertFalse(wolpert.isConsistent());
+    }
+    
+    public void testSimple3ColoringHas24AnswerSets() {
+    	OWLOntology coloringOnto = createSimpleGraphColoring();
+    	
+    	Wolpertinger wolpert = new Wolpertinger(coloringOnto);
+    	
+    	assertEquals(24, wolpert.enumerateAllModels().size());
     }
     
     

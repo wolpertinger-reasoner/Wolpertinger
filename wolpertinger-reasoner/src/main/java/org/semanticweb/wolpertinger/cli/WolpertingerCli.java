@@ -47,6 +47,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
@@ -534,7 +535,7 @@ public class WolpertingerCli {
 						domainIRI = IRI.create(base.resolve(arg));
 						OWLOntologyManager domainOntologyManager = OWLManager.createOWLOntologyManager();
 						OWLOntology domainOntology = domainOntologyManager.loadOntology(domainIRI);
-						Set<OWLNamedIndividual> domainIndividuals = domainOntology.getIndividualsInSignature(true);
+						Set<OWLNamedIndividual> domainIndividuals = domainOntology.getIndividualsInSignature(Imports.EXCLUDED);
 						configuration.setDomainIndividuals(domainIndividuals);
 					} catch (IllegalArgumentException e) {
 						throw new UsageException(arg + " is not a valid ontology name");
