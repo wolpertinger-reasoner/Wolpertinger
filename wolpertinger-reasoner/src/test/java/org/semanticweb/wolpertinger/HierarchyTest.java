@@ -8,6 +8,7 @@ import junit.framework.TestSuite;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
@@ -25,6 +26,9 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLProperty;
 import org.semanticweb.owlapi.model.OWLPropertyExpression;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
+import org.semanticweb.owlapi.reasoner.NodeSet;
+import org.semanticweb.owlapi.reasoner.impl.OWLClassNode;
+import org.semanticweb.owlapi.reasoner.impl.OWLClassNodeSet;
 
 /**
  * Simple test based on the example hierarchy defined in OWLReasoner documentation.
@@ -106,6 +110,62 @@ public class HierarchyTest
     	
     	Wolpertinger wolpertinger = new Wolpertinger(ontology);
 		assertTrue(wolpertinger.isEntailed(nothingSubClassOfThing));
+    }
+    
+    public void testDirectSubclass() {
+    	OWLClassExpression classB = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "B")));
+    	
+    	OWLClassExpression classC = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "C")));
+    	OWLClassExpression classD = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "D")));
+    	OWLClassExpression classF = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "F")));
+    	OWLClassNodeSet expectedResult = new OWLClassNodeSet ();
+    	OWLClassNode nodeDF = new OWLClassNode();
+    	nodeDF.add(classD.asOWLClass());
+    	nodeDF.add(classF.asOWLClass());
+    	expectedResult.addNode(nodeDF);
+    	expectedResult.addEntity(classC.asOWLClass());
+    	Wolpertinger wolpertinger = new Wolpertinger(ontology);
+    	
+		assertEquals(expectedResult, wolpertinger.getSubClasses(classB, true));
+    }
+    
+    public void testIndirectSubclass() {
+    	OWLClassExpression classA = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "A")));
+    	
+    	OWLClassExpression classC = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "C")));
+    	OWLClassExpression classD = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "D")));
+    	OWLClassExpression classE = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "E")));
+    	OWLClassExpression classF = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "F")));
+    	OWLClassExpression classK = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "K")));
+    	OWLClassExpression nothing = factory.getOWLNothing();
+    	
+    	OWLClassNodeSet expectedResult = new OWLClassNodeSet ();
+    	
+    	OWLClassNode nodeDF = new OWLClassNode();
+    	nodeDF.add(classD.asOWLClass());
+    	nodeDF.add(classF.asOWLClass());
+    	OWLClassNode nodeNothingK = new OWLClassNode();
+    	nodeNothingK.add(classK.asOWLClass());
+    	nodeNothingK.add(nothing.asOWLClass());
+    	expectedResult.addNode(nodeDF);
+    	expectedResult.addNode(nodeNothingK);
+    	expectedResult.addEntity(classC.asOWLClass());
+    	expectedResult.addEntity(classE.asOWLClass());
+    	Wolpertinger wolpertinger = new Wolpertinger(ontology);
+    	
+		assertEquals(expectedResult, wolpertinger.getSubClasses(classA, false));
+    }
+    
+    public void testEquivalence() {
+    	OWLClassExpression classA = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "A")));
+    	
+    	OWLClassExpression classB = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "B")));
+  
+    	OWLClassNode expectedResult = new OWLClassNode();
+    	expectedResult.add(classA.asOWLClass());
+    	expectedResult.add(classB.asOWLClass());
+    	Wolpertinger wolpertinger = new Wolpertinger(ontology);
+		assertEquals(expectedResult, wolpertinger.getEquivalentClasses(classA));
     }
     
     public void buildOntology() throws OWLOntologyCreationException {
