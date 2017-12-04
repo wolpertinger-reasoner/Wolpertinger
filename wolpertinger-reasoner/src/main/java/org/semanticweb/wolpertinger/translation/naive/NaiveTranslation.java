@@ -108,6 +108,7 @@ import org.semanticweb.owlapi.model.SWRLIndividualArgument;
 import org.semanticweb.owlapi.model.SWRLObjectPropertyAtom;
 import org.semanticweb.owlapi.model.SWRLRule;
 import org.semanticweb.owlapi.model.SWRLVariable;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.wolpertinger.Configuration;
 import org.semanticweb.wolpertinger.Prefixes;
 import org.semanticweb.wolpertinger.model.AtomicConcept;
@@ -145,19 +146,18 @@ import uk.ac.manchester.cs.owl.owlapi.OWLSymmetricObjectPropertyAxiomImpl;
  */
 public class NaiveTranslation implements OWLOntologyTranslator {
 
-	//private Configuration configuration;
 	private PrintWriter writer;
 	private SignatureMapper mapper;
 	private VariableIssuer var;
 
 	private Set<OWLClass> auxClasses;
+
 	// inclusions resutling from, e.g. resolving nominals
 	private Collection<OWLClassExpression[]> newInclusions;
 	private Configuration configuration;
 	
 	// 
 	private OWLOntology rootOntology;
-
 	private boolean assertionMode;
 	
 	/**
@@ -228,7 +228,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	 */
 	public void translateOntology(OWLAxioms normalizedOntology) {
 		clearState();
-
+		
 		// thing assertions for all named individuals
 		for (OWLNamedIndividual individual : normalizedOntology.m_namedIndividuals) {
 			// TODO: avoid adding assertions to owl:Thing when there is already real owl:Thing assertions
@@ -236,7 +236,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			writer.println();
 			var.reset();
 		}
-
+		
 		// ABox axioms
 		for (OWLIndividualAxiom assertion : normalizedOntology.m_facts) {
 			assertion.accept(this);
@@ -363,7 +363,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 			var.reset();
 		}
 
-
 		// SWRL Rules
 		for (DisjunctiveRule rule : normalizedOntology.m_rules) {
 			translateSWRLRule(rule);
@@ -371,10 +370,15 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 		
 		// Guessing
+		Set<OWLClass> closedConcepts = configuration.getClosedConcepts();
 		for (OWLClass owlClass : normalizedOntology.m_classes) {
-			createExtensionGuess(owlClass);
-			var.reset();
-			writer.println();
+			if(!closedConcepts.contains(owlClass)) {
+				createExtensionGuess(owlClass);
+				var.reset();
+				writer.println();
+			} else {
+				// closed concept
+			}
 		}
 
 		// Take care of auxiliary classes, if there are any...
@@ -390,10 +394,15 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 		//}
 
+		Set<OWLObjectProperty> closedRoles = configuration.getClosedRoles();
 		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
-			createExtensionGuess(property);
-			var.reset();
-			writer.println();
+			if(!closedRoles.contains(property)) {
+				createExtensionGuess(property);
+				var.reset();
+				writer.println();
+			} else {
+				// closed role
+			}
 		}
 
 		// add #showp/n.  satements if required

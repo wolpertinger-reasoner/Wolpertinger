@@ -18,9 +18,11 @@
 package org.semanticweb.wolpertinger;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -49,11 +51,12 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
-import org.semanticweb.owlapi.model.OWLIndividualAxiom;
+import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectComplementOf;
 import org.semanticweb.owlapi.model.OWLObjectOneOf;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
@@ -74,6 +77,7 @@ import org.semanticweb.owlapi.reasoner.impl.OWLClassNodeSet;
 import org.semanticweb.owlapi.reasoner.impl.OWLNamedIndividualNodeSet;
 import org.semanticweb.owlapi.reasoner.impl.OWLObjectPropertyNode;
 import org.semanticweb.owlapi.reasoner.impl.OWLObjectPropertyNodeSet;
+import org.semanticweb.owlapi.search.EntitySearcher;
 import org.semanticweb.owlapi.util.DefaultPrefixManager;
 import org.semanticweb.owlapi.util.Version;
 import org.semanticweb.wolpertinger.clingo.ClingoModelEnumerator;
@@ -103,7 +107,7 @@ import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
  * @author Satyadharma Tirtarasa
  */
 public class Wolpertinger implements OWLReasoner {
-
+ 
 	private OWLOntology rootOntology;
 	// normalized kb
 	private OWLAxioms axioms;
@@ -112,10 +116,12 @@ public class Wolpertinger implements OWLReasoner {
 
 	private NaiveTranslation naiveTranslation;
 
-	private File tmpFile;
-	private PrintWriter output;
-	private boolean classified;
+	private File baseProgramTmpFile;
 
+	
+	private boolean classified;
+	private Hierarchy<OWLClass> classHierarchy;
+	
 	private ClingoModelEnumerator enumerator;
 	private OWLNormalization normalization;
 
@@ -124,9 +130,7 @@ public class Wolpertinger implements OWLReasoner {
 
 	private HashSet<OWLClass> equalsToTopClasses;
 	private HashSet<OWLClass> equalsToBottomClasses;
-
-	private Hierarchy<OWLClass> classHierarchy;
-
+	
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
 	}
@@ -152,37 +156,89 @@ public class Wolpertinger implements OWLReasoner {
 		}
 
 		normalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), axioms, 0, configuration.getDomainIndividuals());
-
+		
 		for (OWLOntology ontology : importClosure) {
 			normalization.processOntology(ontology);
 		}
 
 		axioms.m_namedIndividuals.clear();
 		axioms.m_namedIndividuals.addAll(configuration.getDomainIndividuals());
-
+		configuration.setClosedConcepts(getClosedConcepts());
+		configuration.setClosedRoles(getClosedRoles());
+		
 		try {
-			tmpFile = File.createTempFile("wolpertinger-base-program", ".lp");
-			tmpFile.deleteOnExit();
-			output = new PrintWriter(tmpFile);
-			naiveTranslation = new NaiveTranslation(configuration, output);
+			baseProgramTmpFile = File.createTempFile("wolpertinger-base-program", ".lp");
+			baseProgramTmpFile.deleteOnExit();
+			PrintWriter baseProgramWriter = new PrintWriter(baseProgramTmpFile);
+			naiveTranslation = new NaiveTranslation(configuration, baseProgramWriter);
 			naiveTranslation.translateOntology(axioms);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
+		// hotfix for owl:Thing is subsumed by owl:Nothing
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory factory = manager.getOWLDataFactory();
 		PrefixManager pManager = new DefaultPrefixManager();
 		OWLClassExpression thing = factory.getOWLClass("owl:Thing", pManager);
-
+		
+		/*
+		// closed concepts
+		for (OWLClass closedConcept : configuration.getClosedConcepts()) {
+			Set<OWLNamedIndividual> nonassertedIndividuals = configuration.getDomainIndividuals();
+			Collection<OWLIndividual> assertedIndividuals = EntitySearcher.getIndividuals(closedConcept, rootOntology);
+			nonassertedIndividuals.removeAll(assertedIndividuals);
+			for (OWLNamedIndividual individual : nonassertedIndividuals) {
+				axioms.m_facts.add(factory.getOWLClassAssertionAxiom(new OWLObjectComplementOfImpl(closedConcept), individual));
+			}
+		}
+		
+		// closed roles
+		for (OWLObjectProperty closedConcept : configuration.getClosedRoles()) {
+			// make a copy of domain and remove asserted individuals
+			Set<OWLNamedIndividual> nonassertedIndividuals = new HashSet<OWLNamedIndividual> (configuration.getDomainIndividuals());
+			Collection<OWLIndividual> assertedIndividuals = EntitySearcher.getIndividuals(closedConcept, rootOntology);
+			nonassertedIndividuals.removeAll(assertedIndividuals);
+			for (OWLNamedIndividual individual : nonassertedIndividuals) {
+				axioms.m_facts.add(factory.getOWLClassAssertionAxiom(new OWLObjectComplementOfImpl(closedConcept), individual));
+			}
+		}
+		*/
+	
+		
 		for (OWLNamedIndividual individual : axioms.m_namedIndividuals) {
 			OWLClassAssertionAxiom assertion = factory.getOWLClassAssertionAxiom(thing, individual);
 			manager.addAxiom(rootOntology, assertion);
 		}
 		
-		enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath()});
+		enumerator = new ClingoModelEnumerator(new String[] {baseProgramTmpFile.getAbsolutePath()});
 	}
 
+	private Set<OWLClass> getClosedConcepts () {
+		Set<OWLClass> closedConcepts = new HashSet<OWLClass> ();
+		for (OWLClass cl : rootOntology.getClassesInSignature()) {
+			for (OWLAnnotation annotation : EntitySearcher.getAnnotations(cl, rootOntology)) {
+				if (annotation.getProperty().getIRI().getShortForm().equals("closedConcept") && annotation.getValue().toString().startsWith("\"true\"")) {
+					closedConcepts.add(cl);
+				}
+			}
+		}
+		return closedConcepts;
+	}
+	
+	private Set<OWLObjectProperty> getClosedRoles () {
+		Set<OWLObjectProperty> closedRoles = new HashSet<OWLObjectProperty> ();
+		for (OWLObjectProperty property : rootOntology.getObjectPropertiesInSignature()) {
+			for (OWLAnnotation annotation : EntitySearcher.getAnnotations(property, rootOntology)) {
+				//TODO define the annotation properly
+				if (annotation.getProperty().getIRI().getShortForm().equals("closedRole")) {
+					closedRoles.add(property);
+				}
+			}
+		}
+		return closedRoles;
+	}
+	
 	private void clearState() {
 		this.axioms = null;
 	}
@@ -265,7 +321,7 @@ public class Wolpertinger implements OWLReasoner {
 		if (classified) {
 			return;
 		}
-		classified = true;
+		
 		equalsToTopClasses = new HashSet<OWLClass> ();
 		equalsToBottomClasses = new HashSet<OWLClass> ();
 		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(Imports.INCLUDED);
@@ -337,14 +393,16 @@ public class Wolpertinger implements OWLReasoner {
 			classifyOutput.write("#show not_subClass/2.");				
 			classifyOutput.close();
 			
-			Collection<String> results = solver.solve(new String[] {tmpFile.getAbsolutePath(), classifyClassFile.getAbsolutePath()}, 0);
+			Collection<String> results = solver.solve(new String[] {baseProgramTmpFile.getAbsolutePath(), classifyClassFile.getAbsolutePath()}, 0);
+			 
 			String[] resultsArray = new String[results.size()];
 			resultsArray = results.toArray(resultsArray);
 			ArrayList<String> notSubclasses = new ArrayList<String>(Arrays.asList(resultsArray[results.size() - 1].split(" ")));
 			HashMap<String, HashSet<String>> tmpNotSubclasses = new HashMap<String, HashSet<String>> ();
-			
+
 			for (String str : notSubclasses) {
-				if(str.equals("")) {
+				// hotfix, has to be optimized
+				if(str.equals("") || !str.startsWith("not_subClass")) {
 					// no subsumption holds
 					continue;
 				}
@@ -457,13 +515,14 @@ public class Wolpertinger implements OWLReasoner {
 		OWLClass nothing = getOWLDataFactory().getOWLNothing();
 		
 		classHierarchy = HierarchyBuilder.buildHierarchy(superClassHierarchy, classRepresentative, thing, nothing, equalsToTopClasses, equalsToBottomClasses);
+		classified = true;
 	}
 
 	public String computeCautiousModel () {
 		ClingoSolver cautiousSolver = SolverFactory.INSTANCE.createClingoCautiousSolver();
 		Collection<String> models = null;
 		try {
-			models = cautiousSolver.solve(new String[] {tmpFile.getAbsolutePath()}, 0);
+			models = cautiousSolver.solve(new String[] {baseProgramTmpFile.getAbsolutePath()}, 0);
 		} catch (SolvingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -688,7 +747,7 @@ public class Wolpertinger implements OWLReasoner {
 		entailmentOutput.print(" violation.");
 		entailmentOutput.close();
 
-		ClingoModelEnumerator enumerator = new ClingoModelEnumerator(new String[] {tmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
+		ClingoModelEnumerator enumerator = new ClingoModelEnumerator(new String[] {baseProgramTmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
 
 		if (enumerator.enumerateModels(1).size() == 0) {
 			tmpEntailmentFile.delete();
@@ -743,7 +802,6 @@ public class Wolpertinger implements OWLReasoner {
 			Set<HierarchyNode<OWLClass>> result;
 			OWLClass queryClass = (OWLClass) queryClassExpression;
 			HierarchyNode<OWLClass> hierarchyNode = classHierarchy.getNodeForElement(queryClass);
-
 			if (direct) {
 				result = hierarchyNode.getChildNodes();
 			} else {
@@ -819,7 +877,7 @@ public class Wolpertinger implements OWLReasoner {
 					satisfiableOutput.write("#show " + className.toLowerCase() + "/0.");
 				}
 				satisfiableOutput.close();
-				Collection<String> results = solver.solve(new String[] {tmpFile.getAbsolutePath(), satisfiableClassFile.getAbsolutePath()}, 0);
+				Collection<String> results = solver.solve(new String[] {baseProgramTmpFile.getAbsolutePath(), satisfiableClassFile.getAbsolutePath()}, 0);
 				String[] resultsArray = new String[results.size()];
 				resultsArray = results.toArray(resultsArray);
 				satisfiableClasses = new ArrayList<String>(Arrays.asList(resultsArray[results.size() - 1].split(" ")));

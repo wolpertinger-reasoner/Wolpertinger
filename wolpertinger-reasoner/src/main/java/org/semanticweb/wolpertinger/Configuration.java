@@ -22,7 +22,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.reasoner.FreshEntityPolicy;
 import org.semanticweb.owlapi.reasoner.IndividualNodeSetPolicy;
 import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
@@ -39,8 +41,11 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 
 	private String filter;
 	private Set<IRI> conceptsToProjectOn;
+	private Set<OWLClass> closedConcepts;
+	private Set<OWLObjectProperty> closedRoles;
 	private Set<OWLNamedIndividual> domainIndividuals;
 	private String aboxDirectory; // the dirc to write the models to
+	
 
 	public Configuration() {
 		this.conceptsToProjectOn = new HashSet<IRI>();
@@ -128,6 +133,24 @@ public class Configuration implements OWLReasonerConfiguration, Cloneable,
 	
 	public void setAboxDirectory(String directory) {
 		this.aboxDirectory = directory;
+	}
+	
+	public Set<OWLClass> getClosedConcepts() {
+		Set<OWLClass> closedConceptsSetCopy = new HashSet<OWLClass> (this.closedConcepts);
+		return closedConceptsSetCopy;
+	}
+
+	public void setClosedConcepts(Set<OWLClass> closedConcepts) {
+		this.closedConcepts = closedConcepts;
+	}
+
+	public Set<OWLObjectProperty> getClosedRoles() {
+		Set<OWLObjectProperty> closedRolesSetCopy = new HashSet<OWLObjectProperty> (this.closedRoles);
+		return closedRolesSetCopy;
+	}
+
+	public void setClosedRoles(Set<OWLObjectProperty> closedRoles) {
+		this.closedRoles = closedRoles;
 	}
 
 }
