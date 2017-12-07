@@ -611,7 +611,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	}
 
 	private void translateEntailmentInclusion(OWLClassExpression[] inclusion) {
-		writer.print("violation");
 		writer.print(ASP2CoreSymbols.IMPLICATION);
 
 		boolean isFirst=true;
@@ -624,7 +623,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 		var.reset();
 		if(!assertionMode){
-			writer.print(ASP2CoreSymbols.CONJUNCTION);
+			if(!isFirst) {
+				writer.print(ASP2CoreSymbols.CONJUNCTION);
+			}
 			writer.print("thing");
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print("X"); //var issuer problem
@@ -963,7 +964,6 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 	
 	public void visit(OWLObjectComplementOf objComplementOf) {
 		OWLClassExpression operand = objComplementOf.getOperand();
-
 		if (operand instanceof OWLClass) {
 			OWLClass owlClass = operand.asOWLClass();
 			String predicateName = mapper.getPredicateName(owlClass);
@@ -991,7 +991,7 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 		else if (operand instanceof OWLObjectOneOf) {
 			throw new NotImplementedException();
-		}
+		} 
 	}
 
 	/**

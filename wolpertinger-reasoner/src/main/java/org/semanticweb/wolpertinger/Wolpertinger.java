@@ -97,6 +97,7 @@ import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
+import uk.ac.manchester.cs.owl.owlapi.OWLObjectIntersectionOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
 
@@ -691,71 +692,64 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public boolean isEntailed(Set<? extends OWLAxiom> axiomSet) {
-		File tmpEntailmentFile = null;
-		PrintWriter entailmentOutput = null;
-
-		// write the constraints
-		try {
-			tmpEntailmentFile = File.createTempFile("wolpertinger-entailment-program", ".lp");
-			tmpEntailmentFile.deleteOnExit();
-			entailmentOutput = new PrintWriter(tmpEntailmentFile);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 		for (OWLAxiom axiom : axiomSet) {
-			if (axiom instanceof OWLDeclarationAxiom) {
+			// write the constraints
+			try {
+				File tmpEntailmentFile = null;
+				PrintWriter entailmentOutput = null;
+				tmpEntailmentFile = File.createTempFile("wolpertinger-entailment-program", ".lp");
+				tmpEntailmentFile.deleteOnExit();
+				entailmentOutput = new PrintWriter(tmpEntailmentFile);
+				if (axiom instanceof OWLDeclarationAxiom) {
 					// skip all declaration axioms
-			} else if (axiom instanceof OWLSubClassOfAxiom) {
-				OWLAxioms tempAxioms = new OWLAxioms ();
-				Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
-				OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
-				// transform into union of ~A and B
-				OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
-				LinkedHashSet<OWLClassExpression> intersectionSet = new LinkedHashSet<OWLClassExpression> ();
-				OWLClassExpression negatedSubClass = new OWLObjectComplementOfImpl (subClassOfAxiom.getSubClass());
-				intersectionSet.add(negatedSubClass);
-				intersectionSet.add(subClassOfAxiom.getSuperClass());
-				OWLObjectUnionOfImpl intersection = new OWLObjectUnionOfImpl (intersectionSet);
-				OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
-				OWLSubClassOfAxiomImpl convertedSubClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, intersection, new HashSet<OWLAnnotation> ());
-				wrapper.add(convertedSubClassOfAxiom);
-				tempNormalization.processAxioms(wrapper);
-				NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
-				axiomTranslation.translateEntailment(tempAxioms);
-			} else if (axiom instanceof OWLClassAssertionAxiom) {
-				OWLAxioms tempAxioms = new OWLAxioms ();
-				Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
-				OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
-
-				OWLClassAssertionAxiom classAssertionAxiom = (OWLClassAssertionAxiom) axiom;
-				OWLClassExpression classExpression = classAssertionAxiom.getClassExpression();
-				OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
-				OWLSubClassOfAxiomImpl subClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, classExpression, new HashSet<OWLAnnotation> ());
-				wrapper.add(subClassOfAxiom);
-				tempNormalization.processAxioms(wrapper);
-				NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
-				axiomTranslation.individualAssertionMode((OWLNamedIndividual) classAssertionAxiom.getIndividual());
-				axiomTranslation.translateEntailment(tempAxioms);
-			} else {
-				//TODO: well...
+				} else if (axiom instanceof OWLSubClassOfAxiom) {
+					OWLAxioms tempAxioms = new OWLAxioms ();
+					Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
+					OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
+					// transform into A and ~B
+					OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
+					LinkedHashSet<OWLClassExpression> intersectionSet = new LinkedHashSet<OWLClassExpression> ();
+					OWLClassExpression negatedSuperClass = new OWLObjectComplementOfImpl (subClassOfAxiom.getSuperClass());
+					intersectionSet.add(negatedSuperClass);
+					intersectionSet.add(subClassOfAxiom.getSubClass());
+					OWLObjectIntersectionOfImpl intersection = new OWLObjectIntersectionOfImpl (intersectionSet);
+					OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
+					OWLSubClassOfAxiomImpl convertedSubClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, intersection, new HashSet<OWLAnnotation> ());
+					wrapper.add(convertedSubClassOfAxiom);
+					tempNormalization.processAxioms(wrapper);
+					NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
+					axiomTranslation.translateEntailment(tempAxioms);
+				} else if (axiom instanceof OWLClassAssertionAxiom) {
+					OWLAxioms tempAxioms = new OWLAxioms ();
+					Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
+					OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
+	
+					OWLClassAssertionAxiom classAssertionAxiom = (OWLClassAssertionAxiom) axiom;
+					OWLClassExpression classExpression = classAssertionAxiom.getClassExpression();
+					OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
+					OWLSubClassOfAxiomImpl subClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, classExpression, new HashSet<OWLAnnotation> ());
+					wrapper.add(subClassOfAxiom);
+					tempNormalization.processAxioms(wrapper);
+					NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
+					axiomTranslation.individualAssertionMode((OWLNamedIndividual) classAssertionAxiom.getIndividual());
+					axiomTranslation.translateEntailment(tempAxioms);
+				} else {
+					//TODO: well...
+				}
+				
+				ClingoModelEnumerator enumerator = new ClingoModelEnumerator(new String[] {baseProgramTmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
+				tmpEntailmentFile.delete();
+				entailmentOutput.close();
+				if (enumerator.enumerateModels(1).size() != 0) {
+					return false;
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+			
 		}
-		entailmentOutput.print(ASP2CoreSymbols.IMPLICATION);
-		entailmentOutput.print(ASP2CoreSymbols.NAF);
-		entailmentOutput.print(" violation.");
-		entailmentOutput.close();
-
-		ClingoModelEnumerator enumerator = new ClingoModelEnumerator(new String[] {baseProgramTmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
-
-		if (enumerator.enumerateModels(1).size() == 0) {
-			tmpEntailmentFile.delete();
-			return true;
-		} else{
-			tmpEntailmentFile.delete();			;
-			return false;
-		}
+		return true;
 	}
 
 	public boolean isEntailmentCheckingSupported(AxiomType<?> arg0) {

@@ -103,7 +103,7 @@ public class HierarchyTest
 		assertFalse(wolpertinger.isEntailed(thingSubClassOfNothing));
     }
     
-    public void testThingSubsetOfNohing() {
+    public void testNothingSubsetOfThing() {
     	OWLClassExpression thing = factory.getOWLThing();
     	OWLClassExpression nothing = factory.getOWLNothing();
     	OWLSubClassOfAxiom nothingSubClassOfThing = factory.getOWLSubClassOfAxiom(nothing, thing);
