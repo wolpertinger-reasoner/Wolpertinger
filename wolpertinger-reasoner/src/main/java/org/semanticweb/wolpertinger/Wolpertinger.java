@@ -522,7 +522,6 @@ public class Wolpertinger implements OWLReasoner {
 					OWLObjectIntersectionOfImpl intersection = new OWLObjectIntersectionOfImpl (intersectionSet);
 					OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
 					OWLSubClassOfAxiomImpl convertedSubClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, intersection, new HashSet<OWLAnnotation> ());
-					System.out.println(convertedSubClassOfAxiom);
 					ontologyManager.addAxiom(entailmentOntology, convertedSubClassOfAxiom);
 				} else if (axiom instanceof OWLClassAssertionAxiom) {
 					OWLAxioms tempAxioms = new OWLAxioms ();
