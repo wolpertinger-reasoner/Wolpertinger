@@ -18,11 +18,9 @@
 package org.semanticweb.wolpertinger;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -51,7 +49,6 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
-import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectComplementOf;
@@ -60,11 +57,13 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.PrefixManager;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.reasoner.BufferingMode;
 import org.semanticweb.owlapi.reasoner.FreshEntityPolicy;
 import org.semanticweb.owlapi.reasoner.IndividualNodeSetPolicy;
@@ -92,13 +91,11 @@ import org.semanticweb.wolpertinger.structural.OWLNormalization;
 import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
-import org.semanticweb.wolpertinger.translation.naive.ASP2CoreSymbols;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
 
 import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLObjectIntersectionOfImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectUnionOfImpl;
 import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
 
 /**
@@ -119,7 +116,6 @@ public class Wolpertinger implements OWLReasoner {
 
 	private File baseProgramTmpFile;
 
-	
 	private boolean classified;
 	private Hierarchy<OWLClass> classHierarchy;
 	
@@ -131,6 +127,8 @@ public class Wolpertinger implements OWLReasoner {
 
 	private HashSet<OWLClass> equalsToTopClasses;
 	private HashSet<OWLClass> equalsToBottomClasses;
+
+	private SignatureMapper mapper;
 	
 	public Wolpertinger(OWLOntology rootOntology) {
 		this(new Configuration(), rootOntology);
@@ -173,10 +171,11 @@ public class Wolpertinger implements OWLReasoner {
 			PrintWriter baseProgramWriter = new PrintWriter(baseProgramTmpFile);
 			naiveTranslation = new NaiveTranslation(configuration, baseProgramWriter);
 			naiveTranslation.translateOntology(axioms);
+			mapper = naiveTranslation.getSignatureMapper();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
 		// hotfix for owl:Thing is subsumed by owl:Nothing
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLDataFactory factory = manager.getOWLDataFactory();
@@ -318,206 +317,7 @@ public class Wolpertinger implements OWLReasoner {
 		return modelsAsAxioms;
 	}
 
-	public void classifyClasses() {
-		if (classified) {
-			return;
-		}
-		
-		equalsToTopClasses = new HashSet<OWLClass> ();
-		equalsToBottomClasses = new HashSet<OWLClass> ();
-		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(Imports.INCLUDED);
-		HashMap<OWLClass,HashSet<OWLClass>> superClassHierarchy = new HashMap<OWLClass,HashSet<OWLClass>> ();
-
-		for (OWLClass cl : allClasses) {
-			OWLObjectComplementOf negated = new OWLObjectComplementOfImpl(cl);
-			if (!isSatisfiable(cl)) {
-				equalsToBottomClasses.add(cl);
-			}
-			if (!isSatisfiable(negated)) {
-				equalsToTopClasses.add(cl);
-			} else {
-
-			}
-		}
-
-		HashSet<OWLClass> processedClasses = new HashSet<OWLClass> ();
-		for (OWLClass cl : allClasses) {
-			if (equalsToTopClasses.contains(cl) || equalsToBottomClasses.contains(cl) ||
-				cl.isTopEntity() || cl.isBottomEntity()) {
-				continue;
-			}
-			processedClasses.add(cl);
-			superClassHierarchy.put(cl, new HashSet<OWLClass> ());
-		}
 	
-		for (OWLClassExpression[] inclusion : axioms.m_conceptInclusions) {
-			// check for defined simple subsumptions
-			if (inclusion.length == 2 && 
-				inclusion[0] instanceof OWLClass && inclusion[1] instanceof OWLObjectComplementOf) {
-				OWLObjectComplementOf complementOf = (OWLObjectComplementOf) inclusion[1];
-				if (complementOf.getOperand() instanceof OWLClass) {					
-					OWLClass superClass = (OWLClass) inclusion[0];
-					OWLClass subClass = (OWLClass) complementOf.getOperand();
-					// check for auxiliary and non-processed concepts
-					if (!processedClasses.contains(superClass) || !processedClasses.contains(subClass)) {
-						continue;
-					}
-					superClassHierarchy.get(subClass).add(superClass);
-				}
-			}			
-		}
-
-		SignatureMapper mapper = naiveTranslation.getSignatureMapper();
-		ClingoSolver solver = SolverFactory.INSTANCE.createClingoBraveSolver();
-		try {
-			File classifyClassFile = File.createTempFile("wolpertinger-classify-program", ".lp");
-			classifyClassFile.deleteOnExit();
-			PrintWriter classifyOutput = new PrintWriter(classifyClassFile);
-
-			for (OWLClass subClassCandidate : processedClasses) {
-				HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
-				for (OWLClass superClassCandidate : processedClasses) {					
-					if (superClasses.contains(superClassCandidate)) {
-						// listed in the axioms
-						continue;
-					}
-					if (subClassCandidate.equals(superClassCandidate)) {
-						// same class, no need to check
-						continue;
-					}
-					String subClassName = mapper.getPredicateName(subClassCandidate);
-					String superClassName = mapper.getPredicateName(superClassCandidate);
-					classifyOutput.write(String.format("not_subClass(%1$s, %2$s) :- %1$s(X), -%2$s(X).", subClassName.toLowerCase(), superClassName.toLowerCase()));					
-					classifyOutput.println();
-				}
-			}
-			classifyOutput.write("#show not_subClass/2.");				
-			classifyOutput.close();
-			
-			Collection<String> results = solver.solve(new String[] {baseProgramTmpFile.getAbsolutePath(), classifyClassFile.getAbsolutePath()}, 0);
-			 
-			String[] resultsArray = new String[results.size()];
-			resultsArray = results.toArray(resultsArray);
-			ArrayList<String> notSubclasses = new ArrayList<String>(Arrays.asList(resultsArray[results.size() - 1].split(" ")));
-			HashMap<String, HashSet<String>> tmpNotSubclasses = new HashMap<String, HashSet<String>> ();
-
-			for (String str : notSubclasses) {
-				// hotfix, has to be optimized
-				if(str.equals("") || !str.startsWith("not_subClass")) {
-					// no subsumption holds
-					continue;
-				}
-				str = str.substring(13,str.length() - 1);
-				String[] split = str.split(",");
-				if(!tmpNotSubclasses.containsKey(split[0])) {
-					tmpNotSubclasses.put(split[0], new HashSet<String> ());
-				}
-				tmpNotSubclasses.get(split[0]).add(split[1]);
-			}
-			
-			for (OWLClass subClassCandidate : processedClasses) {
-				HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
-				for (OWLClass superClassCandidate : processedClasses) {
-					if (subClassCandidate.equals(superClassCandidate)) {
-						// same class, no need to check
-						continue;
-					}
-					
-					String subClassName = mapper.getPredicateName(subClassCandidate);
-					String superClassName = mapper.getPredicateName(superClassCandidate);
-					if(tmpNotSubclasses.get(subClassName) != null &&
-					   !tmpNotSubclasses.get(subClassName).contains(superClassName)) {
-						superClasses.add(superClassCandidate);
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (SolvingException e) {
-			e.printStackTrace();
-		}		
-
-		// check equivalent classes
-		HashMap<OWLClass, OWLClass> classRepresentative = new HashMap<OWLClass, OWLClass> ();
-		HashMap<OWLClass, HashSet<OWLClass>> classRepresented = new HashMap<OWLClass, HashSet<OWLClass>> ();
-		for (OWLClass cl : processedClasses) {
-			HashSet<OWLClass> superClasses = superClassHierarchy.get(cl);
-			for (OWLClass equivalentCandidate : superClasses) {
-				if (classRepresentative.keySet().contains(cl)) {
-					continue;
-				}
-				if (superClassHierarchy.get(equivalentCandidate).contains(cl)) {
-					classRepresentative.put(equivalentCandidate, cl);
-					if(!classRepresented.containsKey(cl)) {
-						HashSet<OWLClass> newSet = new HashSet<OWLClass> ();
-						newSet.add(equivalentCandidate);
-						classRepresented.put(cl, newSet);
-					} else {
-						HashSet<OWLClass> existedSet = classRepresented.get(cl);
-						existedSet.add(equivalentCandidate);
-					}
-
-				}
-			}
-		}
-
-		Set<OWLClass> representedClasses = classRepresentative.keySet();
-		for (OWLClass cl : processedClasses) {
-			HashSet<OWLClass> superClasses = superClassHierarchy.get(cl);
-			superClasses.removeAll(representedClasses);
-		}
-
-		for (OWLClass cl : representedClasses) {
-			superClassHierarchy.remove(cl);
-		}
-
-		// compute transitive reduction of dag
-		for (OWLClass cl : allClasses) {
-			Collection<OWLClass> superClasses = superClassHierarchy.get(cl);
-			if(superClasses == null) {
-				continue;
-			}
-			OWLClass[] tmpSuperClasses = new OWLClass[superClasses.size()];
-
-			for (OWLClass superClass : superClasses.toArray(tmpSuperClasses)) {
-				if (!superClassHierarchy.get(cl).contains(superClass)){
-					// has been removed
-				}
-				HashSet<OWLClass> marked = new HashSet<OWLClass> ();
-
-		        // depth-first search using an explicit stack
-		        Stack<OWLClass> stack = new Stack<OWLClass>();
-		        marked.add(superClass);
-		        stack.push(superClass);
-		        while (!stack.isEmpty()) {
-		            OWLClass v = stack.peek();
-		            HashSet<OWLClass> superSuperClasses = superClassHierarchy.get(v);
-		            for (OWLClass superSuperClass : superSuperClasses) {
-		            	if (!marked.contains(superSuperClass)) {
-		            		marked.add(superSuperClass);
-		            		stack.add(superSuperClass);
-		            		continue;
-		            	}
-
-		            }
-            		stack.pop();
-		        }
-		        HashSet<OWLClass> directSuperClasses = superClassHierarchy.get(cl);
-		        for (OWLClass indirectSuperClass : marked) {
-		        	if (indirectSuperClass.equals(superClass)) {
-
-		        	} else {
-		        		directSuperClasses.remove(indirectSuperClass);
-		        	}
-		        }
-			}
-		}
-		OWLClass thing = getOWLDataFactory().getOWLThing();
-		OWLClass nothing = getOWLDataFactory().getOWLNothing();
-		
-		classHierarchy = HierarchyBuilder.buildHierarchy(superClassHierarchy, classRepresentative, thing, nothing, equalsToTopClasses, equalsToBottomClasses);
-		classified = true;
-	}
 
 	public String computeCautiousModel () {
 		ClingoSolver cautiousSolver = SolverFactory.INSTANCE.createClingoCautiousSolver();
@@ -673,7 +473,6 @@ public class Wolpertinger implements OWLReasoner {
 
 	public void interrupt() {
 		// TODO Auto-generated method stub
-
 	}
 
 	////////////////////////////
@@ -692,7 +491,18 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public boolean isEntailed(Set<? extends OWLAxiom> axiomSet) {
+		
+		
 		for (OWLAxiom axiom : axiomSet) {
+			OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
+			OWLOntology entailmentOntology = null;
+			try {
+				entailmentOntology = ontologyManager.copyOntology(rootOntology, OntologyCopy.SHALLOW);
+			} catch (OWLOntologyCreationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			// write the constraints
 			try {
 				File tmpEntailmentFile = null;
@@ -703,9 +513,6 @@ public class Wolpertinger implements OWLReasoner {
 				if (axiom instanceof OWLDeclarationAxiom) {
 					// skip all declaration axioms
 				} else if (axiom instanceof OWLSubClassOfAxiom) {
-					OWLAxioms tempAxioms = new OWLAxioms ();
-					Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
-					OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
 					// transform into A and ~B
 					OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
 					LinkedHashSet<OWLClassExpression> intersectionSet = new LinkedHashSet<OWLClassExpression> ();
@@ -715,15 +522,12 @@ public class Wolpertinger implements OWLReasoner {
 					OWLObjectIntersectionOfImpl intersection = new OWLObjectIntersectionOfImpl (intersectionSet);
 					OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
 					OWLSubClassOfAxiomImpl convertedSubClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, intersection, new HashSet<OWLAnnotation> ());
-					wrapper.add(convertedSubClassOfAxiom);
-					tempNormalization.processAxioms(wrapper);
-					NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
-					axiomTranslation.translateEntailment(tempAxioms);
+					System.out.println(convertedSubClassOfAxiom);
+					ontologyManager.addAxiom(entailmentOntology, convertedSubClassOfAxiom);
 				} else if (axiom instanceof OWLClassAssertionAxiom) {
 					OWLAxioms tempAxioms = new OWLAxioms ();
 					Collection<OWLAxiom> wrapper = new HashSet<OWLAxiom> ();
-					OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());
-	
+					OWLNormalization tempNormalization = new OWLNormalization(rootOntology.getOWLOntologyManager().getOWLDataFactory(), tempAxioms, 0, configuration.getDomainIndividuals());	
 					OWLClassAssertionAxiom classAssertionAxiom = (OWLClassAssertionAxiom) axiom;
 					OWLClassExpression classExpression = classAssertionAxiom.getClassExpression();
 					OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
@@ -737,17 +541,14 @@ public class Wolpertinger implements OWLReasoner {
 					//TODO: well...
 				}
 				
-				ClingoModelEnumerator enumerator = new ClingoModelEnumerator(new String[] {baseProgramTmpFile.getAbsolutePath(), tmpEntailmentFile.getAbsolutePath()});
-				tmpEntailmentFile.delete();
-				entailmentOutput.close();
-				if (enumerator.enumerateModels(1).size() != 0) {
+				Wolpertinger entailmentWolpertinger = new Wolpertinger(entailmentOntology);
+				if (entailmentWolpertinger.isConsistent()) {
 					return false;
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
 		}
 		return true;
 	}
@@ -853,7 +654,6 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public boolean isSatisfiable(OWLClassExpression classExpression) {
-		SignatureMapper mapper = naiveTranslation.getSignatureMapper();
 		if(!satisfiableClassesComputed) {
 			ClingoSolver solver = SolverFactory.INSTANCE.createClingoBraveSolver();
 			try {
@@ -1020,8 +820,7 @@ public class Wolpertinger implements OWLReasoner {
 	// Individual-related methods
 	////////////////////////////
 
-	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression,
-			boolean arg1) {
+	public NodeSet<OWLNamedIndividual> getInstances(OWLClassExpression classExpression, boolean arg1) {
 		//TODO Indirect and Arbitrary Class Expr
 		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(Imports.INCLUDED);
 		OWLNamedIndividualNodeSet result = new OWLNamedIndividualNodeSet ();
@@ -1050,5 +849,220 @@ public class Wolpertinger implements OWLReasoner {
 			}
 		}
 		return result;
+	}
+	
+	///////////////////////////////
+	// Private utility methods
+	///////////////////////////////
+	
+	
+	private void classifyClasses() {
+		if (classified) {
+			return;
+		}
+		
+		equalsToTopClasses = new HashSet<OWLClass> ();
+		equalsToBottomClasses = new HashSet<OWLClass> ();
+		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(Imports.INCLUDED);
+		HashMap<OWLClass,HashSet<OWLClass>> superClassHierarchy = new HashMap<OWLClass,HashSet<OWLClass>> ();
+
+		for (OWLClass cl : allClasses) {
+			OWLObjectComplementOf negated = new OWLObjectComplementOfImpl(cl);
+			if (!isSatisfiable(cl)) {
+				equalsToBottomClasses.add(cl);
+			}
+			if (!isSatisfiable(negated)) {
+				equalsToTopClasses.add(cl);
+			} else {
+
+			}
+		}
+
+		HashSet<OWLClass> processedClasses = new HashSet<OWLClass> ();
+		for (OWLClass cl : allClasses) {
+			if (equalsToTopClasses.contains(cl) || equalsToBottomClasses.contains(cl) ||
+				cl.isTopEntity() || cl.isBottomEntity()) {
+				continue;
+			}
+			processedClasses.add(cl);
+			superClassHierarchy.put(cl, new HashSet<OWLClass> ());
+		}
+	
+		for (OWLClassExpression[] inclusion : axioms.m_conceptInclusions) {
+			// check for defined simple subsumptions
+			if (inclusion.length == 2 && 
+				inclusion[0] instanceof OWLClass && inclusion[1] instanceof OWLObjectComplementOf) {
+				OWLObjectComplementOf complementOf = (OWLObjectComplementOf) inclusion[1];
+				if (complementOf.getOperand() instanceof OWLClass) {					
+					OWLClass superClass = (OWLClass) inclusion[0];
+					OWLClass subClass = (OWLClass) complementOf.getOperand();
+					// check for auxiliary and non-processed concepts
+					if (!processedClasses.contains(superClass) || !processedClasses.contains(subClass)) {
+						continue;
+					}
+					superClassHierarchy.get(subClass).add(superClass);
+				}
+			}			
+		}
+
+		
+		ClingoSolver solver = SolverFactory.INSTANCE.createClingoBraveSolver();
+		try {
+			File classifyClassFile = createClassifyingFile(processedClasses, superClassHierarchy);
+			Collection<String> results = solver.solve(new String[] {baseProgramTmpFile.getAbsolutePath(), classifyClassFile.getAbsolutePath()}, 0);
+			 
+			String[] resultsArray = new String[results.size()];
+			resultsArray = results.toArray(resultsArray);
+			ArrayList<String> notSubclasses = new ArrayList<String>(Arrays.asList(resultsArray[results.size() - 1].split(" ")));
+			HashMap<String, HashSet<String>> tmpNotSubclasses = new HashMap<String, HashSet<String>> ();
+
+			for (String str : notSubclasses) {
+				// hotfix, has to be optimized
+				if(str.equals("") || !str.startsWith("not_subClass")) {
+					// no subsumption holds
+					continue;
+				}
+				str = str.substring(13,str.length() - 1);
+				String[] split = str.split(",");
+				if(!tmpNotSubclasses.containsKey(split[0])) {
+					tmpNotSubclasses.put(split[0], new HashSet<String> ());
+				}
+				tmpNotSubclasses.get(split[0]).add(split[1]);
+			}
+			
+			for (OWLClass subClassCandidate : processedClasses) {
+				HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
+				for (OWLClass superClassCandidate : processedClasses) {
+					if (subClassCandidate.equals(superClassCandidate)) {
+						// same class, no need to check
+						continue;
+					}
+					
+					String subClassName = mapper.getPredicateName(subClassCandidate);
+					String superClassName = mapper.getPredicateName(superClassCandidate);
+					if(tmpNotSubclasses.get(subClassName) != null &&
+					   !tmpNotSubclasses.get(subClassName).contains(superClassName)) {
+						superClasses.add(superClassCandidate);
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SolvingException e) {
+			e.printStackTrace();
+		}		
+
+		// check equivalent classes
+		HashMap<OWLClass, OWLClass> classRepresentative = new HashMap<OWLClass, OWLClass> ();
+		HashMap<OWLClass, HashSet<OWLClass>> classRepresented = new HashMap<OWLClass, HashSet<OWLClass>> ();
+		for (OWLClass cl : processedClasses) {
+			HashSet<OWLClass> superClasses = superClassHierarchy.get(cl);
+			for (OWLClass equivalentCandidate : superClasses) {
+				if (classRepresentative.keySet().contains(cl)) {
+					continue;
+				}
+				if (superClassHierarchy.get(equivalentCandidate).contains(cl)) {
+					classRepresentative.put(equivalentCandidate, cl);
+					if(!classRepresented.containsKey(cl)) {
+						HashSet<OWLClass> newSet = new HashSet<OWLClass> ();
+						newSet.add(equivalentCandidate);
+						classRepresented.put(cl, newSet);
+					} else {
+						HashSet<OWLClass> existedSet = classRepresented.get(cl);
+						existedSet.add(equivalentCandidate);
+					}
+
+				}
+			}
+		}
+
+		Set<OWLClass> representedClasses = classRepresentative.keySet();
+		for (OWLClass cl : processedClasses) {
+			HashSet<OWLClass> superClasses = superClassHierarchy.get(cl);
+			superClasses.removeAll(representedClasses);
+		}
+
+		for (OWLClass cl : representedClasses) {
+			superClassHierarchy.remove(cl);
+		}
+
+		computeTransitiveReduction(superClassHierarchy);
+		OWLClass thing = getOWLDataFactory().getOWLThing();
+		OWLClass nothing = getOWLDataFactory().getOWLNothing();
+		
+		classHierarchy = HierarchyBuilder.buildHierarchy(superClassHierarchy, classRepresentative, thing, nothing, equalsToTopClasses, equalsToBottomClasses);
+		classified = true;
+	}
+	
+	private File createClassifyingFile (HashSet<OWLClass> processedClasses, HashMap<OWLClass,HashSet<OWLClass>> superClassHierarchy) throws IOException {
+		File classifyClassFile = File.createTempFile("wolpertinger-classify-program", ".lp");
+		classifyClassFile.deleteOnExit();
+		PrintWriter classifyOutput = new PrintWriter(classifyClassFile);
+
+		for (OWLClass subClassCandidate : processedClasses) {
+			HashSet<OWLClass> superClasses = superClassHierarchy.get(subClassCandidate);
+			for (OWLClass superClassCandidate : processedClasses) {					
+				if (superClasses.contains(superClassCandidate)) {
+					// listed in the axioms
+					continue;
+				}
+				if (subClassCandidate.equals(superClassCandidate)) {
+					// same class, no need to check
+					continue;
+				}
+				String subClassName = mapper.getPredicateName(subClassCandidate);
+				String superClassName = mapper.getPredicateName(superClassCandidate);
+				classifyOutput.write(String.format("not_subClass(%1$s, %2$s) :- %1$s(X), -%2$s(X).", subClassName.toLowerCase(), superClassName.toLowerCase()));					
+				classifyOutput.println();
+			}
+		}
+		classifyOutput.write("#show not_subClass/2.");				
+		classifyOutput.close();
+		return classifyClassFile;
+	}
+	
+	private void computeTransitiveReduction (HashMap<OWLClass,HashSet<OWLClass>> superClassHierarchy) {
+		// compute transitive reduction of dag
+		Collection<OWLClass> allClasses = rootOntology.getClassesInSignature(Imports.INCLUDED);
+		for (OWLClass cl : allClasses) {
+			Collection<OWLClass> superClasses = superClassHierarchy.get(cl);
+			if(superClasses == null) {
+				continue;
+			}
+			OWLClass[] tmpSuperClasses = new OWLClass[superClasses.size()];
+
+			for (OWLClass superClass : superClasses.toArray(tmpSuperClasses)) {
+				if (!superClassHierarchy.get(cl).contains(superClass)){
+					// has been removed
+				}
+				HashSet<OWLClass> marked = new HashSet<OWLClass> ();
+
+		        // depth-first search using an explicit stack
+		        Stack<OWLClass> stack = new Stack<OWLClass>();
+		        marked.add(superClass);
+		        stack.push(superClass);
+		        while (!stack.isEmpty()) {
+		            OWLClass v = stack.peek();
+		            HashSet<OWLClass> superSuperClasses = superClassHierarchy.get(v);
+		            for (OWLClass superSuperClass : superSuperClasses) {
+		            	if (!marked.contains(superSuperClass)) {
+		            		marked.add(superSuperClass);
+		            		stack.add(superSuperClass);
+		            		continue;
+		            	}
+
+		            }
+            		stack.pop();
+		        }
+		        HashSet<OWLClass> directSuperClasses = superClassHierarchy.get(cl);
+		        for (OWLClass indirectSuperClass : marked) {
+		        	if (indirectSuperClass.equals(superClass)) {
+
+		        	} else {
+		        		directSuperClasses.remove(indirectSuperClass);
+		        	}
+		        }
+			}
+		}
 	}
 }

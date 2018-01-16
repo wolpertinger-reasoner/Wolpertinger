@@ -595,7 +595,9 @@ public class NaiveTranslation implements OWLOntologyTranslator {
 		}
 		var.reset();
 		String currentVar = var.currentVar();
-		writer.print(ASP2CoreSymbols.CONJUNCTION);
+		if(!isFirst) {
+			writer.print(ASP2CoreSymbols.CONJUNCTION);
+		}
 		writer.print("thing");
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.print(currentVar);
