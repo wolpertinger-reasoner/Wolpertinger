@@ -491,8 +491,6 @@ public class Wolpertinger implements OWLReasoner {
 	}
 
 	public boolean isEntailed(Set<? extends OWLAxiom> axiomSet) {
-		
-		
 		for (OWLAxiom axiom : axiomSet) {
 			OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
 			OWLOntology entailmentOntology = null;
@@ -511,6 +509,7 @@ public class Wolpertinger implements OWLReasoner {
 				tmpEntailmentFile.deleteOnExit();
 				entailmentOutput = new PrintWriter(tmpEntailmentFile);
 				if (axiom instanceof OWLDeclarationAxiom) {
+					continue;
 					// skip all declaration axioms
 				} else if (axiom instanceof OWLSubClassOfAxiom) {
 					// transform into A and ~B

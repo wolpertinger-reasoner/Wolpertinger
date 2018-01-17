@@ -8,6 +8,7 @@ import junit.framework.TestSuite;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDisjointClassesAxiom;
@@ -299,6 +300,54 @@ public class WolpertingerTest
     	assertEquals(24, wolpert.enumerateAllModels().size());
     }
     
-    
-
+    public void testComplexConceptSubclassEntailment() {
+    	OWLDataFactory factory = OWLManager.getOWLDataFactory();
+    	OWLOntology ontology = null;
+    	OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+    	
+    	
+    	HashSet<OWLNamedIndividual> domain = new HashSet<OWLNamedIndividual>();
+    	domain.add(factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "d1"))));
+    	domain.add(factory.getOWLNamedIndividual(IRI.create(String.format("%s#%s", PREFIX, "d2"))));
+    	
+    	OWLObjectPropertyExpression propR = factory.getOWLObjectProperty(IRI.create(String.format("%s#%s", PREFIX, "r")));
+    	OWLClassExpression classA = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "A")));
+    	OWLClassExpression classB = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "B")));
+    	OWLClassExpression classC = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "C")));
+    	OWLClassExpression classD = factory.getOWLClass(IRI.create(String.format("%s#%s", PREFIX, "D")));
+    	 
+    	OWLClassExpression rSomeB = factory.getOWLObjectSomeValuesFrom(propR, classB);
+    	OWLClassExpression rOnlyD = factory.getOWLObjectAllValuesFrom(propR, classD);
+    	
+    	// A -> r only D ; A -> r some B
+    	OWLAxiom axiom1 = factory.getOWLSubClassOfAxiom(classA, rSomeB);
+    	OWLAxiom axiom2 = factory.getOWLSubClassOfAxiom(classA, rOnlyD);
+    	OWLAxiom axiom3 = factory.getOWLDeclarationAxiom(classC.asOWLClass());
+    	
+    	try {
+    		ontology = manager.createOntology(); 
+			
+			manager.addAxiom(ontology, axiom1);
+			manager.addAxiom(ontology, axiom2);
+			manager.addAxiom(ontology, axiom3);
+			
+		} catch (OWLOntologyCreationException e) {
+			e.printStackTrace();
+		}
+   	
+    	// (B and C) or ((r only D) and (r some (B or C)))
+    	OWLClassExpression bAndC = factory.getOWLObjectIntersectionOf(classB, classC);
+    	OWLClassExpression bOrC  = factory.getOWLObjectUnionOf(classB, classC);
+    	OWLClassExpression rSomeBOrC = factory.getOWLObjectSomeValuesFrom(propR, bOrC);
+    	OWLClassExpression rightSide = factory.getOWLObjectIntersectionOf(rOnlyD, rSomeBOrC);
+    	OWLClassExpression fullConcept = factory.getOWLObjectUnionOf(bAndC, rightSide);
+    	OWLAxiom checkedAxiom = factory.getOWLSubClassOfAxiom(classA, fullConcept);
+    	OWLAxiom converseAxiom = factory.getOWLSubClassOfAxiom(fullConcept, classA);
+    	
+    	Configuration config = new Configuration(new HashSet<IRI>(), domain);
+    	Wolpertinger wolpert = new Wolpertinger(config, ontology);
+    	
+    	assertTrue(wolpert.isEntailed(checkedAxiom));
+    	assertFalse(wolpert.isEntailed(converseAxiom));
+    }
 }
