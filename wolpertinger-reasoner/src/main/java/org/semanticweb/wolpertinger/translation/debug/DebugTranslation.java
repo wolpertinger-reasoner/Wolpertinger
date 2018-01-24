@@ -159,6 +159,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	private int aBoxAxiomsCount;
 	private int tBoxAxiomsCount;	
 	private int rBoxAxiomsCount;
+	
 	/**
 	 * Creates a {@link NaiveTranslation} instance
 	 * @param configuration
@@ -542,12 +543,12 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 	private void translateInclusion(OWLClassExpression[] inclusion, int index) {
 		writer.print("icons " + ASP2CoreSymbols.IMPLICATION);
-		writer.print(String.format(" activated(%d), ", index));
+		writer.print(String.format(" activated(%d),", index));
 
 		boolean isFirst=true;
 		for (OWLClassExpression classExp : inclusion) {
 			if (!isFirst) {
-				writer.print(ASP2CoreSymbols.CONJUNCTION + " ");
+				writer.print(ASP2CoreSymbols.CONJUNCTION);
 			}
 			//writer.print("----" + classExp + "----");
 			classExp.accept(this);
@@ -1383,7 +1384,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print(currentVar);
 			writer.print(",");
-			writer.print(classVar);
+			writer.print(nextVar);
 			writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 			writer.print("}" + ">" + (nIndividuals - cardinalityRestriction.getCardinality()));
 		}
@@ -1725,7 +1726,10 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
 		writer.print(objectName);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(ASP2CoreSymbols.EOR);
+		writer.print(ASP2CoreSymbols.SPACE);
+		writer.write(ASP2CoreSymbols.IMPLICATION);
+		writer.write(String.format(" activated(%d)", nConstraints++));
+		writer.write(ASP2CoreSymbols.EOR);
 	}
 
 	/* (non-Javadoc)
