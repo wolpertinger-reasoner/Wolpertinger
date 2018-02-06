@@ -101,7 +101,7 @@ public class WolpertingerCli {
     	}
 
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-			wolpertinger.naffTranslate(new PrintWriter(System.out), debugFlag);
+			wolpertinger.naffTranslate(new PrintWriter(System.out), debugFlag, null);
 		}
     }
 
@@ -132,12 +132,20 @@ public class WolpertingerCli {
     }
 
     static protected class JustificationAction implements TranslationAction {
+    	private OWLOntology axiomOntology;
+    	
     	public JustificationAction() {
     		super();
+    		this.axiomOntology = null;
     	}
 
+    	public JustificationAction(OWLOntology axiomOntology) {
+    		super();
+    		this.axiomOntology = axiomOntology;
+    	}
+    	
 		public void run(Wolpertinger wolpertinger, Configuration configuration, StatusOutput status, PrintWriter output) {
-			wolpertinger.naffTranslate(new PrintWriter(System.out), true);
+			wolpertinger.naffTranslate(new PrintWriter(System.out), true, axiomOntology);
 		}
     }
 
@@ -378,7 +386,7 @@ public class WolpertingerCli {
 			new Option('A', "abox", groupActions, true, "DIRECTORY", "write models as proper assertions in TTL syntax to DIRECTORY"),
 			new Option('C', "cautious", groupActions, "write the cautious model of the ontology"),
 			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
-			new Option('j', "justification", groupActions, "ask for an inconsistency justification"),
+			new Option('j', "justification", groupActions, false, "FILE", "ask for justifications for an axiom that written in FILE. if no argument provided, justifications for inconsistency are given"),
 			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
 			new Option('S', "supers", groupActions, true, "CLASS", "output classes subsuming by CLASS"),
 			new Option('E', "equi", groupActions, true, "CLASS", "output classes equivalent to CLASS"),
@@ -567,8 +575,24 @@ public class WolpertingerCli {
 				break;
 				//justification
 				case 'j': {
-					TranslationAction action = new JustificationAction();
-					actions.add(action);
+					String arg = getopt.getOptarg();
+					IRI domainIRI = null;
+					if (arg != null) {
+						try {
+							domainIRI = IRI.create(base.resolve(arg));
+							OWLOntologyManager justificationontologyManager = OWLManager.createOWLOntologyManager();
+							OWLOntology axiomOntology = justificationontologyManager.loadOntology(domainIRI);
+							TranslationAction action = new JustificationAction(axiomOntology);
+							actions.add(action);
+						} catch (IllegalArgumentException e) {
+							throw new UsageException(arg + " is not a valid ontology name");
+						} catch (OWLOntologyCreationException e) {
+							throw new UsageException("Failed to load ontology");
+						}	
+					} else {
+						TranslationAction action = new JustificationAction();
+						actions.add(action);
+					}
 				}
 				break;
 				case 'a': {

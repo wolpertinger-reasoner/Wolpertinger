@@ -49,9 +49,11 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLDifferentIndividualsAxiom;
+import org.semanticweb.owlapi.model.OWLIndividual;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectComplementOf;
+import org.semanticweb.owlapi.model.OWLObjectIntersectionOf;
 import org.semanticweb.owlapi.model.OWLObjectOneOf;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
@@ -92,11 +94,7 @@ import org.semanticweb.wolpertinger.structural.OWLNormalizationWithTracer;
 import org.semanticweb.wolpertinger.translation.SignatureMapper;
 import org.semanticweb.wolpertinger.translation.debug.DebugTranslation;
 import org.semanticweb.wolpertinger.translation.naive.NaiveTranslation;
-
-import uk.ac.manchester.cs.owl.owlapi.OWLClassAssertionAxiomImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectComplementOfImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLObjectIntersectionOfImpl;
-import uk.ac.manchester.cs.owl.owlapi.OWLSubClassOfAxiomImpl;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * TODO: Detailed Description here.
@@ -109,7 +107,7 @@ public class Wolpertinger implements OWLReasoner {
 	private OWLOntology rootOntology;
 	// normalized kb
 	private OWLAxioms axioms;
-
+	private OWLDataFactory dataFactory;
 	private Configuration configuration;
 
 	private NaiveTranslation naiveTranslation;
@@ -139,6 +137,7 @@ public class Wolpertinger implements OWLReasoner {
 		this.configuration = configuration;
 		loadOntology();
 		classified = false;
+		dataFactory = OWLManager.getOWLDataFactory();
 	}
 
 	/**
@@ -252,7 +251,7 @@ public class Wolpertinger implements OWLReasoner {
 		translation.translateOntology(axioms);
 	}
 
-	public void naffTranslate(PrintWriter output, boolean debugFlag) {
+	public void naffTranslate(PrintWriter output, boolean debugFlag, OWLOntology axiomOntology) {
 		clearState();
 
 		OWLAxioms axioms = new OWLAxioms();
@@ -270,9 +269,49 @@ public class Wolpertinger implements OWLReasoner {
 
 		axioms.m_namedIndividuals.clear();
 		axioms.m_namedIndividuals.addAll(configuration.getDomainIndividuals());
-
+		
 		DebugTranslation translation = new DebugTranslation(configuration, output, debugFlag, normalization);
 		translation.translateOntology(axioms);
+		
+		if(axiomOntology != null) {
+			OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
+			OWLOntology processedAxiomOntology;
+			try {
+				processedAxiomOntology = ontologyManager.createOntology();
+				for(OWLAxiom axiom : axiomOntology.getAxioms()) {
+					if (axiom instanceof OWLDeclarationAxiom) {
+						continue;
+					} else if (axiom instanceof OWLSubClassOfAxiom) {
+						// transform into A and ~B
+						OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
+						LinkedHashSet<OWLClassExpression> intersectionSet = new LinkedHashSet<OWLClassExpression> ();
+						OWLClassExpression negatedSuperClass = dataFactory.getOWLObjectComplementOf(subClassOfAxiom.getSuperClass());
+						intersectionSet.add(negatedSuperClass);
+						intersectionSet.add(subClassOfAxiom.getSubClass());
+						OWLObjectIntersectionOf intersection = dataFactory.getOWLObjectIntersectionOf(intersectionSet);
+						OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
+						OWLSubClassOfAxiom convertedSubClassOfAxiom = dataFactory.getOWLSubClassOfAxiom(thing, intersection, new HashSet<OWLAnnotation> ());
+						ontologyManager.addAxiom(processedAxiomOntology, convertedSubClassOfAxiom);
+					} else if (axiom instanceof OWLClassAssertionAxiom) {
+						OWLClassAssertionAxiom classAssertionAxiom = (OWLClassAssertionAxiom) axiom;
+						OWLIndividual individual = classAssertionAxiom.getIndividual();
+						OWLClassExpression classExp = classAssertionAxiom.getClassExpression();
+						OWLClassExpression negClassExp = dataFactory.getOWLObjectComplementOf(classExp);
+						OWLClassAssertionAxiom negatedClassAsssertionAxiom = dataFactory.getOWLClassAssertionAxiom(negClassExp, individual);
+						ontologyManager.addAxiom(processedAxiomOntology, negatedClassAsssertionAxiom);
+					} else {
+						throw new NotImplementedException();
+					}
+				}
+				OWLNormalizationWithTracer axiomNormalization = normalization.copy();
+				axiomNormalization.processOntology(processedAxiomOntology);
+				DebugTranslation axiomTranslation = new DebugTranslation(configuration, output, false, axiomNormalization);
+				axiomTranslation.translateOntologyAxioms(axiomNormalization.getM_axioms());
+			} catch (OWLOntologyCreationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public Collection<String> enumerateAllModels() {
@@ -493,6 +532,7 @@ public class Wolpertinger implements OWLReasoner {
 	public boolean isEntailed(Set<? extends OWLAxiom> axiomSet) {
 		for (OWLAxiom axiom : axiomSet) {
 			OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();
+			
 			OWLOntology entailmentOntology = null;
 			try {
 				entailmentOntology = ontologyManager.copyOntology(rootOntology, OntologyCopy.SHALLOW);
@@ -515,12 +555,12 @@ public class Wolpertinger implements OWLReasoner {
 					// transform into A and ~B
 					OWLSubClassOfAxiom subClassOfAxiom = (OWLSubClassOfAxiom) axiom;
 					LinkedHashSet<OWLClassExpression> intersectionSet = new LinkedHashSet<OWLClassExpression> ();
-					OWLClassExpression negatedSuperClass = new OWLObjectComplementOfImpl (subClassOfAxiom.getSuperClass());
+					OWLClassExpression negatedSuperClass = dataFactory.getOWLObjectComplementOf(subClassOfAxiom.getSuperClass());
 					intersectionSet.add(negatedSuperClass);
 					intersectionSet.add(subClassOfAxiom.getSubClass());
-					OWLObjectIntersectionOfImpl intersection = new OWLObjectIntersectionOfImpl (intersectionSet);
+					OWLObjectIntersectionOf intersection = dataFactory.getOWLObjectIntersectionOf(intersectionSet);
 					OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
-					OWLSubClassOfAxiomImpl convertedSubClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, intersection, new HashSet<OWLAnnotation> ());
+					OWLSubClassOfAxiom convertedSubClassOfAxiom = dataFactory.getOWLSubClassOfAxiom(thing, intersection, new HashSet<OWLAnnotation> ());
 					ontologyManager.addAxiom(entailmentOntology, convertedSubClassOfAxiom);
 				} else if (axiom instanceof OWLClassAssertionAxiom) {
 					OWLAxioms tempAxioms = new OWLAxioms ();
@@ -529,14 +569,14 @@ public class Wolpertinger implements OWLReasoner {
 					OWLClassAssertionAxiom classAssertionAxiom = (OWLClassAssertionAxiom) axiom;
 					OWLClassExpression classExpression = classAssertionAxiom.getClassExpression();
 					OWLClass thing = rootOntology.getOWLOntologyManager().getOWLDataFactory().getOWLThing();
-					OWLSubClassOfAxiomImpl subClassOfAxiom = new OWLSubClassOfAxiomImpl(thing, classExpression, new HashSet<OWLAnnotation> ());
+					OWLSubClassOfAxiom subClassOfAxiom = dataFactory.getOWLSubClassOfAxiom(thing, classExpression, new HashSet<OWLAnnotation> ());
 					wrapper.add(subClassOfAxiom);
 					tempNormalization.processAxioms(wrapper);
 					NaiveTranslation axiomTranslation = new NaiveTranslation(configuration, entailmentOutput);
 					axiomTranslation.individualAssertionMode((OWLNamedIndividual) classAssertionAxiom.getIndividual());
 					axiomTranslation.translateEntailment(tempAxioms);
 				} else {
-					//TODO: well...
+					throw new NotImplementedException();
 				}
 				
 				Wolpertinger entailmentWolpertinger = new Wolpertinger(entailmentOntology);
@@ -823,8 +863,8 @@ public class Wolpertinger implements OWLReasoner {
 		Set<OWLNamedIndividual> individuals = rootOntology.getIndividualsInSignature(Imports.INCLUDED);
 		OWLNamedIndividualNodeSet result = new OWLNamedIndividualNodeSet ();
 		for (OWLNamedIndividual individual : individuals) {
-			OWLClassAssertionAxiom impl = new OWLClassAssertionAxiomImpl (individual, classExpression, new HashSet<OWLAnnotation> ());
-			if(isEntailed(impl)) {
+			OWLClassAssertionAxiom classAssertion = dataFactory.getOWLClassAssertionAxiom(classExpression, individual, new HashSet<OWLAnnotation> ());
+			if(isEntailed(classAssertion)) {
 				result.addEntity(individual);
 			}
 		}
@@ -841,8 +881,8 @@ public class Wolpertinger implements OWLReasoner {
 		Set<OWLClass> classes = rootOntology.getClassesInSignature();
 		OWLClassNodeSet result = new OWLClassNodeSet ();
 		for (OWLClass cl : classes) {
-			OWLClassAssertionAxiom impl = new OWLClassAssertionAxiomImpl (individual, cl, new HashSet<OWLAnnotation> ());
-			if(isEntailed(impl)) {
+			OWLClassAssertionAxiom classAssertion = dataFactory.getOWLClassAssertionAxiom (cl, individual, new HashSet<OWLAnnotation> ());
+			if(isEntailed(classAssertion)) {
 				result.addEntity(cl);
 			}
 		}
@@ -865,7 +905,7 @@ public class Wolpertinger implements OWLReasoner {
 		HashMap<OWLClass,HashSet<OWLClass>> superClassHierarchy = new HashMap<OWLClass,HashSet<OWLClass>> ();
 
 		for (OWLClass cl : allClasses) {
-			OWLObjectComplementOf negated = new OWLObjectComplementOfImpl(cl);
+			OWLObjectComplementOf negated = dataFactory.getOWLObjectComplementOf(cl);
 			if (!isSatisfiable(cl)) {
 				equalsToBottomClasses.add(cl);
 			}

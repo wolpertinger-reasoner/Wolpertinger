@@ -155,11 +155,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 	private OWLNormalizationWithTracer normalization;
 	
-	private int axiomsCount;
-	private int aBoxAxiomsCount;
-	private int tBoxAxiomsCount;	
-	private int rBoxAxiomsCount;
-	
 	/**
 	 * Creates a {@link NaiveTranslation} instance
 	 * @param configuration
@@ -211,7 +206,12 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	 */
 	
 	public void translateOntology(OWLOntology rootOntology) {
-		translateOntology(loadOntology(rootOntology));
+		OWLAxioms normalizedOntology = loadOntology(rootOntology);
+	}
+	
+	public void translateOntologyAxioms(OWLAxioms normalizedOntology) {
+		generateAxiomsTranslation(normalizedOntology);
+		writer.flush();
 	}
 	
 	public Set<OWLAxiom> retranslateSolution(String solution) {
@@ -227,7 +227,14 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	public void translateOntology(OWLAxioms normalizedOntology) {
 		clearState();
 		nIndividuals = normalizedOntology.m_namedIndividuals.size();
-
+		generateAxiomsTranslation(normalizedOntology);
+		generateInterpretationGuessing(normalizedOntology);
+		generateShowStatements(normalizedOntology);
+		generatePreference();
+		writer.flush();
+	}
+	
+	private void generateAxiomsTranslation(OWLAxioms normalizedOntology) {
 		// thing assertions for all named individuals
 		writer.println();
 		writer.println("% Individual Assertions");
@@ -238,7 +245,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.println();
 			var.reset();
 		}
-
+		
 		// ABox axioms
 		writer.println();
 		writer.println("% ABox Axiom");
@@ -248,7 +255,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.println();
 			var.reset();
 		}
-
+		
 		// TBox axioms
 		writer.println();
 		writer.println("% TBox Axiom");
@@ -279,7 +286,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			translateInclusion(inclusion, axiomNumber);
 			var.reset();
 		}
-
+		
 		// RBox
 		for (OWLObjectPropertyExpression objectPropertyExp : normalizedOntology.m_complexObjectPropertyExpressions) {
 			// TODO
@@ -347,8 +354,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			translateInclusion(inclusion, nConstraints++);
 			var.reset();
 		}
-
-		writer.println();
+	}
+	
+	private void generateInterpretationGuessing(OWLAxioms normalizedOntology) {
 		// add assertions of nominal guard classes
 		for (OWLNamedIndividual individual : nominalGuards.keySet()) {
 			OWLClass guard = nominalGuards.get(individual);
@@ -458,7 +466,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			}
 		}
 
-
 		// Property Guess
 		writer.println();
 		writer.println("% Guess Property Axiom");
@@ -481,19 +488,19 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		}
 
 		// Everything Follows Property
-				writer.println();
-				writer.println("% Everything Follows Property Axiom");
-				writer.println();
-				for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
-					createIconsImpactProperty(property);
-					var.reset();
-					writer.println();
-				}
+		writer.println();
+		writer.println("% Everything Follows Property Axiom");
+		writer.println();
+		for (OWLObjectProperty property : normalizedOntology.m_objectProperties) {
+			createIconsImpactProperty(property);
+			var.reset();
+			writer.println();
+		}
 
-				// SWRL Rules
-//				for (DisjunctiveRule rule : normalizedOntology.m_rules) {
-//					writer.println(rule);
-//				}
+		// SWRL Rules
+		// for (DisjunctiveRule rule : normalizedOntology.m_rules) {
+		//     writer.println(rule);
+		// }
 
 		// add #show p/n. statements if required
 		for (IRI conceptIRI : configuration.getConceptNamesToProjectOn()) {
@@ -502,7 +509,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			writer.write("#show " + conceptName + "/1.");
 			writer.println();
 		}
-
+	}
+	
+	private void generatePreference() {
 		writer.println();
 		writer.println("% Auxiliary Part");
 		writer.println("");
@@ -521,9 +530,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	        writer.write(String.format("    activated(C) : C=0..%d\n", nConstraints - 1));
 			writer.write("}.\n");
 		}
-
-		writer.println();
-
+	}
+	
+	private void generateShowStatements(OWLAxioms normalizedOntology) {
 		if (!debugFlag) {
 			// show statement
 			for (OWLClass owlClass : normalizedOntology.m_classes) {
@@ -538,13 +547,12 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		} else {
 			writer.println("#show activated/1.");
 		}
-		writer.flush();
 	}
-
 	private void translateInclusion(OWLClassExpression[] inclusion, int index) {
 		writer.print("icons " + ASP2CoreSymbols.IMPLICATION);
-		writer.print(String.format(" activated(%d),", index));
-
+		if (debugFlag) {
+			writer.write(String.format(" activated(%d), ", index));
+		}
 		boolean isFirst=true;
 		for (OWLClassExpression classExp : inclusion) {
 			if (!isFirst) {
@@ -552,6 +560,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			}
 			//writer.print("----" + classExp + "----");
 			classExp.accept(this);
+			var.reset();
 			isFirst=false;
 		}
 
@@ -974,7 +983,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		}
 
 	}
-
 
 	// ----------------------
 	// BEGIN OWLAxiomVisitor methods
@@ -1556,7 +1564,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String nVar = var.nextVariable();
 
 		writer.write("icons " + ASP2CoreSymbols.IMPLICATION);
-		writer.write(String.format(" activated(%d), ", nConstraints++));
+		if (debugFlag) {
+			writer.write(String.format(" activated(%d), ", nConstraints++));
+		} 
 		writer.write(propertyName);
 		writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.write(cVar);
@@ -1675,7 +1685,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 	
 	public void visit(OWLDisjointObjectPropertiesAxiom disProperties) {
 		writer.write("icons " + ASP2CoreSymbols.IMPLICATION);
-		writer.write(String.format(" activated(%d), ", nConstraints++));
+		if (debugFlag) {
+			writer.write(String.format(" activated(%d), ", nConstraints++));
+		}
 		String cVar = var.currentVar();
 		String nVar = var.nextVariable();
 
@@ -1726,9 +1738,12 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(ASP2CoreSymbols.ARG_SEPERATOR);
 		writer.print(objectName);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
-		writer.print(ASP2CoreSymbols.SPACE);
-		writer.write(ASP2CoreSymbols.IMPLICATION);
-		writer.write(String.format(" activated(%d)", nConstraints++));
+		
+		if (debugFlag) {
+			writer.print(ASP2CoreSymbols.SPACE);
+			writer.write(ASP2CoreSymbols.IMPLICATION);
+			writer.write(String.format(" activated(%d), ", nConstraints++));
+		}
 		writer.write(ASP2CoreSymbols.EOR);
 	}
 
@@ -1774,7 +1789,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String cVar = var.currentVar();
 		String nVar = var.nextVariable();
 
-		writer.write(String.format(" activated(%d), ", nConstraints++));
+		if (debugFlag) {
+			writer.write(String.format(" activated(%d), ", nConstraints++));
+		}
 		writer.write(propertyName);
 		writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.write(cVar);
@@ -1828,9 +1845,13 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		OWLClassExpression classExpression = classAssertion.getClassExpression();
 		OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
 
+		writer.print("icons");
+		writer.print(ASP2CoreSymbols.IMPLICATION);
+		if (debugFlag) {
+			writer.write(String.format("activated(%d),", nConstraints++));
+		}
 		if (classExpression instanceof OWLObjectComplementOf) {
 			OWLClass owlClass = classAssertion.getClassExpression().getComplementNNF().asOWLClass();
-			writer.print("not_");
 			writer.print(mapper.getPredicateName(owlClass));
 			writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 			writer.print(mapper.getConstantName(individual));
@@ -1851,15 +1872,13 @@ public class DebugTranslation implements OWLOntologyTranslator {
 				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 			} else {
 				// A(a).
+				writer.print("not_");
 				writer.print(mapper.getPredicateName(owlClass));
 				writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 				writer.print(mapper.getConstantName(individual));
 				writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 			}
 		}
-		writer.print(ASP2CoreSymbols.SPACE);
-		writer.write(ASP2CoreSymbols.IMPLICATION);
-		writer.write(String.format(" activated(%d)", nConstraints++));
 		writer.write(ASP2CoreSymbols.EOR);
 	}
 
@@ -1906,7 +1925,9 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		//String nVar = var.nextVariable();
 
 		writer.write("icons " + ASP2CoreSymbols.IMPLICATION);
-		writer.write(String.format(" activated(%d), ", nConstraints++));
+		if (debugFlag) {
+			writer.write(String.format(" activated(%d), ", nConstraints++));
+		}
 		writer.write(propertyName);
 		writer.write(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.write(cVar);

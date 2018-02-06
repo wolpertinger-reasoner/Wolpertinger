@@ -578,6 +578,14 @@ public class OWLNormalization {
         return m_expressionManager.getComplementNNF(m_expressionManager.getSimplified(dataRange));
     }
 
+    public OWLNormalization copy() {
+    	OWLNormalization normalizationCopy = new OWLNormalization(this.m_factory, new OWLAxioms(), this.m_firstReplacementIndex);
+    	normalizationCopy.m_definitions.putAll(m_definitions);
+    	normalizationCopy.m_definitionsForNegativeNominals.putAll(m_definitionsForNegativeNominals);
+    	normalizationCopy.m_domain.addAll(m_domain);
+    	return normalizationCopy;
+    }
+    
     protected class AxiomVisitor implements OWLAxiomVisitor {
         protected final List<OWLClassExpression[]> m_classExpressionInclusionsAsDisjunctions;
         protected final List<OWLDataRange[]> m_dataRangeInclusionsAsDisjunctions;

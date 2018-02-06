@@ -500,6 +500,18 @@ public class OWLNormalizationWithTracer {
         return m_expressionManager.getComplementNNF(m_expressionManager.getSimplified(dataRange));
     }
 
+    public OWLNormalizationWithTracer copy() {
+    	OWLNormalizationWithTracer normalizationCopy = new OWLNormalizationWithTracer(this.m_factory, new OWLAxioms(), this.m_firstReplacementIndex);
+    	normalizationCopy.m_definitions.putAll(m_definitions);
+    	normalizationCopy.m_definitionsForNegativeNominals.putAll(m_definitionsForNegativeNominals);
+    	normalizationCopy.m_domain.addAll(m_domain);
+    	return normalizationCopy;
+    }
+    
+    public OWLAxioms getM_axioms() {
+		return m_axioms;
+	}
+    
     protected class AxiomVisitor implements OWLAxiomVisitor {
         protected final List<OWLClassExpression[]> m_classExpressionInclusionsAsDisjunctions;
         protected final List<OWLDataRange[]> m_dataRangeInclusionsAsDisjunctions;
