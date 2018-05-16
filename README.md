@@ -26,7 +26,9 @@ mvn clean package
 
 For the plug-in, it remains to copy the JAR-file from the target directory into your plugins directory of the local Protege installation. You need to have Clingo (https://github.com/potassco/clingo) in your machine for doing reasoning tasks.
 
-# 3-Coloring Examples
+## Running
+
+### 3-Coloring Examples
 
 We use an ontology that represent the 3-Coloring problem to show how to ask for models. The ontology is available in the sub-repository Ontologies\3Coloring. The core axioms of the problem encoding can be found in 3Coloring.owl. Consider if we want to find a solution for graph G = (V, E):
 * introduce a new individual _v\_i_ for each vertex _v_ in V as an instance of concept Node.
@@ -44,3 +46,7 @@ java -jar C:\wolpertinger.jar --models=3 --abox=3coloring-models "file:/C:/Ontol
 ```
 
 The ontologies that represent models will be written in the folder 3coloring-models. One can derive the solution from each model by looking at the instances of RedNode, BlueNode, and GreenNode. If individual  _v\_i_ is an instance of RedNode, then we give red color to vertex _v_, etc.
+
+### Justifications
+
+Wolpertinger has built-in functionality for computing justifications.

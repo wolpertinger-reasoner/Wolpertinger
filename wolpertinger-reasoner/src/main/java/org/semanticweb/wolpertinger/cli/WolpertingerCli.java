@@ -79,7 +79,7 @@ public class WolpertingerCli {
 
     protected static final String versionString;
     static {
-        String version=WolpertingerCli.class.getPackage().getImplementationVersion();
+        String version = WolpertingerCli.class.getPackage().getImplementationVersion();
         if (version == null) {
         	version = "<no version set>";
         } else {
@@ -225,8 +225,8 @@ public class WolpertingerCli {
 		}
     }
 
-    static protected class CautiousModelAction implements TranslationAction {
-    	public CautiousModelAction() {
+    static protected class CautiousConsequenceAction implements TranslationAction {
+    	public CautiousConsequenceAction() {
     		super();
     	}
 
@@ -376,7 +376,7 @@ public class WolpertingerCli {
 			new Option('v', "verbose", groupDebug, true, "AMOUNT", "increase verbosity by AMOUNT levels (default 1)"),
 			// actions
 			//new Option('N', "normalize", groupActions, "normalize the input ontology (structural transformation), optionally writing it back to file (via --output)"),
-			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output); supported values are 'naive' and 'naff'"),
+			new Option('T', "translate", groupActions, true, "TARGET", "translate the ontology to TARGET language, optionally writing it back to file (via --output); supported values are 'naive', 'naff', and 'meta'"),
 			new Option('O', "output", groupActions, true, "FILE", "output non-debug informations to FILE"),
 			new Option('e', "entail", groupActions, true, "FILE", "check whether ontology FILE is entailed by input ontology"),
 			new Option('D', "domain", groupActions, true, "FILE", "get fixed domain from FILE. if this option is not provided, the domain is the implicit set of individuals in the input ontology"),
@@ -384,15 +384,15 @@ public class WolpertingerCli {
 			new Option('f', "filter", groupActions, true, "MODE", "filter what predicates are to be shown in the model; supported values are 'positive' and 'negative'"),
 			new Option('m', "model", groupActions, true, "NUMBER", "enumerate NUMBER many models; NUMBER=0 means asking for ALL models"),
 			new Option('A', "abox", groupActions, true, "DIRECTORY", "write models as proper assertions in TTL syntax to DIRECTORY"),
-			new Option('C', "cautious", groupActions, "write the cautious model of the ontology"),
-			new Option('c', "consistent", groupActions, "ask whether input ontology(-ies) is consistent"),
-			new Option('j', "justification", groupActions, false, "FILE", "ask for justifications for an axiom that written in FILE. if no argument provided, justifications for inconsistency are given"),
+			new Option('C', "cautious", groupActions, "print the cautious consquences of the ontology; i.e. assertions that hold in every model"),
+			new Option('c', "consistent", groupActions, "check for consisteny of the input ontology"),
+			new Option('j', "justification", groupActions, false, "FILE", "ask for justifications of an axiom given in FILE. if no argument provided, justifications for inconsistency are computed"),
 			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
 			new Option('S', "supers", groupActions, true, "CLASS", "output classes subsuming by CLASS"),
 			new Option('E', "equi", groupActions, true, "CLASS", "output classes equivalent to CLASS"),
 			new Option('i', "instances", groupActions, true, "CLASS", "output instances of the CLASS"),
 			new Option('t', "types", groupActions, true, "INDIVIDUAL", "output types of the INDIVIDUAL"),
-			new Option('a', "axiomatize", groupUtility, true, "FILE", "For the ontology given, generate axioms that axiomatize the fixed-domain semantics and write the axiomatized ontolgy to FILE."),
+			new Option('a', "axiomatize", groupUtility, true, "FILE", "For the input ontology, generate axioms that axiomatize the fixed-domain semantics and write the axiomatized ontolgy version to FILE."),
 	};
 
 	public static void main(String[] args) {
@@ -569,7 +569,7 @@ public class WolpertingerCli {
 				}
 				break;
 				case 'C': {
-					TranslationAction action = new CautiousModelAction();
+					TranslationAction action = new CautiousConsequenceAction();
 					actions.add(action);
 				}
 				break;
