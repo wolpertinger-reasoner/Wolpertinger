@@ -386,7 +386,7 @@ public class WolpertingerCli {
 			new Option('A', "abox", groupActions, true, "DIRECTORY", "write models as proper assertions in TTL syntax to DIRECTORY"),
 			new Option('C', "cautious", groupActions, "print the cautious consquences of the ontology; i.e. assertions that hold in every model"),
 			new Option('c', "consistent", groupActions, "check for consisteny of the input ontology"),
-			new Option('j', "justification", groupActions, false, "FILE", "ask for justifications of an axiom given in FILE. if no argument provided, justifications for inconsistency are computed"),
+			new Option('j', "justification", groupActions, false, "FILE", "compute justifications for the axioms given in the ontology FILE. if no argument provided, justifications for inconsistency are computed. CURRENTLY this only returns a translation that can be passed to asprin!"),
 			new Option('s', "subs", groupActions, true, "CLASS", "output classes subsumed by CLASS"),
 			new Option('S', "supers", groupActions, true, "CLASS", "output classes subsuming by CLASS"),
 			new Option('E', "equi", groupActions, true, "CLASS", "output classes equivalent to CLASS"),
@@ -396,7 +396,7 @@ public class WolpertingerCli {
 	};
 
 	public static void main(String[] args) {
-		try {
+		try {	
 			Configuration configuration = new Configuration();
 			Getopt getopt = new Getopt("", args, Option.formatOptionsString(options), Option.createLongOpts(options));
 			

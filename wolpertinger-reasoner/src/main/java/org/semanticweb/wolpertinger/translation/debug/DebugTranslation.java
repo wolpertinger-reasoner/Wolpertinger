@@ -155,11 +155,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 
 	private OWLNormalizationWithTracer normalization;
 	
-	/**
-	 * Creates a {@link NaiveTranslation} instance
-	 * @param configuration
-	 * @param writer
-	 */
 	public DebugTranslation(Configuration configuration, PrintWriter writer, boolean debugFlag, OWLNormalizationWithTracer normalization) {
 		// TODO: based on config parameter instantiate the name mappers (nice,std)
 		this.mapper = SignatureMapper.ASP2CoreMapping;
