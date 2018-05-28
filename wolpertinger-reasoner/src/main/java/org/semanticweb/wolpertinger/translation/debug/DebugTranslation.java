@@ -247,7 +247,6 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.println();
 		for (OWLIndividualAxiom assertion : normalizedOntology.m_facts) {
 			assertion.accept(this);
-			writer.println();
 			var.reset();
 		}
 		
@@ -1533,6 +1532,11 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String subjectName = mapper.getConstantName(subject);
 		String objectName = mapper.getConstantName(object);
 
+		writer.print("icons");
+		writer.print(ASP2CoreSymbols.IMPLICATION);
+		if (debugFlag) {
+			writer.write(String.format("activated(%d), ", nConstraints++));
+		}
 		writer.print("not_");
 		writer.print(propertyName);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
@@ -1726,7 +1730,13 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		String propertyName = mapper.getPredicateName(property);
 		String subjectName = mapper.getConstantName(subject);
 		String objectName = mapper.getConstantName(object);
-
+		
+		writer.print("icons");
+		writer.print(ASP2CoreSymbols.IMPLICATION);
+		if (debugFlag) {
+			writer.write(String.format("activated(%d), ", nConstraints++));
+		}
+		writer.print("not_");
 		writer.print(propertyName);
 		writer.print(ASP2CoreSymbols.BRACKET_OPEN);
 		writer.print(subjectName);
@@ -1734,12 +1744,8 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		writer.print(objectName);
 		writer.print(ASP2CoreSymbols.BRACKET_CLOSE);
 		
-		if (debugFlag) {
-			writer.print(ASP2CoreSymbols.SPACE);
-			writer.write(ASP2CoreSymbols.IMPLICATION);
-			writer.write(String.format(" activated(%d), ", nConstraints++));
-		}
 		writer.write(ASP2CoreSymbols.EOR);
+		writer.println();
 	}
 
 	/* (non-Javadoc)
@@ -1840,6 +1846,10 @@ public class DebugTranslation implements OWLOntologyTranslator {
 		OWLClassExpression classExpression = classAssertion.getClassExpression();
 		OWLNamedIndividual individual = classAssertion.getIndividual().asOWLNamedIndividual();
 
+		if (classExpression.isOWLThing()) {
+			return;
+		}
+		
 		writer.print("icons");
 		writer.print(ASP2CoreSymbols.IMPLICATION);
 		if (debugFlag) {
@@ -1875,6 +1885,7 @@ public class DebugTranslation implements OWLOntologyTranslator {
 			}
 		}
 		writer.write(ASP2CoreSymbols.EOR);
+		writer.println();;
 	}
 
 	/* (non-Javadoc)
