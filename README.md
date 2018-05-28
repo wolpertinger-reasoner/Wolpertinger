@@ -53,4 +53,5 @@ node(i_n4) node(i_n2) node(i_n3) node(i_n1) edge(i_n1,i_n2) edge(i_n1,i_n3) edge
 
 ### Justifications
 
-Wolpertinger has built-in functionality for computing justifications.
+Wolpertinger provides a translation that allows to compute justifications for inconsistency using asprin. The parameter "--justification" therefore translates an input ontology into an answer-set program, such that its answer-sets correspond to justifications.
+The resulting program is dedicated to be processed with asprin (which in turn uses Clingo). In the current development state, asprin needs to be called seperately.
